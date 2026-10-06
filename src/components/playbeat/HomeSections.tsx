@@ -338,9 +338,9 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-4">
-          {movies.map((movie) => {
+          {(movies || []).map((movie) => {
             if (!movie) return null;
-            const inList = isItemInMyList(movie.title);
+            const inList = isItemInMyList(movie?.title || '');
             return (
               <div
                 key={movie.id}
@@ -350,7 +350,7 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
                 <div className="aspect-[2/3] w-full overflow-hidden bg-slate-950 relative">
                   <img
                     src={movie.poster}
-                    alt={movie.title}
+                    alt={movie?.title || ''}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-[#050811] via-transparent to-transparent opacity-80" />
@@ -364,7 +364,7 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        onToggleMyList(movie.title);
+                        onToggleMyList(movie?.title || '');
                       }}
                       className="p-1.5 rounded-md bg-black/60 hover:bg-cyan-500 text-white backdrop-blur-md transition-colors"
                       title="Add to My List"
@@ -376,7 +376,7 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
 
                 <div className="p-3">
                   <div className="text-xs font-bold text-white truncate group-hover:text-cyan-300 transition-colors">
-                    {movie.title}
+                    {movie?.title || ''}
                   </div>
                   <div className="flex items-center gap-2 text-[10px] text-slate-400 mt-1">
                     <span>{movie.year}</span>
