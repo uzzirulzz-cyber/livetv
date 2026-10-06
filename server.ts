@@ -904,6 +904,124 @@ app.get('/api/proxy/stream', async (req: Request, res: Response) => {
   }
 });
 
+// 8b. Universal Video Proxy with Range Request & CORS Support (/api/proxy/video)
+// Supports HTTP 206 Partial Content so browser player can seek smoothly across any MP4 or WebM video
+app.get('/api/proxy/video', async (req: Request, res: Response) => {
+  const targetUrl = req.query.url as string;
+  if (!targetUrl) {
+    return res.status(400).send('Missing url parameter');
+  }
+
+  try {
+    const rangeHeader = req.headers.range;
+    const fetchHeaders: Record<string, string> = {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+      'Accept': '*/*'
+    };
+    if (rangeHeader) {
+      fetchHeaders['Range'] = rangeHeader;
+    }
+
+    const upstreamRes = await fetch(targetUrl, { headers: fetchHeaders });
+    
+    // Copy important video streaming headers
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Headers', '*');
+    res.setHeader('Accept-Ranges', 'bytes');
+    
+    const contentType = upstreamRes.headers.get('content-type') || 'video/mp4';
+    res.setHeader('Content-Type', contentType);
+
+    const contentLength = upstreamRes.headers.get('content-length');
+    if (contentLength) res.setHeader('Content-Length', contentLength);
+
+    const contentRange = upstreamRes.headers.get('content-range');
+    if (contentRange) res.setHeader('Content-Range', contentRange);
+
+    res.status(upstreamRes.status);
+
+    if (upstreamRes.body) {
+      const { Readable } = await import('stream');
+      const nodeStream = Readable.fromWeb(upstreamRes.body as any);
+      nodeStream.pipe(res);
+    } else {
+      res.status(502).send('No video body');
+    }
+  } catch (err: any) {
+    console.error('[VideoProxy Error]:', err.message);
+    res.status(500).send(`Video proxy error: ${err.message}`);
+  }
+});
+
+// 8c. Live TVMaze Television Series & Web Series API (/api/media/tvmaze/search & /api/media/tvmaze/episodes)
+// Provides 100% genuine real web series data, real posters, real episodes, real actors, and summaries
+app.get('/api/media/tvmaze/search', async (req: Request, res: Response) => {
+  const query = (req.query.q as string) || 'stranger things';
+  try {
+    const upstream = await fetch(`https://api.tvmaze.com/search/shows?q=${encodeURIComponent(query)}`);
+    if (!upstream.ok) {
+      return res.status(upstream.status).json({ success: false, error: 'TVMaze error' });
+    }
+    const data = await upstream.json();
+    res.json({ success: true, results: data });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/media/tvmaze/episodes', async (req: Request, res: Response) => {
+  const showId = req.query.showId as string;
+  if (!showId) return res.status(400).json({ error: 'Missing showId' });
+  try {
+    const upstream = await fetch(`https://api.tvmaze.com/shows/${encodeURIComponent(showId)}/episodes`);
+    if (!upstream.ok) {
+      return res.status(upstream.status).json({ success: false, error: 'TVMaze error' });
+    }
+    const data = await upstream.json();
+    res.json({ success: true, episodes: data });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 8d. Xtream-Masters WebPlayer & Player API Gateway (/api/xtream/player-api)
+// Bridges credentials from PlayBeat to Xtream-Masters panel (http://xtream-masters.com/webplayer/ & geotv.space)
+app.all('/api/xtream/player-api', async (req: Request, res: Response) => {
+  const host = (req.query.host as string) || (req.body?.host as string) || GEOTV_HOST;
+  const username = (req.query.username as string) || (req.body?.username as string) || GEOTV_USER;
+  const password = (req.query.password as string) || (req.body?.password as string) || GEOTV_PASS;
+  const action = (req.query.action as string) || (req.body?.action as string) || '';
+
+  try {
+    let url = `${host}/player_api.php?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`;
+    if (action) {
+      url += `&action=${encodeURIComponent(action)}`;
+    }
+    const seriesId = req.query.series_id || req.body?.series_id;
+    if (seriesId) url += `&series_id=${encodeURIComponent(String(seriesId))}`;
+
+    const vodId = req.query.vod_id || req.body?.vod_id;
+    if (vodId) url += `&vod_id=${encodeURIComponent(String(vodId))}`;
+
+    const upstream = await fetch(url, {
+      headers: {
+        'User-Agent': 'PlayBeat-Xtream-WebPlayer/3.0'
+      }
+    });
+
+    const data = await upstream.json();
+    res.json({
+      success: true,
+      host,
+      username,
+      action: action || 'auth',
+      data
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // -----------------------------------------------------------------------
 // CLOUDFLARE DNS & NAMESERVER MANAGEMENT FOR playbeat.live
 // -----------------------------------------------------------------------

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Movie } from '../../types/playbeat';
-import { Play, Plus, Check, Star, Info, Film, Sparkles, Filter } from 'lucide-react';
+import { Play, Plus, Check, Star, Info, Film, Sparkles, Filter, Search, Tv, ExternalLink } from 'lucide-react';
 
 interface MoviesViewProps {
   movies: Movie[];
@@ -16,45 +16,95 @@ export const MoviesView: React.FC<MoviesViewProps> = ({
   isItemInMyList
 }) => {
   const [selectedGenre, setSelectedGenre] = useState<string>('All');
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedMovieForDetails, setSelectedMovieForDetails] = useState<Movie | null>(null);
 
-  const genres = ['All', 'Sci-Fi', 'Action', 'Animation', 'Fantasy', 'Adventure', 'Family'];
+  const genres = ['All', 'Action', 'Sci-Fi', 'Drama', 'Adventure', 'Crime', 'Biography', 'Animation', 'Comedy'];
 
   const filteredMovies = movies.filter((m) => {
-    if (selectedGenre === 'All') return true;
-    return m.genres.includes(selectedGenre);
+    const matchesGenre = selectedGenre === 'All' || m.genres.includes(selectedGenre);
+    if (!matchesGenre) return false;
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      m.title.toLowerCase().includes(q) ||
+      m.director.toLowerCase().includes(q) ||
+      m.cast.some((c) => c.toLowerCase().includes(q)) ||
+      m.description.toLowerCase().includes(q)
+    );
   });
 
   return (
     <div className="max-w-7xl mx-auto px-4 lg:px-8 py-6 space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/[0.08]">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-white/[0.08]">
         <div>
           <h1 className="text-2xl font-black text-white font-display tracking-tight flex items-center gap-2">
             <Film className="w-6 h-6 text-cyan-400" />
-            <span>PlayBeat Movies Catalog</span>
+            <span>PlayBeat Blockbuster Cinema</span>
           </h1>
           <p className="text-xs text-slate-400 mt-0.5">
-            Authorized cinematic features in 4K Ultra HD and Dolby Atmos surround
+            Real theatrical cinema releases in 4K Ultra HD, HDR, and Dolby Atmos audio
           </p>
         </div>
 
-        {/* Genre Filter Tabs */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
-          {genres.map((g) => (
-            <button
-              key={g}
-              onClick={() => setSelectedGenre(g)}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap ${
-                selectedGenre === g
-                  ? 'bg-cyan-500 text-slate-950 font-bold'
-                  : 'bg-[#0c1326] text-slate-400 hover:text-white border border-white/10'
-              }`}
-            >
-              {g}
-            </button>
-          ))}
+        {/* Search input */}
+        <div className="relative w-full md:w-72">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            placeholder="Search real movies, cast, director..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-9 pr-3 py-2 bg-[#0c1326] border border-white/10 rounded-xl text-xs text-white placeholder-slate-400 focus:outline-none focus:border-cyan-400"
+          />
         </div>
+      </div>
+
+      {/* Xtream-Masters WebPlayer Banner */}
+      <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-950/60 via-slate-900/80 to-[#0c1326] border border-blue-500/30 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-blue-500/20 text-cyan-400 flex items-center justify-center border border-blue-500/30 shrink-0">
+            <Tv className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+              <span>Xtream-Masters WebPlayer Compatible</span>
+              <span className="px-1.5 py-0.5 rounded text-[10px] bg-emerald-500/20 text-emerald-300 font-mono">
+                ONLINE
+              </span>
+            </h3>
+            <p className="text-xs text-slate-300 mt-0.5">
+              Watch on the official Xtream-Masters WebPlayer at <code className="text-cyan-300">http://xtream-masters.com/webplayer/</code> with Host <strong className="text-white">geotv.space:8880</strong>, User <strong className="text-white">3fa35bc1</strong>, Pass <strong className="text-white">3cc73db1</strong>.
+            </p>
+          </div>
+        </div>
+        <a
+          href="http://xtream-masters.com/webplayer/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="shrink-0 px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 transition-all shadow-md shadow-cyan-500/20"
+        >
+          <span>Open WebPlayer</span>
+          <ExternalLink className="w-3.5 h-3.5" />
+        </a>
+      </div>
+
+      {/* Genre Filter Tabs */}
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+        {genres.map((g) => (
+          <button
+            key={g}
+            onClick={() => setSelectedGenre(g)}
+            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap ${
+              selectedGenre === g
+                ? 'bg-cyan-500 text-slate-950 font-bold'
+                : 'bg-[#0c1326] text-slate-400 hover:text-white border border-white/10'
+            }`}
+          >
+            {g}
+          </button>
+        ))}
       </div>
 
       {/* Movies Grid */}
@@ -86,7 +136,7 @@ export const MoviesView: React.FC<MoviesViewProps> = ({
                       setSelectedMovieForDetails(movie);
                     }}
                     className="p-1.5 rounded-md bg-black/60 hover:bg-white/20 text-white backdrop-blur-md transition-colors"
-                    title="Movie synopsis & details"
+                    title="Movie details"
                   >
                     <Info className="w-3.5 h-3.5" />
                   </button>
@@ -98,21 +148,35 @@ export const MoviesView: React.FC<MoviesViewProps> = ({
                     className="p-1.5 rounded-md bg-black/60 hover:bg-cyan-500 text-white backdrop-blur-md transition-colors"
                     title="Add to My List"
                   >
-                    {inList ? <Check className="w-3.5 h-3.5 text-cyan-300" /> : <Plus className="w-3.5 h-3.5" />}
+                    {inList ? (
+                      <Check className="w-3.5 h-3.5 text-cyan-400" />
+                    ) : (
+                      <Plus className="w-3.5 h-3.5" />
+                    )}
                   </button>
+                </div>
+
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
+                  <div className="w-12 h-12 rounded-full bg-cyan-400 text-slate-950 flex items-center justify-center shadow-xl shadow-cyan-400/40 group-hover:scale-110 transition-transform">
+                    <Play className="w-5 h-5 fill-slate-950 translate-x-0.5" />
+                  </div>
                 </div>
               </div>
 
-              <div className="p-3.5 space-y-1.5">
-                <div className="text-xs sm:text-sm font-bold text-white truncate group-hover:text-cyan-300 transition-colors">
-                  {movie.title}
-                </div>
-                <div className="flex items-center gap-2 text-[10px] text-slate-400 font-mono">
+              <div className="p-4 space-y-1.5">
+                <div className="flex items-center justify-between text-[11px] text-cyan-400 font-mono font-semibold">
                   <span>{movie.year}</span>
-                  <span>·</span>
                   <span>{movie.duration}</span>
-                  <span>·</span>
-                  <span className="text-cyan-400 font-sans">{movie.genres[0]}</span>
+                </div>
+                <h3 className="text-sm font-bold text-white group-hover:text-cyan-300 transition-colors line-clamp-1">
+                  {movie.title}
+                </h3>
+                <p className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed">
+                  {movie.description}
+                </p>
+                <div className="pt-2 flex items-center justify-between text-[10px] text-slate-500 border-t border-white/[0.06]">
+                  <span className="truncate max-w-[120px]">{movie.director}</span>
+                  <span className="text-cyan-400 font-mono">4K Atmos</span>
                 </div>
               </div>
             </div>
@@ -120,78 +184,95 @@ export const MoviesView: React.FC<MoviesViewProps> = ({
         })}
       </div>
 
+      {filteredMovies.length === 0 && (
+        <div className="text-center py-16 space-y-3">
+          <Film className="w-10 h-10 text-slate-600 mx-auto" />
+          <h3 className="text-base font-bold text-white">No Movies Found</h3>
+          <p className="text-xs text-slate-400">
+            Try adjusting your search query or selecting a different genre filter.
+          </p>
+        </div>
+      )}
+
       {/* Movie Details Modal */}
       {selectedMovieForDetails && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
-          <div className="bg-[#0c1326] border border-white/15 rounded-2xl max-w-2xl w-full overflow-hidden shadow-2xl animate-in zoom-in-95 duration-150">
-            {/* Backdrop header */}
-            <div className="relative h-60 w-full overflow-hidden bg-black">
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="w-full max-w-2xl bg-slate-950 border border-white/15 rounded-3xl overflow-hidden shadow-2xl space-y-4 text-white">
+            <div className="relative aspect-video w-full overflow-hidden bg-black">
               <img
                 src={selectedMovieForDetails.backdrop}
                 alt={selectedMovieForDetails.title}
                 className="w-full h-full object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#0c1326] to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
               <button
                 onClick={() => setSelectedMovieForDetails(null)}
-                className="absolute top-4 right-4 p-2 rounded-full bg-black/60 hover:bg-white/20 text-white transition-colors"
+                className="absolute top-4 right-4 p-2 rounded-full bg-black/60 hover:bg-white/20 text-white"
               >
-                ✕
+                <Info className="w-4 h-4" />
               </button>
+              <div className="absolute bottom-4 left-6 right-6 space-y-1">
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/30">
+                    {selectedMovieForDetails.rating}
+                  </span>
+                  <span className="text-slate-300 font-mono">{selectedMovieForDetails.year}</span>
+                  <span className="text-slate-500">·</span>
+                  <span className="text-slate-300">{selectedMovieForDetails.duration}</span>
+                  <span className="text-slate-500">·</span>
+                  <span className="text-cyan-400 font-medium">{selectedMovieForDetails.genres.join(', ')}</span>
+                </div>
+                <h2 className="text-2xl font-black text-white font-display">
+                  {selectedMovieForDetails.title}
+                </h2>
+              </div>
             </div>
 
-            {/* Content info */}
-            <div className="p-6 space-y-4">
-              <div className="flex flex-wrap items-center gap-2 text-xs text-slate-300">
-                <span className="bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 px-2 py-0.5 rounded font-bold">
-                  {selectedMovieForDetails.rating}
-                </span>
-                <span>{selectedMovieForDetails.year}</span>
-                <span>·</span>
-                <span>{selectedMovieForDetails.duration}</span>
-                <span>·</span>
-                <span>{selectedMovieForDetails.genres.join(', ')}</span>
-              </div>
-
-              <h2 className="text-2xl font-black text-white font-display">
-                {selectedMovieForDetails.title}
-              </h2>
-
+            <div className="p-6 pt-0 space-y-4">
               <p className="text-xs text-slate-300 leading-relaxed">
                 {selectedMovieForDetails.description}
               </p>
 
-              <div className="grid grid-cols-2 gap-2 text-xs text-slate-400 pt-2 border-t border-white/10">
+              <div className="grid grid-cols-2 gap-4 text-xs bg-white/[0.03] p-3 rounded-xl border border-white/10 font-mono">
                 <div>
-                  <strong className="text-white">Director:</strong> {selectedMovieForDetails.director}
+                  <span className="text-slate-400 block">Director:</span>
+                  <span className="text-white font-bold">{selectedMovieForDetails.director}</span>
                 </div>
                 <div>
-                  <strong className="text-white">Language:</strong> {selectedMovieForDetails.language}
+                  <span className="text-slate-400 block">Audio / Tech:</span>
+                  <span className="text-cyan-300 font-bold">{selectedMovieForDetails.language}</span>
                 </div>
                 <div className="col-span-2">
-                  <strong className="text-white">Starring:</strong> {selectedMovieForDetails.cast.join(', ')}
+                  <span className="text-slate-400 block">Starring:</span>
+                  <span className="text-slate-200">{selectedMovieForDetails.cast.join(', ')}</span>
                 </div>
               </div>
 
-              <div className="pt-3 flex justify-end gap-3 border-t border-white/10">
+              <div className="flex items-center gap-3 pt-2">
+                <button
+                  onClick={() => {
+                    const m = selectedMovieForDetails;
+                    setSelectedMovieForDetails(null);
+                    onWatchMovie(m);
+                  }}
+                  className="flex-1 py-3 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/25 transition-all"
+                >
+                  <Play className="w-4 h-4 fill-slate-950" />
+                  <span>Start Watching in 4K</span>
+                </button>
                 <button
                   onClick={() => {
                     onToggleMyList(selectedMovieForDetails.title);
                   }}
-                  className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-xs font-semibold"
+                  className="py-3 px-4 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs"
                 >
-                  {isItemInMyList(selectedMovieForDetails.title) ? 'In My List' : '+ Add to My List'}
+                  {isItemInMyList(selectedMovieForDetails.title) ? 'In My List' : 'Add to My List'}
                 </button>
-
                 <button
-                  onClick={() => {
-                    onWatchMovie(selectedMovieForDetails);
-                    setSelectedMovieForDetails(null);
-                  }}
-                  className="px-6 py-2 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold rounded-lg text-xs flex items-center gap-1.5"
+                  onClick={() => setSelectedMovieForDetails(null)}
+                  className="py-3 px-4 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white font-semibold text-xs"
                 >
-                  <Play className="w-4 h-4 fill-slate-950" />
-                  <span>Watch Movie Now</span>
+                  Close
                 </button>
               </div>
             </div>

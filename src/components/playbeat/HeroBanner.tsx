@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Movie, Series, Channel } from '../../types/playbeat';
 import { Play, Plus, Check, Info, Tv, Volume2, VolumeX, ShieldCheck } from 'lucide-react';
+import { RELIABLE_STREAMS } from '../../services/catalogData';
 
 interface HeroBannerProps {
   onWatchLive: () => void;
@@ -19,40 +20,52 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
 }) => {
   const featuredSlides = [
     {
-      id: 'f_tears',
-      title: 'Tears of Steel: Renaissance',
-      subtitle: 'PlayBeat Original Cinematic Presentation',
-      category: 'Sci-Fi / Cyberpunk',
+      id: 'f_dune',
+      title: 'Dune: Part Two',
+      subtitle: 'Warner Bros. Theatrical Blockbuster',
+      category: 'Sci-Fi / Adventure / Drama',
       rating: 'PG-13',
       quality: '4K Ultra HD',
-      audio: 'Dolby Atmos',
-      description: 'In an Amsterdam transformed by rogue biotechnology and colossal orbital sentinels, a fractured brigade of ex-scientists execute one final daring temporal upload to rescue human memory.',
+      audio: 'Dolby Atmos 7.1',
+      description: 'Paul Atreides unites with Chani and the Fremen while seeking revenge against the conspirators who destroyed his family. Facing a choice between the love of his life and the fate of the known universe.',
+      backdrop: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=1920&h=1080&q=80',
+      streamUrl: RELIABLE_STREAMS.MP4_CINEMA_1
+    },
+    {
+      id: 'f_stranger_things',
+      title: 'Stranger Things',
+      subtitle: 'The Duffer Brothers Phenomenon',
+      category: 'Sci-Fi / Horror / Mystery',
+      rating: 'TV-14',
+      quality: '4K HDR',
+      audio: 'Dolby 5.1 Surround',
+      description: 'When a young boy vanishes, a small town uncovers a mystery involving secret experiments, terrifying supernatural forces and one strange little girl.',
       backdrop: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1920&h=1080&q=80',
-      streamUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4'
+      streamUrl: RELIABLE_STREAMS.MP4_CINEMA_2
     },
     {
       id: 'f_sports',
-      title: 'UEFA Champions Tour Highlights',
-      subtitle: 'Live On Sky Sports Premier League 4K',
-      category: 'Live Sports',
-      rating: 'Live',
+      title: 'Sky Sports Premier League 4K',
+      subtitle: 'Live On Sky Sports Premier League',
+      category: 'Live Broadcast',
+      rating: 'LIVE',
       quality: '4K 60FPS',
       audio: 'Stadium Surround',
       description: 'Experience ultra-crisp pitchside multi-angle coverage, real-time tactical overlays, and immersive stadium audio engineered for the ultimate sports fan.',
       backdrop: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=1920&h=1080&q=80',
-      streamUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
+      streamUrl: RELIABLE_STREAMS.HLS_ADAPTIVE
     },
     {
-      id: 'f_sintel',
-      title: 'Sintel: The Dragon Huntress',
-      subtitle: 'Authorized Epic Fantasy Feature',
-      category: 'Fantasy / Adventure',
-      rating: 'PG-13',
-      quality: '4K HDR',
-      audio: 'Orchestral 5.1',
-      description: 'A relentless young warrior traverses frozen glacier passes and desolate deserts searching for her captive companion baby dragon, only to encounter an agonizing revelation.',
-      backdrop: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=1920&h=1080&q=80',
-      streamUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4'
+      id: 'f_deadpool',
+      title: 'Deadpool & Wolverine',
+      subtitle: 'Marvel Studios Blockbuster',
+      category: 'Action / Comedy / Sci-Fi',
+      rating: 'R',
+      quality: '4K IMAX Enhanced',
+      audio: 'Dolby Atmos',
+      description: 'Wade Wilson recruits a reluctant variant of Wolverine to save his home universe from existential collapse in this high-octane cinematic ride.',
+      backdrop: 'https://images.unsplash.com/photo-1511447333015-45b65e60f6d5?auto=format&fit=crop&w=1920&h=1080&q=80',
+      streamUrl: RELIABLE_STREAMS.MP4_CINEMA_3
     }
   ];
 

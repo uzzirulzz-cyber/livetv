@@ -122,6 +122,18 @@ export const PlayBeatHeader: React.FC<PlayBeatHeaderProps> = ({
             )}
           </button>
 
+          {/* Xtream-Masters WebPlayer Launcher */}
+          <a
+            href="http://xtream-masters.com/webplayer/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-blue-600/20 border border-blue-500/30 hover:bg-blue-600/30 text-xs font-semibold text-cyan-300 transition-colors"
+            title="Open official Xtream-Masters WebPlayer (http://xtream-masters.com/webplayer/)"
+          >
+            <Tv className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="hidden xl:inline text-[11px] font-mono">Xtream WebPlayer</span>
+          </a>
+
           {/* Direct Admin Access Icon */}
           <button
             onClick={onNavigateToAdmin}
