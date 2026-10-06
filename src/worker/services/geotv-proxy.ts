@@ -140,9 +140,14 @@ export async function fetchGeoTvChannels(
     };
   }
 
-  const host = env.GEOTV_HOST || 'http://geotv.space:8880';
-  const user = env.GEOTV_USER || '3fa35bc1';
-  const pass = env.GEOTV_PASS || '3cc73db1';
+  const host = env.GEOTV_HOST;
+  const user = env.GEOTV_USER;
+  const pass = env.GEOTV_PASS;
+
+  if (!host || !user || !pass) throw new Error('GeoTV provider configuration is incomplete.');
+  if (new URL(host).protocol !== 'https:') {
+    throw new Error('GeoTV provider must be configured with HTTPS.');
+  }
 
   const playlistUrl = `${host}/get.php?username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}&type=m3u_plus&output=ts`;
 
@@ -170,6 +175,7 @@ export async function fetchGeoTvChannels(
     const line = lines[i].trim();
     if (line.startsWith('#EXTINF:')) {
       const logoMatch = line.match(/tvg-logo="([^"]*)"/);
+      const epgMatch = line.match(/tvg-id="([^"]*)"/);
       const groupMatch = line.match(/group-title="([^"]*)"/);
       const nameParts = line.split(',');
       const rawName = nameParts.length > 1 ? nameParts[nameParts.length - 1].trim() : 'Live Channel';
@@ -180,15 +186,14 @@ export async function fetchGeoTvChannels(
       currentItem = {
         name: cleanName,
         rawName,
+        epgId: epgMatch ? epgMatch[1].trim() : '',
         logo: logo ? `/api/iptv/image?url=${encodeURIComponent(logo)}` : '',
         rawLogo: logo,
         group,
         category: categorizeChannel(rawName, group),
-        streamUrl: '',
       };
     } else if (line.includes('/live/')) {
       if (currentItem) {
-        currentItem.streamUrl = line;
         const idMatch = line.match(/\/live\/[^/]+\/[^/]+\/(\d+)\./);
         const streamId = idMatch ? idMatch[1] : String(parsedChannels.length + 1);
         currentItem.id = `geo_${streamId}`;
@@ -327,9 +332,14 @@ export async function fetchGeoTvHlsStream(
   channelId: string,
   rawUrl?: string
 ): Promise<Response> {
-  const host = env.GEOTV_HOST || 'http://geotv.space:8880';
-  const user = env.GEOTV_USER || '3fa35bc1';
-  const pass = env.GEOTV_PASS || '3cc73db1';
+  const host = env.GEOTV_HOST;
+  const user = env.GEOTV_USER;
+  const pass = env.GEOTV_PASS;
+
+  if (!rawUrl && (!host || !user || !pass)) return new Response('GeoTV provider is not configured', { status: 503 });
+  if (!rawUrl && new URL(host!).protocol !== 'https:') {
+    return new Response('GeoTV HTTPS provider configuration is required', { status: 503 });
+  }
 
   let targetUrl = rawUrl;
   if (!targetUrl && channelId) {
@@ -340,6 +350,9 @@ export async function fetchGeoTvHlsStream(
   }
 
   const parsed = new URL(targetUrl);
+  if (parsed.protocol !== 'https:') {
+    return new Response('GeoTV stream must use HTTPS', { status: 502 });
+  }
   const doh = await resolveCloudflareDoh(parsed.hostname);
 
   let upstreamRes = await fetch(targetUrl, {

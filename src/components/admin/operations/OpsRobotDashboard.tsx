@@ -105,13 +105,13 @@ export const OpsRobotDashboard: React.FC = () => {
   // Run full health scan simulation
   const handleRunHealthScan = () => {
     setIsScanning(true);
-    setScanMessage('PLAYBEAT OPS ROBOT: Validating 850+ stream manifests, DoH routes, and audio/video tracks...');
+    setScanMessage('Running local sample scan; live upstream manifests are not checked...');
     setTimeout(() => {
       // Simulate refreshing channels
       channels.forEach(c => OpsRobotService.checkChannelHealth(c.channelId));
       reloadAll();
       setIsScanning(false);
-      setScanMessage('PLAYBEAT OPS ROBOT: Full scan complete. All stream origins verified within normal operating parameters.');
+      setScanMessage('Sample scan complete. No live stream origins were verified.');
       setTimeout(() => setScanMessage(null), 5000);
     }, 1800);
   };

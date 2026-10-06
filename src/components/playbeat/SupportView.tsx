@@ -35,23 +35,23 @@ export const SupportView: React.FC<SupportViewProps> = ({ onOpenPlans }) => {
     },
     {
       q: 'Can I watch on multiple devices simultaneously?',
-      a: 'Yes! PlayBeat allows you to select your preferred simultaneous connection tier during checkout (from 1 device up to 4 concurrent screens). Each registered screen can watch different live channels or on-demand content simultaneously without interference.'
+      a: 'Multi-device access depends on provider and account configuration. PlayBeat checkout and subscription provisioning are currently unavailable.'
     },
     {
       q: 'Do I need a VPN to use PlayBeat Entertainment?',
-      a: 'PlayBeat operates on high-speed CDN edge servers with native SSL/TLS encryption. A VPN is not required; however, all our servers are 100% VPN-friendly (ExpressVPN, NordVPN, Surfshark) if you prefer additional ISP privacy.'
+      a: 'Network behavior depends on your provider and ISP. DNS-over-HTTPS does not bypass ISP restrictions or guarantee playback.'
     },
     {
       q: 'How fast is subscription activation after payment?',
-      a: 'Activations are instantaneous! As soon as payment is confirmed (via JazzCash, EasyPaisa, Stripe, or Bank Transfer), your personalized Xtream Codes credentials, M3U Plus URLs, and EPG links appear immediately in your Account portal and are emailed to you.'
+      a: 'Checkout and subscription provisioning are unavailable. No payment will be collected and no IPTV credentials will be created through PlayBeat.'
     },
     {
       q: 'What if a channel experiences buffering or audio desync?',
-      a: 'If you encounter buffering, switch between our TS and HLS playlist outputs, or test hardware decoding vs software decoding in your player app settings (e.g. TiviMate / IPTV Smarters). You can also report any stream instantly via our 24/7 ticket center.'
+      a: 'Playback troubleshooting is unavailable until a secure provider is configured. The in-site player can only play streams returned by an authorized provider.'
     },
     {
       q: 'What is PlayBeat’s content authorization policy?',
-      a: 'PlayBeat Entertainment strictly streams authorized, licensed, and open creative commons live feeds and cinema works. We do not restream or distribute unauthorized or pirated feeds.'
+      a: 'Only connect content sources you are authorized to use. Live channels remain unavailable until a secure provider is configured.'
     }
   ];
 

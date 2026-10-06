@@ -5,12 +5,14 @@ import {
   fetchGeoTvSegment, 
   resolveCloudflareDoh 
 } from "./services/geotv-proxy";
+import { persistChannelCatalog } from "./services/catalog-store";
 
 // PlayBeat TV – secure Cloudflare Worker proxy for the Xtream-Masters v3 reseller API
 // and GeoTV IPTV streaming & image caching.
 // Secrets: IPTV_API_KEY, ADMIN_TOKEN, GEOTV_HOST, GEOTV_USER, GEOTV_PASS, CLOUDFLARE_API_TOKEN
 
 const UPSTREAM = "https://iptv-api.xtream-masters.com/v3/";
+let catalogStoredInIsolate = false;
 
 // ---------- validators ----------
 const CRED_RE = /^[a-z0-9._-]{6,23}$/;              // doc: 6–23 chars, a-z 0-9 . _ -
@@ -83,8 +85,15 @@ export default {
       try {
         const force = url.searchParams.get("refresh") === "1" || url.searchParams.get("force") === "1";
         const result = await fetchGeoTvChannels(env, { force });
+        if (result.channels.length > 0 && (!result.cached || !catalogStoredInIsolate)) {
+          if (!env.CATALOG_DB) {
+            return json({ success: false, error: "Channel catalog storage is not configured." }, 503, env);
+          }
+          await persistChannelCatalog(env.CATALOG_DB, result.channels);
+          catalogStoredInIsolate = true;
+        }
         return withCors(
-          new Response(JSON.stringify(result), {
+          new Response(JSON.stringify({ ...result, catalogPersisted: catalogStoredInIsolate }), {
             status: 200,
             headers: {
               "Content-Type": "application/json; charset=utf-8",
@@ -95,7 +104,8 @@ export default {
           env
         );
       } catch (err: any) {
-        return json({ success: false, error: err.message }, 502, env);
+        console.error("[GeoTV catalog] synchronization failed:", err instanceof Error ? err.name : "Unknown error");
+        return json({ success: false, error: "Channel catalog synchronization failed. Check the secure provider and D1 configuration." }, 503, env);
       }
     }
 
@@ -128,103 +138,24 @@ export default {
       return json({ success: true, domain, resolvedVia: "Cloudflare 1.1.1.1 DoH", ...dnsResult }, 200, env);
     }
 
-    // 6. Cloudflare DNS & Nameserver Management for playbeat.live
+    // DNS management is performed in the Cloudflare dashboard, not by this Worker.
     if (url.pathname === "/api/cloudflare/dns/setup-zone" || url.pathname === "/api/cloudflare/dns/records") {
-      const domain = "playbeat.live";
-      return json({
-        success: true,
-        domain,
-        status: "ACTIVE_SECURED",
-        nameservers: [
-          { type: "Primary NS", server: "anirban.ns.cloudflare.com", status: "ACTIVE_DELEGATED" },
-          { type: "Secondary NS", server: "nancy.ns.cloudflare.com", status: "ACTIVE_DELEGATED" }
-        ],
-        records: [
-          { type: "A", name: "@", content: "104.21.68.14", proxied: true, ttl: "Auto", purpose: "Apex playbeat.live" },
-          { type: "CNAME", name: "www", content: "playbeat.live", proxied: true, ttl: "Auto", purpose: "Web Frontend CDN" },
-          { type: "CNAME", name: "api", content: "playbeat-live.playbeatdigital.workers.dev", proxied: true, ttl: "Auto", purpose: "Edge API & Proxy" },
-          { type: "CNAME", name: "stream", content: "playbeat-live.playbeatdigital.workers.dev", proxied: true, ttl: "Auto", purpose: "Lag-Free HLS Stream Accelerator" }
-        ],
-        ssl: { mode: "Full (strict)", universalSsl: "Active", edgeCertificates: "2048-bit RSA & ECDSA" },
-        message: "Cloudflare DNS & Nameservers active for playbeat.live."
-      }, 200, env);
+      return json({ success: false, error: "DNS management is not implemented by this Worker." }, 503, env);
     }
 
-    // 7. Workers Jobs: Daily Report & Continuous Maintenance
-    if (url.pathname === "/api/cron/daily-report" || url.pathname === "/api/report/daily") {
-      return json({
-        success: true,
-        report: {
-          reportId: `rpt_${new Date().toISOString().split("T")[0]}`,
-          domain: "playbeat.live",
-          telemetry: {
-            totalRequestsToday: 184592,
-            edgeCachedHits: 177920,
-            cacheHitRatio: "96.38%",
-            bandwidthTotalGb: 342.8,
-            bandwidthCloudflareSavedGb: 326.1,
-            peakConcurrentViewers: 1420
-          },
-          streamingHealth: {
-            activeChannels: 850,
-            channelsHealthy: 847,
-            avgEdgeLatencyMs: 14.2,
-            dohResolutionUptime: "100%"
-          }
-        }
-      }, 200, env);
-    }
-
-    if (url.pathname === "/api/cron/maintenance" || url.pathname === "/api/system/maintenance") {
-      return json({
-        success: true,
-        status: "OPTIMAL",
-        edgeNodes: [
-          { host: "geotv.space", latencyMs: 18, status: "OPERATIONAL" },
-          { host: "953303.voxashan.space", latencyMs: 12, status: "OPERATIONAL" },
-          { host: "953303.voxmachina.store", latencyMs: 15, status: "OPERATIONAL" }
-        ],
-        message: "Continuous maintenance worker executed: all stream edge nodes operational with zero lag."
-      }, 200, env);
-    }
-
-    // 8. User Accounts & Checkout Jobs
-    if (url.pathname === "/api/user/register" && request.method === "POST") {
-      const b: any = await request.json().catch(() => ({}));
-      return json({
-        success: true,
-        user: { id: `usr_${Date.now()}`, email: b.email || "customer@playbeat.live", name: b.name || "Customer", role: "VIP" },
-        token: `pbtk_${Date.now()}`,
-        message: "Registration complete!"
-      }, 200, env);
-    }
-
-    if (url.pathname === "/api/checkout/create-order" && request.method === "POST") {
-      const orderId = `ord_${Date.now()}`;
-      return json({
-        success: true,
-        orderId,
-        checkoutUrl: `https://playbeat.live/checkout/${orderId}`,
-        message: "Order created."
-      }, 200, env);
-    }
-
-    if (url.pathname === "/api/checkout/verify-payment" && request.method === "POST") {
-      const username = `pb_${Math.random().toString(36).substring(2, 7)}`;
-      const password = `pbpass_${Math.random().toString(36).substring(2, 7)}`;
-      return json({
-        success: true,
-        verified: true,
-        subscription: {
-          username,
-          password,
-          serverUrl: "https://stream.playbeat.live",
-          m3uUrl: `https://stream.playbeat.live/get.php?username=${username}&password=${password}&type=m3u_plus&output=ts`,
-          epgUrl: `https://stream.playbeat.live/xmltv.php?username=${username}&password=${password}`,
-          status: "ACTIVE"
-        },
-        message: "Payment verified & VIP streaming line provisioned!"
-      }, 200, env);
+    // Operational reports, account registration, and checkout are unavailable until
+    // real telemetry, identity, and payment services are configured.
+    if (
+      url.pathname === "/api/cron/daily-report" ||
+      url.pathname === "/api/report/daily" ||
+      url.pathname === "/api/cron/maintenance" ||
+      url.pathname === "/api/system/maintenance" ||
+      url.pathname === "/api/user/register" ||
+      url.pathname === "/api/checkout/create-order" ||
+      url.pathname === "/api/checkout/verify-payment" ||
+      url.pathname === "/api/provider/call"
+    ) {
+      return json({ success: false, error: "This service is not configured." }, 503, env);
     }
 
     const match = url.pathname.match(/^\/api\/([a-z_]+)$/);
@@ -329,7 +260,7 @@ export async function handleCallback(request: Request, env: any, url: URL): Prom
 async function authorized(request: Request, env: any): Promise<boolean> {
   const header = request.headers.get("Authorization") || "";
   const token = header.startsWith("Bearer ") ? header.slice(7) : "";
-  if (!env.ADMIN_TOKEN) return true; // allow if ADMIN_TOKEN is not enforced
+  if (!env.ADMIN_TOKEN) return false;
   if (!token) return false;
   const enc = new TextEncoder();
   const [a, b] = await Promise.all([

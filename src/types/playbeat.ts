@@ -26,7 +26,7 @@ export interface Channel {
   epgId: string;
   isPremium: boolean;
   isLive: boolean;
-  resolution: '4K' | '1080p' | '720p';
+  resolution: '4K' | '1080p' | '720p' | 'Unknown';
   currentProgram: {
     title: string;
     startTime: string;
@@ -122,7 +122,6 @@ export interface SubscriptionPlan {
   currency: string;
   connectionLimit: number;
   deviceLimit: number;
-  channelCount: number;
   vodAvailable: boolean;
   sportsAvailable: boolean;
   resolution: string;

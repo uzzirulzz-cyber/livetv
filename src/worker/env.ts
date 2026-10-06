@@ -14,6 +14,14 @@ export interface Env {
   CLOUDFLARE_ACCOUNT_ID?: string;
   CLOUDFLARE_API_TOKEN?: string;
   DB?: any;
+  CATALOG_DB?: {
+    prepare(query: string): {
+      bind(...values: (string | number | null)[]): {
+        run(): Promise<unknown>;
+      };
+    };
+    batch(statements: { run(): Promise<unknown> }[]): Promise<unknown[]>;
+  };
   CACHE?: any;
   ACTIVATIONS?: any;
 }

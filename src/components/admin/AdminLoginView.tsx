@@ -1,47 +1,14 @@
-import React, { useState } from 'react';
-import { Shield, Lock, Mail, ArrowRight, AlertCircle, CheckCircle2, Tv, ArrowLeft, KeyRound } from 'lucide-react';
+import React from 'react';
+import { Shield, ArrowLeft } from 'lucide-react';
 import { PlayBeatLogo } from '../common/PlayBeatLogo';
 
 interface AdminLoginViewProps {
-  onLoginSuccess: () => void;
   onBackToStorefront: () => void;
 }
 
 export const AdminLoginView: React.FC<AdminLoginViewProps> = ({
-  onLoginSuccess,
   onBackToStorefront
 }) => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setIsLoading(true);
-
-    setTimeout(() => {
-      // Validate credentials provided by user: admin@playbeat.digital / playbeat1122
-      const cleanEmail = email.trim().toLowerCase();
-      const cleanPass = password.trim();
-
-      if (cleanEmail === 'admin@playbeat.digital' && cleanPass === 'playbeat1122') {
-        setIsLoading(false);
-        onLoginSuccess();
-      } else {
-        setIsLoading(false);
-        setError('Invalid admin credentials. Please use admin@playbeat.digital / playbeat1122');
-      }
-    }, 400);
-  };
-
-  const handleQuickFill = () => {
-    setEmail('admin@playbeat.digital');
-    setPassword('playbeat1122');
-    setError(null);
-  };
-
   return (
     <div className="min-h-screen bg-[#050811] text-slate-100 flex flex-col justify-between relative overflow-hidden font-sans">
       {/* Background Ambience */}
@@ -72,90 +39,13 @@ export const AdminLoginView: React.FC<AdminLoginViewProps> = ({
           <div className="text-center space-y-3 flex flex-col items-center">
             <PlayBeatLogo size="lg" />
             <p className="text-xs text-slate-400">
-              Authorized access for IPTV node control, Cloudflare proxy &amp; streaming hub
+              The administration portal is unavailable until server-side authentication is configured.
             </p>
           </div>
 
-          {/* Quick Fill Credentials Banner */}
-          <div className="p-3 bg-cyan-950/40 border border-cyan-500/30 rounded-xl space-y-2 text-xs">
-            <div className="flex items-center justify-between text-cyan-300 font-semibold font-mono text-[11px]">
-              <span className="flex items-center gap-1.5">
-                <KeyRound className="w-3.5 h-3.5" />
-                Configured Credentials
-              </span>
-              <button
-                type="button"
-                onClick={handleQuickFill}
-                className="text-xs font-bold text-white bg-cyan-500 hover:bg-cyan-400 text-slate-950 px-2 py-0.5 rounded transition-colors"
-              >
-                Quick Fill
-              </button>
-            </div>
-            <div className="font-mono text-[11px] text-slate-300 space-y-0.5">
-              <div>Username: <strong className="text-white">admin@playbeat.digital</strong></div>
-              <div>Password: <strong className="text-white">playbeat1122</strong></div>
-            </div>
+          <div className="rounded-xl border border-amber-500/30 bg-amber-950/30 p-4 text-xs leading-relaxed text-amber-100">
+            Access is locked because this app does not yet have a server-validated admin sign-in. Browser-only passwords and session flags are not secure.
           </div>
-
-          {/* Error Message */}
-          {error && (
-            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 shrink-0" />
-              <span>{error}</span>
-            </div>
-          )}
-
-          {/* Login Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block">
-                Admin Username
-              </label>
-              <div className="relative">
-                <Mail className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  required
-                  placeholder="admin@playbeat.digital"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-[#080d1a] border border-white/10 rounded-xl pl-9 pr-3 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 transition-colors font-mono"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block">
-                Password
-              </label>
-              <div className="relative">
-                <Lock className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
-                  type="password"
-                  required
-                  placeholder="••••••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-[#080d1a] border border-white/10 rounded-xl pl-9 pr-3 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 transition-colors font-mono"
-                />
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-extrabold rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/20 transition-all active:scale-[0.98] disabled:opacity-50"
-            >
-              {isLoading ? (
-                <span>Authenticating...</span>
-              ) : (
-                <>
-                  <span>Sign In to Admin Portal</span>
-                  <ArrowRight className="w-4 h-4" />
-                </>
-              )}
-            </button>
-          </form>
 
           {/* Storefront return */}
           <div className="pt-2 text-center">
@@ -163,7 +53,7 @@ export const AdminLoginView: React.FC<AdminLoginViewProps> = ({
               onClick={onBackToStorefront}
               className="text-xs text-slate-400 hover:text-white transition-colors"
             >
-              Return to Public Storefront (850+ Free Channels)
+              Return to Public Storefront
             </button>
           </div>
         </div>

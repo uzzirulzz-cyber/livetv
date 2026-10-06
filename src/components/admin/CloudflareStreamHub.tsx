@@ -54,7 +54,7 @@ export const CloudflareStreamHub: React.FC<CloudflareStreamHubProps> = ({
   const [dnsSyncData, setDnsSyncData] = useState<any>(null);
 
   // DNS Tester state
-  const [testDomain, setTestDomain] = useState('953303.voxashan.space');
+  const [testDomain, setTestDomain] = useState('playbeat.live');
   const [isTestingDns, setIsTestingDns] = useState(false);
   const [dnsTestResult, setDnsTestResult] = useState<{ ip: string; latency: number; provider: string } | null>(null);
 
@@ -74,31 +74,7 @@ export const CloudflareStreamHub: React.FC<CloudflareStreamHubProps> = ({
   const [checkoutTestStatus, setCheckoutTestStatus] = useState<any>(null);
   const [userRegTestStatus, setUserRegTestStatus] = useState<any>(null);
 
-  const cfCredentials = {
-    domain: 'playbeat.live',
-    accountId: '20c83732a1af52f80655768cd4dfc251',
-    apiTokenMasked: 'cfat_IGSx••••••••••••••••••••••••••••••••edce6b4b',
-    accessKeyId: '1b2fccbe7f62051f2204fdd0eea27da4',
-    s3Endpoint: 'https://20c83732a1af52f80655768cd4dfc251.r2.cloudflarestorage.com',
-    secretKeyMasked: '53652ee2••••••••••••••••••••••••••••••••c0546787',
-    workerUrl: 'https://playbeat-live.playbeatdigital.workers.dev',
-    ns1: 'anirban.ns.cloudflare.com',
-    ns2: 'nancy.ns.cloudflare.com'
-  };
-
-  const geoTvInfo = {
-    host: 'http://geotv.space:8880',
-    username: '3fa35bc1',
-    password: '••••••••',
-    rawPass: '3cc73db1',
-    package: 'World Package, Channels + Vods (Family)',
-    renewal: '05-11-2026',
-    m3uPlus: 'http://geotv.space:8880/get.php?username=3fa35bc1&password=3cc73db1&type=m3u_plus&output=ts',
-    m3uStandard: 'http://geotv.space:8880/get.php?username=3fa35bc1&password=3cc73db1&type=m3u&output=ts',
-    webtvList: 'http://geotv.space:8880/get.php?username=3fa35bc1&password=3cc73db1&type=webtvlist&output=mpegts',
-    proxyHlsExample: '/api/proxy/hls/stream.m3u8?channelId=823012',
-    proxyTsExample: '/api/proxy/stream?url=' + encodeURIComponent('http://geotv.space:8880/live/3fa35bc1/3cc73db1/823012.ts')
-  };
+  const cfCredentials = { domain: 'playbeat.live' };
 
   const handleCopy = (text: string, key: string) => {
     navigator.clipboard.writeText(text);
@@ -124,6 +100,9 @@ export const CloudflareStreamHub: React.FC<CloudflareStreamHubProps> = ({
     try {
       const res = await fetch('/api/cloudflare/dns/setup-zone', { method: 'POST' });
       const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'DNS setup is not configured.');
+      }
       setDnsSyncData(data);
       setActionNotice(`Synchronized DNS Name Servers & Edge Routing for ${cfCredentials.domain}!`);
       setTimeout(() => setActionNotice(null), 4000);
@@ -139,11 +118,12 @@ export const CloudflareStreamHub: React.FC<CloudflareStreamHubProps> = ({
     try {
       const res = await fetch('/api/cron/daily-report');
       const data = await res.json();
-      if (data.success) {
-        setDailyReport(data.report);
-        setActionNotice('Daily operational report generated successfully!');
-        setTimeout(() => setActionNotice(null), 3500);
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Daily report is not configured.');
       }
+      setDailyReport(data.report);
+      setActionNotice('Daily operational report generated successfully.');
+      setTimeout(() => setActionNotice(null), 3500);
     } catch (err: any) {
       setActionNotice(`Report error: ${err.message}`);
     } finally {
@@ -156,8 +136,11 @@ export const CloudflareStreamHub: React.FC<CloudflareStreamHubProps> = ({
     try {
       const res = await fetch('/api/cron/maintenance');
       const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Maintenance is not configured.');
+      }
       setMaintenanceResult(data);
-      setActionNotice('Continuous maintenance job completed: all 4 edge stream nodes responsive!');
+      setActionNotice('Maintenance completed successfully.');
       setTimeout(() => setActionNotice(null), 4000);
     } catch (err: any) {
       setActionNotice(`Maintenance error: ${err.message}`);
@@ -178,6 +161,9 @@ export const CloudflareStreamHub: React.FC<CloudflareStreamHubProps> = ({
         })
       });
       const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Registration is not configured.');
+      }
       setUserRegTestStatus(data);
     } catch (err: any) {
       setUserRegTestStatus({ success: false, message: err.message });
@@ -198,6 +184,9 @@ export const CloudflareStreamHub: React.FC<CloudflareStreamHubProps> = ({
         })
       });
       const orderData = await orderRes.json();
+      if (!orderRes.ok || !orderData.success || !orderData.orderId) {
+        throw new Error(orderData.error || 'Order creation is not configured.');
+      }
 
       // 2. Verify payment & provision
       const verifyRes = await fetch('/api/checkout/verify-payment', {
@@ -209,6 +198,9 @@ export const CloudflareStreamHub: React.FC<CloudflareStreamHubProps> = ({
         })
       });
       const verifyData = await verifyRes.json();
+      if (!verifyRes.ok || !verifyData.success) {
+        throw new Error(verifyData.error || 'Payment verification is not configured.');
+      }
       setCheckoutTestStatus(verifyData);
     } catch (err: any) {
       setCheckoutTestStatus({ success: false, message: err.message });
@@ -222,21 +214,23 @@ export const CloudflareStreamHub: React.FC<CloudflareStreamHubProps> = ({
       const res = await fetch(`https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(testDomain)}&type=A`, {
         headers: { 'Accept': 'application/dns-json' }
       });
+      if (!res.ok) {
+        throw new Error(`DNS lookup failed with HTTP ${res.status}.`);
+      }
       const data = await res.json();
       const latency = Math.round(performance.now() - start);
-      const ip = data.Answer && data.Answer[0] ? data.Answer[0].data : '84.247.165.18';
+      const ip = data.Answer?.[0]?.data;
+      if (typeof ip !== 'string') {
+        throw new Error(`No A record was returned for ${testDomain}.`);
+      }
       setDnsTestResult({
         ip,
-        latency: Math.max(5, latency),
+        latency,
         provider: 'Cloudflare 1.1.1.1 DoH'
       });
-    } catch {
-      const latency = Math.round(performance.now() - start);
-      setDnsTestResult({
-        ip: '84.247.165.18',
-        latency: Math.max(8, latency),
-        provider: 'Cloudflare Edge Fallback'
-      });
+    } catch (err: any) {
+      setDnsTestResult(null);
+      setActionNotice(`DNS lookup error: ${err.message}`);
     } finally {
       setIsTestingDns(false);
     }
@@ -247,16 +241,18 @@ export const CloudflareStreamHub: React.FC<CloudflareStreamHubProps> = ({
     try {
       const res = await fetch(`/api/iptv/geotv/channels${forceRefresh ? '?refresh=1' : ''}`);
       const data = await res.json();
-      if (data.success && Array.isArray(data.channels)) {
-        setChannels(data.channels);
-        setActionNotice(
-          forceRefresh
-            ? `Cache purged & re-indexed ${data.channels.length} live channels from GeoTV upstream!`
-            : `Loaded ${data.channels.length} channels from Cloudflare memory cache.`
-        );
-        setTimeout(() => setActionNotice(null), 4000);
-        if (onRefreshAllChannels) onRefreshAllChannels();
+      if (!res.ok || !data.success || !Array.isArray(data.channels)) {
+        setChannels([]);
+        throw new Error(data.error || 'Provider catalog is not configured.');
       }
+      setChannels(data.channels);
+      setActionNotice(
+        forceRefresh
+          ? `Refreshed provider catalog: ${data.channels.length} configured feeds.`
+          : `Loaded ${data.channels.length} configured feeds.`
+      );
+      setTimeout(() => setActionNotice(null), 4000);
+      if (onRefreshAllChannels) onRefreshAllChannels();
     } catch (err: any) {
       setActionNotice(`Failed to load channels: ${err.message}`);
     } finally {
@@ -269,7 +265,15 @@ export const CloudflareStreamHub: React.FC<CloudflareStreamHubProps> = ({
     testCloudflareDns();
     runDailyReport();
     runMaintenance();
-    fetch('/api/cloudflare/dns/setup-zone').then(r => r.json()).then(d => setDnsSyncData(d)).catch(() => {});
+    fetch('/api/cloudflare/dns/setup-zone')
+      .then(async (res) => {
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          throw new Error(data.error || 'DNS status is not configured.');
+        }
+        setDnsSyncData(data);
+      })
+      .catch((err: Error) => setActionNotice(`DNS status unavailable: ${err.message}`));
   }, []);
 
   // Filter channels
@@ -281,13 +285,20 @@ export const CloudflareStreamHub: React.FC<CloudflareStreamHubProps> = ({
     const matchesGroup = selectedGroup === 'ALL' || c.group === selectedGroup;
     return matchesSearch && matchesGroup;
   });
+  const actionNoticeIsError = Boolean(
+    actionNotice && /error|failed|unavailable|not configured/i.test(actionNotice)
+  );
 
   return (
     <div className="space-y-6">
       {/* Top Banner Notice */}
       {actionNotice && (
-        <div className="p-3 bg-cyan-950/60 border border-cyan-500/40 rounded-xl text-xs text-cyan-200 flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0" />
+        <div className={`p-3 rounded-xl text-xs flex items-center gap-2 ${
+          actionNoticeIsError
+            ? 'bg-rose-950/60 border border-rose-500/40 text-rose-200'
+            : 'bg-cyan-950/60 border border-cyan-500/40 text-cyan-200'
+        }`}>
+          <CheckCircle2 className={`w-4 h-4 shrink-0 ${actionNoticeIsError ? 'text-rose-400' : 'text-cyan-400'}`} />
           <span>{actionNotice}</span>
         </div>
       )}
@@ -306,7 +317,7 @@ export const CloudflareStreamHub: React.FC<CloudflareStreamHubProps> = ({
               </span>
             </div>
             <p className="text-xs text-slate-400 mt-0.5">
-              Automated Workers Jobs, Cloudflare DNS Nameservers, Continuous Stream Maintenance &amp; 850+ Channels Indexer.
+              Cloudflare Worker deployment, DNS configuration, provider-fed catalog, and operational status.
             </p>
           </div>
         </div>
@@ -318,7 +329,7 @@ export const CloudflareStreamHub: React.FC<CloudflareStreamHubProps> = ({
             className="flex items-center gap-1.5 px-3 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold text-xs rounded-lg transition-all shadow-lg shadow-cyan-500/20 disabled:opacity-50"
           >
             <Globe className={`w-3.5 h-3.5 ${isSyncingDns ? 'animate-spin' : ''}`} />
-            <span>Go Live &amp; Sync DNS (playbeat.live)</span>
+            <span>Check DNS setup</span>
           </button>
 
           <button
@@ -327,7 +338,7 @@ export const CloudflareStreamHub: React.FC<CloudflareStreamHubProps> = ({
             className="flex items-center gap-1.5 px-3 py-2 bg-white/10 hover:bg-white/20 text-white font-semibold text-xs rounded-lg border border-white/20 transition-colors disabled:opacity-50"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isLoadingChannels ? 'animate-spin' : ''}`} />
-            <span>Purge &amp; Re-index (850+)</span>
+            <span>Refresh provider catalog</span>
           </button>
         </div>
       </div>
@@ -363,20 +374,20 @@ export const CloudflareStreamHub: React.FC<CloudflareStreamHubProps> = ({
       {/* TAB 1: CLOUDFLARE DNS & NAMESERVER DEPLOYMENT FOR playbeat.live */}
       {activeTab === 'DEPLOYMENT' && (
         <div className="space-y-6">
-          {/* Nameservers Card */}
+          {/* Nameserver information is not fetched from the Cloudflare zone. */}
           <div className="p-5 bg-slate-900/70 border border-slate-800 rounded-2xl space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
               <div className="flex items-center gap-2.5">
                 <Globe className="w-5 h-5 text-cyan-400" />
                 <div>
-                  <h3 className="text-sm font-bold text-white">Cloudflare Authoritative Nameservers</h3>
+                  <h3 className="text-sm font-bold text-white">Cloudflare Nameservers</h3>
                   <p className="text-xs text-slate-400">
-                    Set these nameservers at your domain registrar for <strong>playbeat.live</strong>
+                    Verify the assigned nameservers in Cloudflare and at your registrar for <strong>playbeat.live</strong>.
                   </p>
                 </div>
               </div>
               <span className="text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded">
-                DELEGATION READY
+                UNVERIFIED
               </span>
             </div>
 
@@ -384,29 +395,29 @@ export const CloudflareStreamHub: React.FC<CloudflareStreamHubProps> = ({
               <div className="p-4 bg-black/40 border border-slate-800 rounded-xl space-y-1">
                 <div className="text-[11px] text-slate-400 font-sans">Primary Nameserver</div>
                 <div className="flex items-center justify-between text-cyan-300 text-sm font-bold">
-                  <span>anirban.ns.cloudflare.com</span>
+                  <span>Not available</span>
                   <button
-                    onClick={() => handleCopy('anirban.ns.cloudflare.com', 'ns1')}
+                    disabled
                     className="text-slate-400 hover:text-white"
                   >
                     {copiedKey === 'ns1' ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
                   </button>
                 </div>
-                <div className="text-[10px] text-emerald-400 font-mono">Assigned Cloudflare NS 1 · IPv4 / IPv6</div>
+                <div className="text-[10px] text-slate-400 font-mono">Confirm this value in the Cloudflare dashboard.</div>
               </div>
 
               <div className="p-4 bg-black/40 border border-slate-800 rounded-xl space-y-1">
                 <div className="text-[11px] text-slate-400 font-sans">Secondary Nameserver</div>
                 <div className="flex items-center justify-between text-cyan-300 text-sm font-bold">
-                  <span>nancy.ns.cloudflare.com</span>
+                  <span>Not available</span>
                   <button
-                    onClick={() => handleCopy('nancy.ns.cloudflare.com', 'ns2')}
+                    disabled
                     className="text-slate-400 hover:text-white"
                   >
                     {copiedKey === 'ns2' ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
                   </button>
                 </div>
-                <div className="text-[10px] text-emerald-400 font-mono">Assigned Cloudflare NS 2 · IPv4 / IPv6</div>
+                <div className="text-[10px] text-slate-400 font-mono">Confirm this value in the Cloudflare dashboard.</div>
               </div>
             </div>
           </div>
@@ -416,7 +427,7 @@ export const CloudflareStreamHub: React.FC<CloudflareStreamHubProps> = ({
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
               <div className="flex items-center gap-2">
                 <Layers className="w-4 h-4 text-indigo-400" />
-                <h3 className="text-sm font-bold text-white">Configured Cloudflare DNS Zone Records</h3>
+                <h3 className="text-sm font-bold text-white">Example DNS Records (not verified)</h3>
               </div>
               <span className="text-xs font-mono text-cyan-300">
                 Zone: <strong>playbeat.live</strong>
@@ -475,10 +486,10 @@ export const CloudflareStreamHub: React.FC<CloudflareStreamHubProps> = ({
                     <ShieldCheck className="w-4 h-4 text-emerald-400" />
                     SSL / TLS Encryption
                   </span>
-                  <span className="text-emerald-400 font-mono text-[11px]">Full (strict)</span>
+                  <span className="text-slate-400 font-mono text-[11px]">Unverified</span>
                 </div>
                 <p className="text-[11px] text-slate-400">
-                  Universal SSL certificate enabled with automatic HTTPS rewrites, TLS 1.3, and HSTS.
+                  Check SSL/TLS mode and certificate status in Cloudflare; this page does not read those settings.
                 </p>
               </div>
 
@@ -488,10 +499,10 @@ export const CloudflareStreamHub: React.FC<CloudflareStreamHubProps> = ({
                     <Zap className="w-4 h-4 text-cyan-400" />
                     Edge Video Cache Rules
                   </span>
-                  <span className="text-cyan-400 font-mono text-[11px]">HLS 2s / TS 7d</span>
+                  <span className="text-slate-400 font-mono text-[11px]">Unverified</span>
                 </div>
                 <p className="text-[11px] text-slate-400">
-                  Live m3u8 playlists refreshed every 2 seconds; video chunks buffered at edge for lag-free streaming.
+                  Cache behavior is not verified here. Provider streams require a configured HTTPS upstream.
                 </p>
               </div>
             </div>
@@ -517,10 +528,10 @@ export const CloudflareStreamHub: React.FC<CloudflareStreamHubProps> = ({
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  WORKFLOW CONFIGURED
+                  WORKFLOW STATUS UNKNOWN
                 </span>
                 <span className="text-[10px] font-mono font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 px-2 py-0.5 rounded">
-                  playbeat.live LIVE
+                  DEPLOYMENT UNVERIFIED
                 </span>
               </div>
             </div>
@@ -555,35 +566,10 @@ export const CloudflareStreamHub: React.FC<CloudflareStreamHubProps> = ({
                   <span>Set GitHub Action Secrets</span>
                 </div>
                 <p className="text-[11px] text-slate-400">
-                  In GitHub: <strong>Settings &gt; Secrets and variables &gt; Actions</strong>, add these two repository secrets:
+                  Configure Cloudflare deployment secrets in GitHub Actions. Secret values are never rendered in this application.
                 </p>
-                <div className="space-y-2">
-                  <div className="p-2 bg-slate-950 border border-slate-800 rounded space-y-1">
-                    <div className="text-[10px] text-slate-400">Secret Name: <strong className="text-white">CLOUDFLARE_API_TOKEN</strong></div>
-                    <div className="flex items-center justify-between text-[11px] font-mono text-cyan-300">
-                      <span className="truncate">cfat_IGSxAUk5mhviwh...</span>
-                      <button
-                        onClick={() => handleCopy("cfat_IGSxAUk5mhviwhOD4NP5vEP1pW3k8yoTSTmNGsnTedce6b4b", "sec_token")}
-                        className="text-slate-400 hover:text-white ml-1"
-                      >
-                        {copiedKey === 'sec_token' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                      </button>
-                    </div>
-                  </div>
-                  <div className="p-2 bg-slate-950 border border-slate-800 rounded space-y-1">
-                    <div className="text-[10px] text-slate-400">Secret Name: <strong className="text-white">CLOUDFLARE_ACCOUNT_ID</strong></div>
-                    <div className="flex items-center justify-between text-[11px] font-mono text-cyan-300">
-                      <span className="truncate">20c83732a1af52f80655768cd4dfc251</span>
-                      <button
-                        onClick={() => handleCopy("20c83732a1af52f80655768cd4dfc251", "sec_acc")}
-                        className="text-slate-400 hover:text-white ml-1"
-                      >
-                        {copiedKey === 'sec_acc' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                      </button>
-                    </div>
-                  </div>
-                </div>
               </div>
+
 
               <div className="p-4 bg-black/40 border border-slate-800 rounded-xl space-y-2">
                 <div className="flex items-center gap-2 text-emerald-400 font-bold">
@@ -596,7 +582,7 @@ export const CloudflareStreamHub: React.FC<CloudflareStreamHubProps> = ({
                 <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded space-y-1.5">
                   <div className="text-[11px] font-bold text-emerald-300 flex items-center gap-1.5">
                     <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>Live URLs Active</span>
+                    <span>Configured URLs (unverified)</span>
                   </div>
                   <div className="text-[10px] text-slate-300 space-y-0.5 font-mono">
                     <div>Domain: https://playbeat.live</div>
@@ -610,7 +596,7 @@ export const CloudflareStreamHub: React.FC<CloudflareStreamHubProps> = ({
                   className="w-full py-1.5 bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white rounded text-[11px] font-bold flex items-center justify-center gap-1 transition-all shadow-md"
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
-                  <span>Visit Live playbeat.live</span>
+                  <span>Open playbeat.live</span>
                 </a>
               </div>
             </div>
@@ -677,7 +663,7 @@ export const CloudflareStreamHub: React.FC<CloudflareStreamHubProps> = ({
                 <span className="text-xs font-bold text-slate-300">Content Producer</span>
                 <Film className="w-4 h-4 text-cyan-400" />
               </div>
-              <div className="text-xl font-black text-white font-mono">850+ Feeds</div>
+              <div className="text-xl font-black text-white font-mono">{channels.length} Configured Feeds</div>
               <div className="text-[11px] text-slate-400">TV, Movies, Series &amp; Songs</div>
               <button
                 onClick={() => loadChannels(true)}
@@ -739,7 +725,7 @@ export const CloudflareStreamHub: React.FC<CloudflareStreamHubProps> = ({
           </div>
 
           {/* Test Status Logs (If triggered) */}
-          {checkoutTestStatus && (
+          {checkoutTestStatus?.success && (
             <div className="p-4 bg-black/50 border border-emerald-500/30 rounded-xl space-y-2 text-xs">
               <div className="flex items-center gap-2 text-emerald-400 font-bold">
                 <CheckCircle2 className="w-4 h-4" />
@@ -755,14 +741,24 @@ export const CloudflareStreamHub: React.FC<CloudflareStreamHubProps> = ({
               </div>
             </div>
           )}
+          {checkoutTestStatus && !checkoutTestStatus.success && (
+            <div className="p-4 bg-rose-950/30 border border-rose-500/30 rounded-xl text-xs text-rose-300">
+              Checkout test unavailable: {checkoutTestStatus.message}
+            </div>
+          )}
 
-          {userRegTestStatus && (
+          {userRegTestStatus?.success && (
             <div className="p-4 bg-black/50 border border-indigo-500/30 rounded-xl space-y-1 text-xs font-mono">
               <div className="text-indigo-400 font-bold flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4" />
                 <span>User Registered: {userRegTestStatus.user?.email}</span>
               </div>
               <div className="text-slate-300">Bearer Token: {userRegTestStatus.token}</div>
+            </div>
+          )}
+          {userRegTestStatus && !userRegTestStatus.success && (
+            <div className="p-4 bg-rose-950/30 border border-rose-500/30 rounded-xl text-xs text-rose-300">
+              Registration test unavailable: {userRegTestStatus.message}
             </div>
           )}
 
@@ -877,12 +873,12 @@ export const CloudflareStreamHub: React.FC<CloudflareStreamHubProps> = ({
               </div>
               <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-2 py-0.5 rounded flex items-center gap-1">
                 <Activity className="w-3 h-3 animate-pulse" />
-                RESOLVER ACTIVE
+                DNS CHECK
               </span>
             </div>
 
             <p className="text-xs text-slate-400">
-              Streaming nodes are queried directly against Cloudflare 1.1.1.1 DNS-over-HTTPS to prevent DNS spoofing, bypass ISP packet shaping, and guarantee zero-lag live stream routing.
+              Cloudflare DoH resolves public hostnames; it does not verify stream health, bypass ISP restrictions, or guarantee playback.
             </p>
 
             <div className="space-y-3 text-xs">
@@ -894,7 +890,7 @@ export const CloudflareStreamHub: React.FC<CloudflareStreamHubProps> = ({
                     value={testDomain}
                     onChange={(e) => setTestDomain(e.target.value)}
                     className="flex-1 bg-black/40 border border-slate-800 px-3 py-2 rounded-lg font-mono text-white text-xs focus:outline-none focus:border-cyan-500"
-                    placeholder="e.g. 953303.voxashan.space"
+                    placeholder="e.g. streams.example.com"
                   />
                   <button
                     onClick={testCloudflareDns}
@@ -928,44 +924,14 @@ export const CloudflareStreamHub: React.FC<CloudflareStreamHubProps> = ({
                 <Server className="w-4 h-4 text-cyan-400" />
                 <h3 className="text-sm font-bold text-white">Streaming Upstream Edge Nodes</h3>
               </div>
-              <span className="text-[10px] font-mono text-cyan-400 bg-cyan-950/60 border border-cyan-500/30 px-2 py-0.5 rounded">
-                4 Active Nodes
+              <span className="text-[10px] font-mono text-slate-400 bg-slate-800 border border-slate-700 px-2 py-0.5 rounded">
+                STATUS UNVERIFIED
               </span>
             </div>
 
-            <div className="space-y-2 text-xs font-mono">
-              <div className="p-3 bg-black/40 border border-slate-800 rounded-xl flex items-center justify-between">
-                <div>
-                  <div className="text-white font-bold">geotv.space:8880</div>
-                  <div className="text-[10px] text-slate-400">Master Xtream API &amp; M3U Catalog</div>
-                </div>
-                <span className="text-emerald-400 text-[10px] font-bold">PRIMARY API</span>
-              </div>
-
-              <div className="p-3 bg-black/40 border border-slate-800 rounded-xl flex items-center justify-between">
-                <div>
-                  <div className="text-white font-bold">953303.voxashan.space:80</div>
-                  <div className="text-[10px] text-cyan-300">Active HLS Video Chunks (Lag-Free)</div>
-                </div>
-                <span className="text-cyan-400 text-[10px] font-bold">STREAM ACTIVE</span>
-              </div>
-
-              <div className="p-3 bg-black/40 border border-slate-800 rounded-xl flex items-center justify-between">
-                <div>
-                  <div className="text-white font-bold">953303.voxmachina.store:80</div>
-                  <div className="text-[10px] text-slate-400">Failover Video Cluster 1</div>
-                </div>
-                <span className="text-slate-400 text-[10px]">STANDBY</span>
-              </div>
-
-              <div className="p-3 bg-black/40 border border-slate-800 rounded-xl flex items-center justify-between">
-                <div>
-                  <div className="text-white font-bold">953303.xvin.store:80</div>
-                  <div className="text-[10px] text-slate-400">Secondary Video Cluster 2</div>
-                </div>
-                <span className="text-slate-400 text-[10px]">STANDBY</span>
-              </div>
-            </div>
+            <p className="text-xs text-slate-400">
+              No upstream endpoints or health checks are configured. Add an authorized HTTPS provider before testing playback.
+            </p>
           </div>
         </div>
       )}
@@ -977,7 +943,7 @@ export const CloudflareStreamHub: React.FC<CloudflareStreamHubProps> = ({
             <div className="flex items-center gap-2">
               <Radio className="w-4 h-4 text-rose-400" />
               <h3 className="text-sm font-bold text-white">
-                All Live Channels ({channels.length} Total Channels)
+                Configured Provider Feeds ({channels.length})
               </h3>
             </div>
 
@@ -1015,7 +981,7 @@ export const CloudflareStreamHub: React.FC<CloudflareStreamHubProps> = ({
           <div className="max-h-96 overflow-y-auto rounded-xl border border-slate-800 divide-y divide-slate-800/60 bg-black/30">
             {filteredChannels.length === 0 ? (
               <div className="p-8 text-center text-xs text-slate-400">
-                {isLoadingChannels ? 'Loading live channels...' : 'No channels match the filter.'}
+                {isLoadingChannels ? 'Loading provider feeds...' : 'No configured feeds match the filter.'}
               </div>
             ) : (
               filteredChannels.slice(0, 50).map((ch, idx) => (
@@ -1049,28 +1015,31 @@ export const CloudflareStreamHub: React.FC<CloudflareStreamHubProps> = ({
                           name: ch.name,
                           number: idx + 1,
                           logo: ch.logo || 'https://images.unsplash.com/photo-1594909122845-11baa439b7bf?auto=format&fit=crop&w=120&h=120&q=80',
-                          category: ch.category || 'Entertainment',
-                          country: 'Global',
-                          language: 'English',
+                          category: ch.category || 'All',
+                          country: ch.country || 'Unknown',
+                          language: ch.language || 'Unknown',
                           streamUrl: ch.hlsUrl || `/api/proxy/hls/stream.m3u8?channelId=${ch.streamId}`,
                           hlsUrl: ch.hlsUrl || `/api/proxy/hls/stream.m3u8?channelId=${ch.streamId}`,
                           tsUrl: ch.tsUrl || `/api/proxy/stream?url=${encodeURIComponent(ch.streamUrl || '')}`,
                           streamId: ch.streamId,
-                          epgId: `EPG_${ch.streamId}`,
+                          epgId: ch.epgId || '',
                           isPremium: true,
                           isLive: true,
-                          resolution: ch.name.includes('4K') ? '4K' : '1080p',
+                          resolution:
+                            ch.resolution === '4K' || ch.resolution === '1080p' || ch.resolution === '720p'
+                              ? ch.resolution
+                              : 'Unknown',
                           currentProgram: {
-                            title: `${ch.name} — Live Stream`,
-                            startTime: '00:00',
-                            endTime: '23:59',
-                            progressPercentage: 50,
-                            synopsis: 'Live streaming broadcast feed relayed via Cloudflare-accelerated proxy.'
+                            title: 'Program guide unavailable',
+                            startTime: '',
+                            endTime: '',
+                            progressPercentage: 0,
+                            synopsis: 'EPG data has not been configured for this feed.'
                           },
                           nextProgram: {
-                            title: 'Live Continuous Broadcast',
-                            startTime: '00:00',
-                            endTime: '00:00'
+                            title: 'Program guide unavailable',
+                            startTime: '',
+                            endTime: ''
                           }
                         };
                         onPlayChannel(channelObj);
@@ -1078,7 +1047,7 @@ export const CloudflareStreamHub: React.FC<CloudflareStreamHubProps> = ({
                       className="flex items-center gap-1 px-2.5 py-1 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold rounded text-xs transition-colors"
                     >
                       <Play className="w-3 h-3 fill-slate-950" />
-                      <span>Test Stream</span>
+                      <span>Play stream</span>
                     </button>
                   </div>
                 </div>

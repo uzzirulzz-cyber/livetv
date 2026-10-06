@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Series, Episode } from '../../types/playbeat';
-import { Play, Layers, Star, Info, Film, ChevronRight, Search, Tv, ExternalLink, Sparkles, Loader2 } from 'lucide-react';
+import { Play, Layers, Star, Info, Film, ChevronRight, Search, Sparkles, Loader2 } from 'lucide-react';
 import { RELIABLE_STREAMS } from '../../services/catalogData';
 
 interface SeriesViewProps {
@@ -132,35 +132,6 @@ export const SeriesView: React.FC<SeriesViewProps> = ({ seriesList, onPlayEpisod
             {isSearchingTvMaze ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Search'}
           </button>
         </form>
-      </div>
-
-      {/* Xtream-Masters WebPlayer Banner */}
-      <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-950/60 via-slate-900/80 to-[#0c1326] border border-blue-500/30 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-blue-500/20 text-cyan-400 flex items-center justify-center border border-blue-500/30 shrink-0">
-            <Tv className="w-5 h-5" />
-          </div>
-          <div>
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
-              <span>Xtream-Masters WebPlayer Support</span>
-              <span className="px-1.5 py-0.5 rounded text-[10px] bg-emerald-500/20 text-emerald-300 font-mono">
-                CONNECTED
-              </span>
-            </h3>
-            <p className="text-xs text-slate-300 mt-0.5">
-              Access entire series libraries with your Xtream account at <code className="text-cyan-300">http://xtream-masters.com/webplayer/</code> (Host: <strong className="text-white">geotv.space:8880</strong>).
-            </p>
-          </div>
-        </div>
-        <a
-          href="http://xtream-masters.com/webplayer/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="shrink-0 px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 transition-all shadow-md shadow-cyan-500/20"
-        >
-          <span>Open WebPlayer</span>
-          <ExternalLink className="w-3.5 h-3.5" />
-        </a>
       </div>
 
       {/* Live TVMaze Search Results Grid (if any) */}

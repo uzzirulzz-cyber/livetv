@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { 
-  Tv, 
   Film, 
   Radio, 
   Calendar, 
@@ -43,7 +42,7 @@ export const PlayBeatHeader: React.FC<PlayBeatHeaderProps> = ({
   // Clean Storefront navigation - completely open, no packages/paywalls
   const mainNav = [
     { id: 'home', label: 'Home' },
-    { id: 'live', label: 'Live TV (850+)' },
+    { id: 'live', label: 'Live TV' },
     { id: 'movies', label: 'Movies' },
     { id: 'series', label: 'Series' },
     { id: 'guide', label: 'TV Guide' },
@@ -95,14 +94,14 @@ export const PlayBeatHeader: React.FC<PlayBeatHeaderProps> = ({
           {/* Free Access Badge */}
           <div className="hidden md:flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono text-[11px] font-bold">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span>100% Free · No Subscription Required</span>
+            <span>Authorized provider access required</span>
           </div>
 
           {/* Global Search Button */}
           <button
             onClick={onOpenSearch}
             className="p-2 rounded-lg bg-white/[0.04] border border-white/[0.06] hover:bg-white/[0.08] hover:border-white/[0.12] text-slate-300 transition-colors"
-            title="Search 850+ live channels, movies, series..."
+            title="Search live channels, movies, and series..."
           >
             <Search className="w-4 h-4" />
           </button>
@@ -121,18 +120,6 @@ export const PlayBeatHeader: React.FC<PlayBeatHeaderProps> = ({
               </span>
             )}
           </button>
-
-          {/* Xtream-Masters WebPlayer Launcher */}
-          <a
-            href="http://xtream-masters.com/webplayer/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-blue-600/20 border border-blue-500/30 hover:bg-blue-600/30 text-xs font-semibold text-cyan-300 transition-colors"
-            title="Open official Xtream-Masters WebPlayer (http://xtream-masters.com/webplayer/)"
-          >
-            <Tv className="w-3.5 h-3.5 text-cyan-400" />
-            <span className="hidden xl:inline text-[11px] font-mono">Xtream WebPlayer</span>
-          </a>
 
           {/* Direct Admin Access Icon */}
           <button
@@ -159,7 +146,7 @@ export const PlayBeatHeader: React.FC<PlayBeatHeaderProps> = ({
         <div className="xl:hidden pt-4 pb-2 border-t border-white/[0.08] mt-3 space-y-2 animate-in slide-in-from-top-2 duration-150">
           <div className="px-3 py-1 text-[10px] font-mono text-emerald-400 bg-emerald-950/40 border border-emerald-500/30 rounded mb-2 flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span>Open Streaming · All 850+ Channels Free</span>
+            <span>Open Live TV</span>
           </div>
 
           <div className="grid grid-cols-2 gap-1">

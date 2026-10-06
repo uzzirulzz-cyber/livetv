@@ -16,7 +16,6 @@ import {
   Users, 
   Clock, 
   Zap, 
-  Eye 
 } from 'lucide-react';
 import { ChannelLogo } from '../common/ChannelLogo';
 
@@ -90,14 +89,14 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
             </span>
             <div>
               <h2 className="text-lg sm:text-xl font-black text-white tracking-tight font-display flex items-center gap-2">
-                <span>Playing Now</span>
+                <span>Live TV Lineup</span>
                 <span className="text-slate-500 font-normal">·</span>
                 <span className="text-xs font-mono font-bold text-rose-400 bg-rose-950/70 border border-rose-500/30 px-2 py-0.5 rounded">
-                  LIVE ON AIR
+                  {channels.length > 0 ? 'PROVIDER FEEDS' : 'SETUP REQUIRED'}
                 </span>
               </h2>
               <p className="text-xs text-slate-400">
-                Current broadcast feeds playing live right now · Click any channel for instant zero-lag playback
+                Channels supplied by the configured provider. Playback is checked when you start a stream.
               </p>
             </div>
           </div>
@@ -111,12 +110,16 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
           </button>
         </div>
 
-        {/* Playing Now Carousel */}
+        {playingNowChannels.length === 0 && (
+          <div className="rounded-2xl border border-white/10 bg-[#0c1326]/70 px-5 py-8 text-center text-sm text-slate-400">
+            No live channels are configured yet. Secure provider setup is required before channels can be listed.
+          </div>
+        )}
+
+        {/* Live Channel Carousel */}
         <div className="flex gap-4 overflow-x-auto pb-4 pt-1 no-scrollbar scroll-smooth">
-          {playingNowChannels.map((channel, idx) => {
+          {playingNowChannels.map((channel) => {
             const isFav = favorites.includes(channel.id);
-            // Simulated live viewer counts based on index
-            const viewers = ((idx * 3.7 + 12.4) % 45 + 5.2).toFixed(1);
 
             return (
               <div
@@ -171,11 +174,7 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
                   <div className="p-3 bg-black/40 border border-white/[0.05] rounded-xl space-y-2 mb-3">
                     <div className="flex items-center justify-between text-xs">
                       <span className="font-semibold text-slate-200 truncate pr-2">
-                        {channel.currentProgram.title}
-                      </span>
-                      <span className="text-[10px] font-mono text-cyan-400 shrink-0 flex items-center gap-0.5">
-                        <Eye className="w-3 h-3" />
-                        <span>{viewers}k</span>
+                        {channel.currentProgram?.title ?? 'Schedule unavailable'}
                       </span>
                     </div>
 
@@ -183,7 +182,7 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
                     <div className="w-full bg-white/10 h-1.5 rounded-full overflow-hidden">
                       <div
                         className="bg-gradient-to-r from-cyan-500 to-blue-500 h-full rounded-full transition-all duration-500"
-                        style={{ width: `${Math.max(15, channel.currentProgram.progressPercentage)}%` }}
+                        style={{ width: `${Math.max(0, channel.currentProgram?.progressPercentage ?? 0)}%` }}
                       />
                     </div>
 
@@ -221,13 +220,13 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
             <Flame className="w-5 h-5 text-amber-400" />
             <div>
               <h2 className="text-lg sm:text-xl font-black text-white tracking-tight font-display flex items-center gap-2">
-                <span>Trending &amp; Popular Channels</span>
-                <span className="text-xs font-mono font-bold text-amber-400 bg-amber-950/70 border border-amber-500/30 px-2 py-0.5 rounded">
-                  MOST WATCHED
+                <span>What’s Popular Right Now</span>
+                <span className="text-xs font-mono font-bold text-amber-200 bg-amber-950/70 border border-amber-500/30 px-2 py-0.5 rounded">
+                  FEATURED PICKS
                 </span>
               </h2>
               <p className="text-xs text-slate-400">
-                Top broadcast networks in Sports, Movies, Global News, and Entertainment
+                A curated selection of featured channels. Availability depends on verified provider feeds.
               </p>
             </div>
           </div>
@@ -257,18 +256,17 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
 
         {/* Popular Channels Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {popularChannels.map((channel, idx) => {
+          {popularChannels.map((channel) => {
             const isFav = favorites.includes(channel.id);
-            const viewers = ((idx * 4.2 + 8.1) % 50 + 7.5).toFixed(1);
 
             return (
               <div
                 key={channel.id}
                 onClick={() => onWatchChannel(channel)}
-                className="group relative bg-[#0c1326]/75 hover:bg-[#111c38] border border-white/[0.08] hover:border-amber-500/50 rounded-2xl p-3.5 cursor-pointer transition-all hover:scale-[1.02] shadow-lg shadow-black/40 flex flex-col justify-between"
+                className="group relative overflow-hidden bg-gradient-to-br from-[#151c34] via-[#0c1326] to-[#080c18] border border-amber-300/20 hover:border-amber-300/60 rounded-2xl p-4 cursor-pointer transition-all hover:-translate-y-1 hover:shadow-xl hover:shadow-amber-500/10 flex flex-col justify-between"
               >
                 <div>
-                  <div className="flex items-start justify-between gap-2.5 mb-2.5">
+                  <div className="flex items-start justify-between gap-2.5 mb-3">
                     <div className="flex items-center gap-2.5 min-w-0">
                       <ChannelLogo
                         src={channel.logo}
@@ -286,12 +284,12 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
                       </div>
                     </div>
 
-                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 shrink-0">
+                    <span className="px-2 py-1 rounded-full text-[9px] font-black tracking-wider bg-amber-300/10 text-amber-200 border border-amber-200/25 shrink-0">
                       {channel.resolution}
                     </span>
                   </div>
 
-                  <div className="p-2.5 bg-black/30 border border-white/[0.04] rounded-xl text-xs space-y-1 mb-2.5">
+                  <div className="p-3 bg-black/30 border border-white/[0.06] rounded-xl text-xs space-y-1 mb-3">
                     <div className="font-semibold text-slate-200 truncate text-[11px]">
                       {channel.currentProgram.title}
                     </div>
@@ -301,10 +299,10 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between pt-2 border-t border-white/[0.04] text-[10px] font-mono">
-                  <span className="text-amber-400 flex items-center gap-1 font-semibold">
-                    <TrendingUp className="w-3 h-3" />
-                    <span>{viewers}K live viewers</span>
+                <div className="flex items-center justify-between pt-3 border-t border-white/[0.06] text-[10px] font-mono">
+                  <span className="text-amber-200/80 flex items-center gap-1 font-semibold">
+                    <Sparkles className="w-3 h-3" />
+                    <span>{channel.resolution} · Featured</span>
                   </span>
                   <span className="font-sans font-bold text-white group-hover:text-amber-300 flex items-center gap-1">
                     <Play className="w-3 h-3 fill-current" />

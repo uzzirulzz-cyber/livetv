@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ServerConfig } from '../types/iptv';
-import { X, Server, Key, ShieldAlert, Check, Plus, Trash2 } from 'lucide-react';
+import { X, Server, ShieldAlert, Plus, Trash2 } from 'lucide-react';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -9,8 +9,6 @@ interface SettingsModalProps {
   onSaveServers: (servers: ServerConfig[]) => void;
   isSimulation: boolean;
   onToggleSimulation: (enabled: boolean) => void;
-  customApiKey: string;
-  onSaveCustomApiKey: (key: string) => void;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -19,36 +17,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   servers,
   onSaveServers,
   isSimulation,
-  onToggleSimulation,
-  customApiKey,
-  onSaveCustomApiKey
+  onToggleSimulation
 }) => {
-  const [apiKeyInput, setApiKeyInput] = useState(customApiKey);
   const [localServers, setLocalServers] = useState<ServerConfig[]>(servers);
   const [newServerName, setNewServerName] = useState('');
   const [newServerHost, setNewServerHost] = useState('');
-  const [savedSuccess, setSavedSuccess] = useState(false);
 
   if (!isOpen) return null;
-
-  const handleSaveKey = async (e: React.FormEvent) => {
-    e.preventDefault();
-    onSaveCustomApiKey(apiKeyInput.trim());
-
-    // Also update server config
-    try {
-      await fetch('/api/provider/config', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ apiKey: apiKeyInput.trim() })
-      });
-    } catch (e) {
-      console.error(e);
-    }
-
-    setSavedSuccess(true);
-    setTimeout(() => setSavedSuccess(false), 2000);
-  };
 
   const handleAddServer = (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,8 +63,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       <div className="bg-slate-900 border border-slate-800 rounded-xl max-w-xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
         <div className="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/70">
           <div>
-            <h2 className="text-sm font-semibold text-white">System Settings &amp; Upstream Gateway</h2>
-            <p className="text-xs text-slate-400">Configure provider keys, simulation mode, and streaming servers</p>
+            <h2 className="text-sm font-semibold text-white">Streaming Server Settings</h2>
+            <p className="text-xs text-slate-400">Manage local streaming server entries and simulation mode</p>
           </div>
           <button
             onClick={onClose}
@@ -130,44 +105,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 </span>
               ) : (
                 <span className="text-emerald-400">
-                  Live Active: Calls are dispatched directly to https://iptv-api.xtream-masters.com/v3/ using your API key.
+                  Provider calls are unavailable until a server-side integration is configured.
                 </span>
               )}
             </div>
           </div>
-
-          {/* Provider API Key */}
-          <form onSubmit={handleSaveKey} className="space-y-3">
-            <div className="flex items-center justify-between">
-              <label className="font-semibold text-slate-300">
-                Provider API Key (<code className="text-indigo-400">STAR_IPTV_API_KEY</code>)
-              </label>
-              {savedSuccess && (
-                <span className="text-[11px] text-emerald-400 flex items-center gap-1">
-                  <Check className="w-3 h-3" /> Saved!
-                </span>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="password"
-                value={apiKeyInput}
-                onChange={(e) => setApiKeyInput(e.target.value)}
-                placeholder="special-key (from your provider panel)"
-                className="w-full font-mono bg-slate-950 border border-slate-800 rounded-md px-3 py-2 text-white focus:outline-none focus:border-indigo-500"
-              />
-              <button
-                type="submit"
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-md whitespace-nowrap transition-colors"
-              >
-                Update Key
-              </button>
-            </div>
-            <p className="text-[11px] text-slate-400 leading-relaxed">
-              Never exposed to the client browser. Handled via the secure server-side proxy route{' '}
-              <code className="text-indigo-300">/api/provider/call</code>.
-            </p>
-          </form>
 
           {/* Streaming Server Host Nodes */}
           <div className="space-y-3 pt-3 border-t border-slate-800">

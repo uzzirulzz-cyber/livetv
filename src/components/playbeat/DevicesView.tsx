@@ -5,8 +5,6 @@ import {
   Monitor, 
   Layers, 
   Download, 
-  Copy, 
-  Check, 
   ExternalLink, 
   ShieldCheck, 
   Wifi, 
@@ -18,28 +16,10 @@ import {
 
 interface DevicesViewProps {
   onOpenPlans: () => void;
-  serverUrl?: string;
-  username?: string;
-  password?: string;
-  m3uUrl?: string;
 }
 
-export const DevicesView: React.FC<DevicesViewProps> = ({
-  onOpenPlans,
-  serverUrl = 'https://stream.playbeat.live:8080',
-  username = 'pb_vip_demo',
-  password = '••••••••',
-  m3uUrl = 'https://stream.playbeat.live:8080/get.php?username=pb_vip_demo&password=demo&type=m3u_plus&output=ts'
-}) => {
+export const DevicesView: React.FC<DevicesViewProps> = ({ onOpenPlans }) => {
   const [selectedDevice, setSelectedDevice] = useState<string>('smart_tv');
-  const [copiedKey, setCopiedKey] = useState<string | null>(null);
-
-  const handleCopy = (text: string, key: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedKey(key);
-    setTimeout(() => setCopiedKey(null), 1800);
-  };
-
   const deviceGuides = [
     {
       id: 'smart_tv',
@@ -66,7 +46,7 @@ export const DevicesView: React.FC<DevicesViewProps> = ({
         'Enable "Install unknown apps" for Downloader in Firestick Settings > My Fire TV > Developer Options.',
         'In Downloader, enter code 272483 (or direct link) to install TiviMate or IPTV Smarters Pro.',
         'Launch TiviMate, select "Add Playlist" > "Xtream Codes".',
-        'Input your PlayBeat server credentials and select "Include TV Guide (EPG)".'
+        'Enter credentials issued by your authorized streaming provider and select "Include TV Guide (EPG)".'
       ]
     },
     {
@@ -79,7 +59,7 @@ export const DevicesView: React.FC<DevicesViewProps> = ({
         'Open Google Play Store directly on your Android TV or Chromecast with Google TV.',
         'Install "TiviMate IPTV Player" or "Televizo IPTV".',
         'Select "Xtream Codes API" login method.',
-        'Enter Server URL, Username, and Password provided in your PlayBeat account.',
+        'Enter the server URL, username, and password supplied by your authorized streaming provider.',
         'Enjoy catch-up TV, audio track selection, and hardware-accelerated 60FPS streaming.'
       ]
     },
@@ -193,24 +173,9 @@ export const DevicesView: React.FC<DevicesViewProps> = ({
             </div>
           </div>
 
-          {/* Quick Credential Box */}
-          <div className="flex flex-wrap items-center gap-2 text-xs">
-            <button
-              onClick={() => handleCopy(serverUrl, 'srv')}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.08] text-slate-300 hover:text-white"
-            >
-              {copiedKey === 'srv' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-cyan-400" />}
-              <span>Copy Server URL</span>
-            </button>
-
-            <button
-              onClick={() => handleCopy(m3uUrl, 'm3u')}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-500/20 font-semibold"
-            >
-              {copiedKey === 'm3u' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Download className="w-3.5 h-3.5" />}
-              <span>Copy M3U Plus URL</span>
-            </button>
-          </div>
+          <p className="max-w-sm text-xs leading-relaxed text-slate-400">
+            Use connection details supplied through your secure provider account. This page does not prefill or expose stream credentials.
+          </p>
         </div>
 
         {/* Recommended Applications */}

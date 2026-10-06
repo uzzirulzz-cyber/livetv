@@ -2,7 +2,7 @@ import { Channel, EpgProgram, Movie, Series, SubscriptionPlan, RegisteredDevice,
 
 export type { Channel, EpgProgram, Movie, Series, SubscriptionPlan, RegisteredDevice, SupportTicket, Song };
 
-// Verified 100% playable CDN stream sources (HTTP 200 OK with CORS * and Byte Range Support)
+// Sample video sources for the movie and series demo catalog, not live TV channels.
 export const RELIABLE_STREAMS = {
   HLS_ADAPTIVE: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
   HLS_APPLE: 'https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_4x3/bipbop_4x3_variant.m3u8',
@@ -14,30 +14,7 @@ export const RELIABLE_STREAMS = {
   MP4_ARCHIVE_BUNNY: 'https://archive.org/download/BigBuckBunny_124/Content/big_buck_bunny_720p_surround.mp4'
 };
 
-export const CHANNELS: Channel[] = [
-  {
-    id: 'chan_live_1',
-    number: 101,
-    name: 'PlayBeat News 24/7',
-    category: 'News',
-    logo: 'https://images.unsplash.com/photo-1557200134-90327ee7fafa?auto=format&fit=crop&w=100&h=100&q=80',
-    isLive: true,
-    streamUrl: RELIABLE_STREAMS.HLS_ADAPTIVE,
-    resolution: '1080p',
-    currentProgram: { title: 'Global News Update', startTime: '03:00', endTime: '04:00', synopsis: 'Latest world news and updates.' }
-  },
-  {
-    id: 'chan_live_2',
-    number: 102,
-    name: 'Cinema World 4K',
-    category: 'Movies',
-    logo: 'https://images.unsplash.com/photo-1594909122845-11baa439b7bf?auto=format&fit=crop&w=100&h=100&q=80',
-    isLive: true,
-    streamUrl: RELIABLE_STREAMS.HLS_APPLE,
-    resolution: '4K',
-    currentProgram: { title: 'Classic Movie Night', startTime: '03:00', endTime: '05:00', synopsis: 'Timeless cinematic masterpieces.' }
-  }
-];
+export const CHANNELS: Channel[] = [];
 
 // =========================================================================
 // REAL BLOCKBUSTER MOVIES (100% REAL DATA — NO MOCK ENTRIES)
@@ -575,7 +552,6 @@ export const PLANS: SubscriptionPlan[] = [
     currency: 'USD',
     connectionLimit: 1,
     deviceLimit: 2,
-    channelCount: 3500,
     vodAvailable: true,
     sportsAvailable: false,
     resolution: '1080p Full HD',
@@ -593,7 +569,6 @@ export const PLANS: SubscriptionPlan[] = [
     currency: 'USD',
     connectionLimit: 2,
     deviceLimit: 4,
-    channelCount: 8500,
     vodAvailable: true,
     sportsAvailable: true,
     resolution: '4K Ultra HD',
@@ -612,7 +587,6 @@ export const PLANS: SubscriptionPlan[] = [
     currency: 'USD',
     connectionLimit: 3,
     deviceLimit: 6,
-    channelCount: 15000,
     vodAvailable: true,
     sportsAvailable: true,
     resolution: '4K HDR & 60FPS Sports',
@@ -630,7 +604,6 @@ export const PLANS: SubscriptionPlan[] = [
     currency: 'USD',
     connectionLimit: 4,
     deviceLimit: 8,
-    channelCount: 18000,
     vodAvailable: true,
     sportsAvailable: true,
     resolution: '4K Ultra HD & Dolby Atmos',

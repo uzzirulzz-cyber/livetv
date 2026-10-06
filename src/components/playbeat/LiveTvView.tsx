@@ -55,40 +55,28 @@ export const LiveTvView: React.FC<LiveTvViewProps> = ({
     { id: 'International', label: 'Regional & Islamic', icon: Coffee }
   ];
 
-  const quickFilterPills = [
-    { id: 'ALL', label: `All Feeds (${channels.length})` },
-    { id: 'CRICKET', label: 'VIP Cricket Live' },
-    { id: 'SPORTS', label: 'Live Sports HD' },
-    { id: 'BOLLYWOOD', label: 'Bollywood 24x7' },
-    { id: 'HOLLYWOOD', label: 'Hollywood 4K' },
-    { id: 'NEWS', label: 'News 24/7' },
-    { id: 'KIDS', label: 'Kids & Cartoons' },
-    { id: 'PAKISTAN', label: 'Pakistani TV' }
-  ];
+  const quickFilterPills = useMemo(() => {
+    const groups = Array.from(new Set(
+      channels.flatMap((channel) => [channel.groupTitle, channel.category])
+        .filter((group): group is string => typeof group === 'string' && group.trim().length > 0)
+    ));
+    return [
+      { id: 'ALL', label: `All Feeds (${channels.length})` },
+      ...groups.map((group) => ({ id: group, label: group }))
+    ];
+  }, [channels]);
 
   const filteredChannels = useMemo(() => {
     return channels.filter((ch) => {
       if (onlyFavorites && !favorites.includes(ch.id)) return false;
       if (selectedCategory !== 'All' && ch.category !== selectedCategory) return false;
 
-      // Quick Tag Matching
-      if (quickTag === 'CRICKET') {
-        const text = (ch.name + ' ' + (ch.currentProgram?.synopsis || '')).toLowerCase();
-        if (!text.includes('cricket')) return false;
-      } else if (quickTag === 'SPORTS') {
-        if (ch.category !== 'Sports') return false;
-      } else if (quickTag === 'BOLLYWOOD') {
-        const text = (ch.name + ' ' + ch.country).toLowerCase();
-        if (!text.includes('bollywood') && !text.includes('hindi')) return false;
-      } else if (quickTag === 'HOLLYWOOD') {
-        const text = (ch.name + ' ' + (ch.currentProgram?.synopsis || '')).toLowerCase();
-        if (!text.includes('hollywood') && !text.includes('eng')) return false;
-      } else if (quickTag === 'NEWS') {
-        if (ch.category !== 'News') return false;
-      } else if (quickTag === 'KIDS') {
-        if (ch.category !== 'Kids') return false;
-      } else if (quickTag === 'PAKISTAN') {
-        if (ch.country !== 'Pakistan' && !ch.name.toLowerCase().includes('pk')) return false;
+      if (
+        quickTag !== 'ALL' &&
+        ch.groupTitle !== quickTag &&
+        ch.category !== quickTag
+      ) {
+        return false;
       }
 
       if (searchQuery.trim()) {
@@ -111,16 +99,16 @@ export const LiveTvView: React.FC<LiveTvViewProps> = ({
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-white/[0.08]">
         <div>
           <div className="flex items-center gap-2.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span className={`w-2.5 h-2.5 rounded-full ${channels.length > 0 ? 'bg-emerald-400' : 'bg-slate-500'}`} />
             <h1 className="text-2xl font-black text-white font-display tracking-tight flex items-center gap-2">
               <span>PLAYBEAT ENTERTAIN — Live TV</span>
               <span className="text-xs font-mono font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-2 py-0.5 rounded">
-                {channels.length} Live Channels
+                {channels.length} Configured Feeds
               </span>
             </h1>
           </div>
           <p className="text-xs text-slate-400 mt-0.5">
-            100% Free Live Broadcast Streams · No Subscription Required · Instant 1-Click Playback
+            Live feeds require an authorized provider and are checked when playback starts.
           </p>
         </div>
 
@@ -130,7 +118,7 @@ export const LiveTvView: React.FC<LiveTvViewProps> = ({
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
-              placeholder="Search across all 850+ channels..."
+              placeholder="Search configured channels..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full bg-[#0c1326] border border-white/[0.1] rounded-lg pl-9 pr-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition-colors"
@@ -221,15 +209,19 @@ export const LiveTvView: React.FC<LiveTvViewProps> = ({
               Showing <strong className="text-white font-mono">{displayedChannels.length}</strong> of{' '}
               <strong className="text-cyan-400 font-mono">{filteredChannels.length}</strong> live television feeds
             </span>
-            <span className="hidden sm:inline">1080p &amp; 4K HLS / DASH Relay</span>
+            <span className="hidden sm:inline">HLS playback · stream quality varies by provider</span>
           </div>
 
           {filteredChannels.length === 0 ? (
             <div className="p-12 text-center bg-[#0c1326]/40 border border-white/[0.06] rounded-2xl space-y-3">
               <Radio className="w-8 h-8 text-slate-400 mx-auto" />
-              <div className="text-sm font-semibold text-white">No channels matching criteria</div>
+              <div className="text-sm font-semibold text-white">
+                {channels.length === 0 ? 'No provider feeds are configured' : 'No channels match these filters'}
+              </div>
               <p className="text-xs text-slate-400">
-                Try selecting &quot;All Channels&quot; or clearing your search term.
+                {channels.length === 0
+                  ? 'Configure an authorized HTTPS provider to load the live catalog.'
+                  : 'Try selecting "All Channels" or clearing your search term.'}
               </p>
             </div>
           ) : (

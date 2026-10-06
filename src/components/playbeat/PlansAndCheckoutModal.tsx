@@ -39,6 +39,7 @@ export const PlansAndCheckoutModal: React.FC<PlansAndCheckoutModalProps> = ({
   const [discountPercent, setDiscountPercent] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState<'JazzCash' | 'EasyPaisa' | 'Bank Transfer' | 'Stripe' | 'PayFast'>('JazzCash');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
   // Activated credentials
   const [activatedCredentials, setActivatedCredentials] = useState<any>(null);
@@ -73,40 +74,7 @@ export const PlansAndCheckoutModal: React.FC<PlansAndCheckoutModalProps> = ({
   };
 
   const handleExecutePayment = () => {
-    if (!name.trim() || !email.trim()) {
-      alert('Please enter your full name and email address.');
-      return;
-    }
-
-    setIsProcessing(true);
-    setTimeout(() => {
-      setIsProcessing(false);
-
-      const generatedUser = 'pb_' + name.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 7) + '_' + Math.floor(100 + Math.random() * 900);
-      const generatedPass = 'PB' + Math.random().toString(36).slice(-7) + '!';
-      const now = new Date();
-      const monthsToAdd = parseInt(duration, 10);
-      const expDate = new Date(now.setMonth(now.getMonth() + monthsToAdd)).toISOString().split('T')[0];
-
-      const creds = {
-        subscriptionId: `SUB-PB-${Date.now().toString().slice(-6)}`,
-        planName: selectedPlan.name,
-        customerName: name,
-        customerEmail: email,
-        username: generatedUser,
-        password: generatedPass,
-        serverUrl: 'https://tv.playbeat.digital',
-        playlistUrl: `https://tv.playbeat.digital/get.php?username=${generatedUser}&password=${generatedPass}&type=m3u_plus&output=ts`,
-        epgUrl: `https://tv.playbeat.digital/xmltv.php?username=${generatedUser}&password=${generatedPass}`,
-        connections,
-        activationDate: new Date().toISOString().split('T')[0],
-        expiryDate: expDate
-      };
-
-      setActivatedCredentials(creds);
-      setStep('SUCCESS');
-      onSubscriptionActivated(selectedPlan, creds);
-    }, 1200);
+    setCheckoutError('Checkout is unavailable: payment verification and subscription provisioning are not configured. No payment was taken.');
   };
 
   const handleCopy = (text: string, key: string) => {
@@ -153,7 +121,7 @@ export const PlansAndCheckoutModal: React.FC<PlansAndCheckoutModalProps> = ({
                   Entertainment Tailored for Every Screen
                 </h3>
                 <p className="text-xs text-slate-400">
-                  Switch or upgrade plans anytime. All plans include full authorized live television feeds.
+                  Plan details, checkout, and live-channel availability are unavailable until provider and payment services are configured.
                 </p>
               </div>
 
@@ -181,32 +149,29 @@ export const PlansAndCheckoutModal: React.FC<PlansAndCheckoutModalProps> = ({
                         <div className="text-sm font-bold text-white font-display">
                           {plan.name}
                         </div>
-                        <div className="text-2xl font-black text-white font-display">
-                          ${plan.monthlyPrice}
-                          <span className="text-xs font-normal text-slate-400 font-sans">
-                            /mo
-                          </span>
+                        <div className="text-2xl font-black text-slate-400 font-display">
+                          Unavailable
                         </div>
                         <p className="text-[11px] text-slate-400 leading-relaxed">
-                          {plan.tagline}
+                          Checkout and provider availability are not configured.
                         </p>
 
                         <ul className="space-y-2 text-xs text-slate-300 pt-2 border-t border-white/10">
                           <li className="flex items-center gap-2">
                             <Check className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-                            <span>{plan.channelCount.toLocaleString()}+ Live Channels</span>
+                            <span>Channel catalog unavailable</span>
                           </li>
                           <li className="flex items-center gap-2">
                             <Check className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-                            <span>{plan.connectionLimit} Screen(s) simultaneous</span>
+                            <span>Playback quality depends on the provider stream</span>
                           </li>
                           <li className="flex items-center gap-2">
                             <Check className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-                            <span>{plan.resolution}</span>
+                            <span>Provider access is not configured</span>
                           </li>
                           <li className="flex items-center gap-2">
                             <Check className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-                            <span>7-Day EPG Guide Included</span>
+                            <span>Program guide is not configured</span>
                           </li>
                         </ul>
                       </div>
@@ -230,12 +195,18 @@ export const PlansAndCheckoutModal: React.FC<PlansAndCheckoutModalProps> = ({
 
               {/* Next Button */}
               <div className="flex justify-end pt-4 border-t border-white/10">
-                <button
-                  onClick={() => setStep('CHECKOUT')}
-                  className="px-8 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black rounded-xl text-xs tracking-wide uppercase transition-all shadow-lg shadow-cyan-500/20"
-                >
-                  Continue to Checkout &rarr;
-                </button>
+                <div className="space-y-3 text-right">
+                  <p className="text-xs text-amber-300">
+                    Purchases are unavailable until real payment verification and provider provisioning are configured.
+                  </p>
+                  <button
+                    type="button"
+                    disabled
+                    className="px-8 py-3 bg-white/10 text-slate-400 font-black rounded-xl text-xs tracking-wide uppercase cursor-not-allowed"
+                  >
+                    Checkout unavailable
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -397,10 +368,15 @@ export const PlansAndCheckoutModal: React.FC<PlansAndCheckoutModalProps> = ({
                   </div>
 
                   {/* Submit Payment button */}
+                  {checkoutError && (
+                    <div role="alert" className="text-xs text-rose-300">
+                      {checkoutError}
+                    </div>
+                  )}
                   <button
                     onClick={handleExecutePayment}
-                    disabled={isProcessing}
-                    className="w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/20 transition-all"
+                    disabled
+                    className="w-full py-3 bg-white/10 text-slate-400 font-black rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 cursor-not-allowed"
                   >
                     {isProcessing ? (
                       <>
@@ -408,7 +384,7 @@ export const PlansAndCheckoutModal: React.FC<PlansAndCheckoutModalProps> = ({
                         <span>Activating Subscription...</span>
                       </>
                     ) : (
-                      <span>Confirm &amp; Activate via {paymentMethod}</span>
+                      <span>Checkout unavailable</span>
                     )}
                   </button>
 

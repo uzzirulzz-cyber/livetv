@@ -11,32 +11,13 @@ export interface ProviderCallResult<T = any> {
   cUrlGet: string;
 }
 
-const PROVIDER_URL = 'https://iptv-api.xtream-masters.com/v3/';
-
-// Generate cURL commands for documentation and direct terminal verification
+// Provider credentials belong in server-side secrets and must not be copied into generated commands.
 export function generateCurlCommands(
-  type: string,
-  params: Record<string, any>,
-  apiKey = 'special-key'
+  _type: string,
+  _params: Record<string, any>
 ): { post: string; get: string } {
-  const queryParams = new URLSearchParams();
-  queryParams.append('apikey', apiKey);
-
-  const entries: [string, any][] = Object.entries(params);
-  for (const [k, v] of entries) {
-    if (v !== undefined && v !== null) {
-      queryParams.append(k, String(v));
-    }
-  }
-  queryParams.append('type', type);
-
-  const getUrl = `${PROVIDER_URL}?${queryParams.toString()}`;
-  const getCmd = `curl -X GET "${getUrl}"`;
-
-  const bodyParts = queryParams.toString();
-  const postCmd = `curl -X POST "${PROVIDER_URL}" \\\n  -d '${bodyParts}'`;
-
-  return { post: postCmd, get: getCmd };
+  const unavailable = 'Disabled: provider calls are available only through a configured server-side integration.';
+  return { post: unavailable, get: unavailable };
 }
 
 // Call the proxy server
@@ -45,12 +26,11 @@ export async function executeProviderCall<T = any>(
   params: Record<string, any> = {},
   options: {
     simulateFallback?: boolean;
-    customKey?: string;
     onLog?: (log: ApiCallLog) => void;
   } = {}
 ): Promise<ProviderCallResult<T>> {
   const startTime = Date.now();
-  const curls = generateCurlCommands(type, params, options.customKey || 'special-key');
+  const curls = generateCurlCommands(type, params);
 
   try {
     const response = await fetch('/api/provider/call', {
@@ -61,7 +41,6 @@ export async function executeProviderCall<T = any>(
       body: JSON.stringify({
         type,
         simulateFallback: options.simulateFallback,
-        customKey: options.customKey,
         ...params
       })
     });
@@ -78,7 +57,7 @@ export async function executeProviderCall<T = any>(
         timestamp: new Date().toISOString(),
         operation: type,
         method: 'POST',
-        endpoint: PROVIDER_URL,
+        endpoint: '/api/provider/call',
         status: success ? 'SUCCESS' : 'ERROR',
         durationMs,
         maskedPayload: { type, ...params, apikey: '••••••••' },
@@ -107,7 +86,7 @@ export async function executeProviderCall<T = any>(
         timestamp: new Date().toISOString(),
         operation: type,
         method: 'POST',
-        endpoint: PROVIDER_URL,
+        endpoint: '/api/provider/call',
         status: 'NETWORK_ERROR',
         durationMs,
         maskedPayload: { type, ...params, apikey: '••••••••' },

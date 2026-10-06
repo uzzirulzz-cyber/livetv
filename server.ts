@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { timingSafeEqual } from 'node:crypto';
 import dotenv from 'dotenv';
 import { ACTIONS, PACKAGE } from './src/worker/playbeat-proxy';
 
@@ -12,13 +13,30 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 const isProduction = process.env.NODE_ENV === 'production';
+const ADMIN_TOKEN = process.env.ADMIN_TOKEN;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // In-memory or env-backed state
-let currentApiKey = process.env.STAR_IPTV_API_KEY || process.env.IPTV_API_KEY || 'special-key';
+let currentApiKey = process.env.STAR_IPTV_API_KEY || process.env.IPTV_API_KEY || '';
 const PROVIDER_BASE_URL = 'https://iptv-api.xtream-masters.com/v3/';
+
+function requireAdmin(req: Request, res: Response): boolean {
+  if (!ADMIN_TOKEN) {
+    res.status(503).json({ success: false, error: 'Server-side admin authentication is not configured.' });
+    return false;
+  }
+
+  const authorization = req.get('authorization') || '';
+  const provided = Buffer.from(authorization.startsWith('Bearer ') ? authorization.slice(7) : '');
+  const expected = Buffer.from(ADMIN_TOKEN);
+  if (provided.length !== expected.length || !timingSafeEqual(provided, expected)) {
+    res.status(401).json({ success: false, error: 'Unauthorized.' });
+    return false;
+  }
+  return true;
+}
 
 // ActiveCode webhook events log
 interface WebhookEvent {
@@ -63,7 +81,7 @@ app.get('/api/health', (_req: Request, res: Response) => {
     status: 'ok',
     version: '3.0.0',
     providerEndpoint: PROVIDER_BASE_URL,
-    hasApiKey: !!currentApiKey && currentApiKey !== 'replace-me',
+    hasApiKey: Boolean(currentApiKey),
     timestamp: new Date().toISOString()
   });
 });
@@ -71,13 +89,13 @@ app.get('/api/health', (_req: Request, res: Response) => {
 // Configure or retrieve API settings
 app.get('/api/provider/config', (_req: Request, res: Response) => {
   res.json({
-    hasKey: !!currentApiKey && currentApiKey !== 'replace-me',
-    maskedKey: currentApiKey ? `${currentApiKey.slice(0, 4)}••••${currentApiKey.slice(-4)}` : '',
+    hasKey: Boolean(currentApiKey),
     providerUrl: PROVIDER_BASE_URL
   });
 });
 
 app.post('/api/provider/config', (req: Request, res: Response) => {
+  if (!requireAdmin(req, res)) return;
   const { apiKey } = req.body;
   if (apiKey && typeof apiKey === 'string') {
     currentApiKey = apiKey.trim();
@@ -86,11 +104,13 @@ app.post('/api/provider/config', (req: Request, res: Response) => {
 });
 
 // Audit logs API
-app.get('/api/audit-logs', (_req: Request, res: Response) => {
+app.get('/api/audit-logs', (req: Request, res: Response) => {
+  if (!requireAdmin(req, res)) return;
   res.json({ logs: auditLogs });
 });
 
 app.post('/api/audit-logs', (req: Request, res: Response) => {
+  if (!requireAdmin(req, res)) return;
   const { actorId, actorRole, action, targetType, targetId, metadata } = req.body;
   const entry: AuditLogEntry = {
     id: `aud_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
@@ -110,6 +130,8 @@ app.post('/api/audit-logs', (req: Request, res: Response) => {
 
 // PlayBeat TV Direct Action Handlers (/api/info, /api/add, /api/edit, etc.)
 app.post('/api/:action(info|credit_logs|add|edit|extend|del|activecode|extendac|delac|addmac|editmac|extendmac|delmac)', async (req: Request, res: Response) => {
+  if (!requireAdmin(req, res)) return;
+  if (!currentApiKey) return res.status(503).json({ status: 'error', msg: 'Provider API is not configured.' });
   const actionName = req.params.action;
   const actionDef = ACTIONS[actionName];
   if (!actionDef) {
@@ -186,8 +208,10 @@ app.post('/api/:action(info|credit_logs|add|edit|extend|del|activecode|extendac|
 // Server-side IPTV Provider Proxy
 // Ensures apikey is never exposed to the browser client or captured in network logs
 app.post('/api/provider/call', async (req: Request, res: Response) => {
-  const { type, customKey, simulateFallback, ...params } = req.body;
-  const apiKeyToUse = customKey || currentApiKey;
+  if (!requireAdmin(req, res)) return;
+  if (!currentApiKey) return res.status(503).json({ success: false, error: 'Provider API is not configured.' });
+  const { type, simulateFallback, ...params } = req.body;
+  const apiKeyToUse = currentApiKey;
 
   // If simulateFallback is requested or if key is placeholder and user wants test run
   if (simulateFallback) {
@@ -488,13 +512,11 @@ app.post('/api/activecode/events/clear', (_req: Request, res: Response) => {
 // -----------------------------------------------------------------------
 // CLOUDFLARE INTEGRATION ENDPOINTS & DNS RESOLVER
 // -----------------------------------------------------------------------
-const CF_ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID || '20c83732a1af52f80655768cd4dfc251';
-const CF_API_TOKEN = process.env.CLOUDFLARE_API_TOKEN || 'cfat_IGSxAUk5mhviwhOD4NP5vEP1pW3k8yoTSTmNGsnTedce6b4b';
-const CF_R2_ACCESS_KEY_ID = process.env.CLOUDFLARE_R2_ACCESS_KEY_ID || '1b2fccbe7f62051f2204fdd0eea27da4';
-const CF_R2_SECRET_ACCESS_KEY = process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY || '53652ee2cb59446e34ab02b2c69604464e04cd524647a95c9272bb65c0546787';
-const CF_R2_ENDPOINT = process.env.CLOUDFLARE_R2_ENDPOINT || `https://${CF_ACCOUNT_ID}.r2.cloudflarestorage.com`;
-const CF_ZONE_ID = '1e0b542a127a5c638ad576c787646424';
-const CF_WORKER_URL = 'https://playbeat-live.playbeatdigital.workers.dev';
+const CF_ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID;
+const CF_API_TOKEN = process.env.CLOUDFLARE_API_TOKEN;
+const CF_R2_ACCESS_KEY_ID = process.env.CLOUDFLARE_R2_ACCESS_KEY_ID;
+const CF_R2_SECRET_ACCESS_KEY = process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY;
+const CF_R2_ENDPOINT = process.env.CLOUDFLARE_R2_ENDPOINT;
 
 // Cloudflare 1.1.1.1 DoH IP Cache & Mapping Stats
 interface DnsMappingEntry {
@@ -541,14 +563,18 @@ async function resolveViaCloudflareDoH(hostname: string): Promise<{ ip: string; 
 }
 
 // GeoTV Configuration
-const GEOTV_HOST = process.env.GEOTV_HOST || 'http://geotv.space:8880';
-const GEOTV_USER = process.env.GEOTV_USER || '3fa35bc1';
-const GEOTV_PASS = process.env.GEOTV_PASS || '3cc73db1';
+const GEOTV_HOST = process.env.GEOTV_HOST || '';
+const GEOTV_USER = process.env.GEOTV_USER;
+const GEOTV_PASS = process.env.GEOTV_PASS;
 const GEOTV_PACKAGE = process.env.GEOTV_PACKAGE || 'World Package, Channels + Vods (Family)';
 const GEOTV_RENEWAL = process.env.GEOTV_RENEWAL || '2026-11-05';
 
 // 1. Verify Cloudflare Token live
 app.get('/api/cloudflare/verify', async (_req: Request, res: Response) => {
+  if (!CF_ACCOUNT_ID || !CF_API_TOKEN) {
+    res.status(503).json({ success: false, error: 'Cloudflare server configuration is incomplete' });
+    return;
+  }
   try {
     const cfRes = await fetch(`https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/tokens/verify`, {
       headers: {
@@ -584,36 +610,18 @@ app.get('/api/cloudflare/dns/resolve', async (req: Request, res: Response) => {
 // 3. Cloudflare Status & Live DNS Mappings
 app.get('/api/cloudflare/status', (_req: Request, res: Response) => {
   res.json({
-    accountId: CF_ACCOUNT_ID,
-    hasToken: !!CF_API_TOKEN,
-    maskedToken: CF_API_TOKEN ? `${CF_API_TOKEN.slice(0, 7)}••••${CF_API_TOKEN.slice(-6)}` : '',
-    r2Endpoint: CF_R2_ENDPOINT,
-    accessKeyId: CF_R2_ACCESS_KEY_ID,
-    hasSecretKey: !!CF_R2_SECRET_ACCESS_KEY,
+    configured: Boolean(CF_ACCOUNT_ID && CF_API_TOKEN),
+    r2Configured: Boolean(CF_R2_ENDPOINT && CF_R2_ACCESS_KEY_ID && CF_R2_SECRET_ACCESS_KEY),
     dohResolver: '1.1.1.1 (Cloudflare DNS over HTTPS)',
     edgeAcceleration: 'ACTIVE_BUFFERED',
-    status: 'ACTIVE_CONFIGURED',
+    status: 'CONFIGURATION_STATUS_ONLY',
     dnsMappings: Object.values(cfDnsCache)
   });
 });
 
 // 4. GeoTV Space Line Info
 app.get('/api/iptv/geotv/info', (_req: Request, res: Response) => {
-  const m3uPlus = `${GEOTV_HOST}/get.php?username=${GEOTV_USER}&password=${GEOTV_PASS}&type=m3u_plus&output=ts`;
-  const m3uStandard = `${GEOTV_HOST}/get.php?username=${GEOTV_USER}&password=${GEOTV_PASS}&type=m3u&output=ts`;
-  const webtv = `${GEOTV_HOST}/get.php?username=${GEOTV_USER}&password=${GEOTV_PASS}&type=webtvlist&output=mpegts`;
-  res.json({
-    host: GEOTV_HOST,
-    username: GEOTV_USER,
-    password: GEOTV_PASS,
-    package: GEOTV_PACKAGE,
-    renewalDate: GEOTV_RENEWAL,
-    m3uPlusUrl: m3uPlus,
-    m3uStandardUrl: m3uStandard,
-    webTvListUrl: webtv,
-    appUrl: `${GEOTV_HOST}/app.php`,
-    cpanelUrl: 'https://store.stariptv.pk/panel/m3u-4ffe0b9c5bfbd4a2d4325fc9aab6e8f1'
-  });
+  res.json({ configured: Boolean(GEOTV_HOST && GEOTV_USER && GEOTV_PASS) });
 });
 
 // 5. Live Playlist Fetcher & Parser
@@ -648,6 +656,9 @@ async function fetchAndParseAllChannels(force = false) {
   }
 
   const playlistUrl = `${GEOTV_HOST}/get.php?username=${GEOTV_USER}&password=${GEOTV_PASS}&type=m3u_plus&output=ts`;
+  if (!GEOTV_HOST || !GEOTV_USER || !GEOTV_PASS || new URL(GEOTV_HOST).protocol !== 'https:') {
+    throw new Error('Secure GeoTV provider configuration is required.');
+  }
   // Pre-resolve host via Cloudflare DoH
   const host = new URL(playlistUrl).hostname;
   await resolveViaCloudflareDoH(host);
@@ -677,12 +688,10 @@ async function fetchAndParseAllChannels(force = false) {
         rawName: rawName,
         logo: logoMatch ? logoMatch[1] : '',
         group: group,
-        category: categorizeGroup(rawName, group),
-        streamUrl: ''
+        category: categorizeGroup(rawName, group)
       };
     } else if (line.includes('/live/')) {
       if (currentItem) {
-        currentItem.streamUrl = line;
         // Extract stream ID (e.g., 823012 from /live/user/pass/823012.ts)
         const idMatch = line.match(/\/live\/[^/]+\/[^/]+\/(\d+)\./);
         const streamId = idMatch ? idMatch[1] : String(parsed.length + 1);
@@ -690,7 +699,7 @@ async function fetchAndParseAllChannels(force = false) {
         currentItem.streamId = streamId;
         // HLS URL powered by Cloudflare DoH Proxy
         currentItem.hlsUrl = `/api/proxy/hls/stream.m3u8?channelId=${streamId}`;
-        currentItem.tsUrl = `/api/proxy/stream?url=${encodeURIComponent(line)}`;
+        currentItem.tsUrl = `/api/iptv/stream?channelId=${streamId}`;
         parsed.push(currentItem);
         currentItem = null;
       }
@@ -714,7 +723,7 @@ app.get(['/api/iptv/geotv/channels', '/api/iptv/channels', '/api/geotv/channels'
       channels: channels
     });
   } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
+    res.status(503).json({ success: false, error: 'Live catalog sync is unavailable. Check secure provider configuration.' });
   }
 });
 
@@ -984,13 +993,17 @@ app.get('/api/media/tvmaze/episodes', async (req: Request, res: Response) => {
   }
 });
 
-// 8d. Xtream-Masters WebPlayer & Player API Gateway (/api/xtream/player-api)
-// Bridges credentials from PlayBeat to Xtream-Masters panel (http://xtream-masters.com/webplayer/ & geotv.space)
+// 8d. Server-side provider metadata gateway
 app.all('/api/xtream/player-api', async (req: Request, res: Response) => {
-  const host = (req.query.host as string) || (req.body?.host as string) || GEOTV_HOST;
-  const username = (req.query.username as string) || (req.body?.username as string) || GEOTV_USER;
-  const password = (req.query.password as string) || (req.body?.password as string) || GEOTV_PASS;
+  if (!requireAdmin(req, res)) return;
+  const host = GEOTV_HOST;
+  const username = (req.body?.username as string) || GEOTV_USER;
+  const password = (req.body?.password as string) || GEOTV_PASS;
   const action = (req.query.action as string) || (req.body?.action as string) || '';
+
+  if (!GEOTV_HOST || !username || !password || new URL(GEOTV_HOST).protocol !== 'https:') {
+    return res.status(503).json({ success: false, error: 'Secure provider configuration is unavailable.' });
+  }
 
   try {
     let url = `${host}/player_api.php?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`;
@@ -1023,86 +1036,11 @@ app.all('/api/xtream/player-api', async (req: Request, res: Response) => {
 });
 
 // -----------------------------------------------------------------------
-// CLOUDFLARE DNS & NAMESERVER MANAGEMENT FOR playbeat.live
-// -----------------------------------------------------------------------
-const DOMAIN_NAME = process.env.DOMAIN || 'playbeat.live';
+app.all(['/api/cloudflare/dns/setup-zone', '/api/cloudflare/dns/records'], (_req: Request, res: Response) =>
+  res.status(503).json({ success: false, error: 'DNS management is not configured.' })
+);
 
-// Cloudflare DNS setup endpoint for playbeat.live
-app.all(['/api/cloudflare/dns/setup-zone', '/api/cloudflare/dns/records'], async (req: Request, res: Response) => {
-  const isPost = req.method === 'POST';
-  
-  const nameservers = [
-    { type: 'Primary NS', server: 'anirban.ns.cloudflare.com', status: 'ACTIVE_DELEGATED' },
-    { type: 'Secondary NS', server: 'nancy.ns.cloudflare.com', status: 'ACTIVE_DELEGATED' }
-  ];
-
-  const configuredRecords = [
-    { type: 'A', name: '@', content: '104.21.68.14', proxied: true, ttl: 'Auto', purpose: 'Root Apex (playbeat.live)' },
-    { type: 'CNAME', name: 'www', content: 'playbeat.live', proxied: true, ttl: 'Auto', purpose: 'Web Frontend CDN' },
-    { type: 'CNAME', name: 'api', content: 'playbeat-live.playbeatdigital.workers.dev', proxied: true, ttl: 'Auto', purpose: 'Worker Reseller API & Proxy' },
-    { type: 'CNAME', name: 'stream', content: 'playbeat-live.playbeatdigital.workers.dev', proxied: true, ttl: 'Auto', purpose: 'Lag-Free HLS Stream Accelerator' },
-    { type: 'TXT', name: '@', content: 'v=spf1 include:_spf.cloudflare.com ~all', proxied: false, ttl: 'Auto', purpose: 'Security & Verification' }
-  ];
-
-  const sslStatus = {
-    mode: 'Full (strict)',
-    universalSsl: 'Active',
-    edgeCertificates: '2048-bit RSA & ECDSA P-256',
-    alwaysUseHttps: true,
-    minTlsVersion: 'TLS 1.2',
-    hsts: 'max-age=31536000; includeSubDomains; preload'
-  };
-
-  const edgeRules = [
-    { name: 'HLS Playlist Caching', match: '*.m3u8', edgeTtl: '2s', browserTtl: '0s', action: 'Cache Everything + Bypass Stale' },
-    { name: 'MPEG-TS Chunks Acceleration', match: '*.ts', edgeTtl: '7d', browserTtl: '1d', action: 'Edge Cache High-Speed Video Buffer' },
-    { name: 'Logo & Static Assets', match: '/api/proxy/image*', edgeTtl: '30d', browserTtl: '7d', action: 'Tiered Cache Active' }
-  ];
-
-  // Try live Cloudflare API query if token is valid
-  let liveCloudflareZone: any = null;
-  try {
-    const zoneQuery = await fetch(`https://api.cloudflare.com/client/v4/zones?name=${DOMAIN_NAME}`, {
-      headers: {
-        'Authorization': `Bearer ${CF_API_TOKEN}`,
-        'Content-Type': 'application/json'
-      }
-    });
-    const zoneData = await zoneQuery.json();
-    if (zoneData.success && zoneData.result && zoneData.result.length > 0) {
-      liveCloudflareZone = zoneData.result[0];
-    }
-  } catch {
-    // Fallback to pre-configured representation
-  }
-
-  res.json({
-    success: true,
-    domain: DOMAIN_NAME,
-    status: 'ACTIVE_SECURED',
-    nameservers,
-    records: configuredRecords,
-    ssl: sslStatus,
-    edgeRules,
-    liveZone: liveCloudflareZone ? {
-      id: liveCloudflareZone.id,
-      name: liveCloudflareZone.name,
-      status: liveCloudflareZone.status,
-      nameServers: liveCloudflareZone.name_servers
-    } : {
-      id: 'cf_zone_playbeat_live_01',
-      name: DOMAIN_NAME,
-      status: 'active',
-      nameServers: ['alec.ns.cloudflare.com', 'sophia.ns.cloudflare.com']
-    },
-    message: isPost 
-      ? `Successfully synchronized DNS Name Servers & Edge Worker routes for ${DOMAIN_NAME}!` 
-      : `Cloudflare DNS settings loaded for ${DOMAIN_NAME}.`
-  });
-});
-
-// -----------------------------------------------------------------------
-// WORKER JOB 1: FETCHING & PRODUCING CONTENT (MOVIES, SONGS, SERIES, LIVE TV)
+// WORKER JOB 1: FETCHING & PRODUCING CONTENT// WORKER JOB 1: FETCHING & PRODUCING CONTENT (MOVIES, SONGS, SERIES, LIVE TV)
 // -----------------------------------------------------------------------
 app.get('/api/content/all', async (_req: Request, res: Response) => {
   const channels = await fetchAndParseAllChannels(false);
@@ -1137,272 +1075,15 @@ app.get('/api/content/series', async (_req: Request, res: Response) => {
   res.json({ success: true, count: SERIES.length, series: SERIES });
 });
 
-// -----------------------------------------------------------------------
-// WORKER JOB 2: USER REGISTRATION & CUSTOMER ACCOUNTS
-// -----------------------------------------------------------------------
-interface CustomerUser {
-  id: string;
-  email: string;
-  name: string;
-  role: 'CUSTOMER' | 'VIP';
-  passwordHash: string;
-  createdAt: string;
-  subscription?: any;
-}
+const unavailableEndpoint = (feature: string) => (_req: Request, res: Response) =>
+  res.status(503).json({ success: false, error: `${feature} is not configured.` });
 
-const registeredUsers: Map<string, CustomerUser> = new Map([
-  [
-    'demo@playbeat.live',
-    {
-      id: 'usr_demo_01',
-      email: 'demo@playbeat.live',
-      name: 'PlayBeat Customer',
-      role: 'VIP',
-      passwordHash: 'playbeat2026',
-      createdAt: '2026-10-01T00:00:00.000Z',
-      subscription: {
-        plan: 'World Package, Channels + Vods (Family)',
-        status: 'ACTIVE',
-        expiryDate: '2026-11-05',
-        username: '3fa35bc1'
-      }
-    }
-  ]
-]);
-
-app.post('/api/user/register', (req: Request, res: Response) => {
-  const { email, password, name } = req.body;
-  if (!email || !password) {
-    return res.status(400).json({ success: false, message: 'Email and password are required.' });
-  }
-
-  const cleanEmail = String(email).trim().toLowerCase();
-  if (registeredUsers.has(cleanEmail)) {
-    return res.status(409).json({ success: false, message: 'An account with this email already exists.' });
-  }
-
-  const newUser: CustomerUser = {
-    id: `usr_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-    email: cleanEmail,
-    name: name || cleanEmail.split('@')[0],
-    role: 'VIP',
-    passwordHash: String(password),
-    createdAt: new Date().toISOString()
-  };
-
-  registeredUsers.set(cleanEmail, newUser);
-  res.json({
-    success: true,
-    user: { id: newUser.id, email: newUser.email, name: newUser.name, role: newUser.role },
-    token: `pbtk_${newUser.id}_${Date.now()}`,
-    message: 'User registration complete. Welcome to PlayBeat Entertainment!'
-  });
-});
-
-app.post('/api/user/login', (req: Request, res: Response) => {
-  const { email, password } = req.body;
-  const cleanEmail = String(email || '').trim().toLowerCase();
-  const user = registeredUsers.get(cleanEmail);
-
-  if (!user || user.passwordHash !== String(password)) {
-    return res.status(401).json({ success: false, message: 'Invalid email or password.' });
-  }
-
-  res.json({
-    success: true,
-    user: { id: user.id, email: user.email, name: user.name, role: user.role, subscription: user.subscription },
-    token: `pbtk_${user.id}_${Date.now()}`
-  });
-});
+app.all(['/api/user/register', '/api/user/login'], unavailableEndpoint('User accounts'));
+app.all(['/api/checkout/create-order', '/api/checkout/verify-payment'], unavailableEndpoint('Checkout'));
+app.all(['/api/cron/daily-report', '/api/report/daily'], unavailableEndpoint('Daily reports'));
+app.all(['/api/cron/maintenance', '/api/system/maintenance'], unavailableEndpoint('Stream maintenance'));
 
 // -----------------------------------------------------------------------
-// WORKER JOB 3: CHECKOUT, VERIFY PAYMENT & PROVIDE SUBSCRIPTION
-// -----------------------------------------------------------------------
-interface SubscriptionOrder {
-  orderId: string;
-  planId: string;
-  planName: string;
-  amountCenti: number;
-  currency: string;
-  customerEmail: string;
-  paymentMethod: string;
-  status: 'PENDING' | 'VERIFIED' | 'FAILED';
-  createdAt: string;
-  provisionedCredentials?: any;
-}
-const ordersDatabase: Map<string, SubscriptionOrder> = new Map();
-
-app.post('/api/checkout/create-order', (req: Request, res: Response) => {
-  const { planId, planName, amount, currency = 'USD', email, paymentMethod = 'Credit Card' } = req.body;
-  const orderId = `ord_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-  const order: SubscriptionOrder = {
-    orderId,
-    planId: planId || 'vip_annual',
-    planName: planName || 'VIP Premier 4K Access',
-    amountCenti: Math.round((Number(amount) || 14.99) * 100),
-    currency,
-    customerEmail: email || 'customer@playbeat.live',
-    paymentMethod,
-    status: 'PENDING',
-    createdAt: new Date().toISOString()
-  };
-
-  ordersDatabase.set(orderId, order);
-  res.json({
-    success: true,
-    orderId,
-    amount: order.amountCenti / 100,
-    currency: order.currency,
-    status: order.status,
-    checkoutUrl: `https://${DOMAIN_NAME}/checkout/${orderId}`
-  });
-});
-
-app.post('/api/checkout/verify-payment', (req: Request, res: Response) => {
-  const { orderId, transactionRef } = req.body;
-  const order: SubscriptionOrder = ordersDatabase.get(orderId) || {
-    orderId: orderId || `ord_${Date.now()}`,
-    planId: 'vip_world',
-    planName: 'World Package, Channels + Vods (Family)',
-    amountCenti: 1499,
-    currency: 'USD',
-    customerEmail: 'customer@playbeat.live',
-    paymentMethod: 'Instant Gateway',
-    status: 'PENDING' as const,
-    createdAt: new Date().toISOString()
-  };
-
-  // Verify and mark paid
-  order.status = 'VERIFIED';
-
-  // Automatically provision Xtream IPTV line credentials & M3U links
-  const username = `pb_${Math.random().toString(36).substring(2, 8)}`;
-  const password = `pbpass_${Math.random().toString(36).substring(2, 8)}`;
-  const host = `https://stream.${DOMAIN_NAME}`;
-  const expiryDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-
-  const credentials = {
-    username,
-    password,
-    serverUrl: host,
-    m3uUrl: `${host}/get.php?username=${username}&password=${password}&type=m3u_plus&output=ts`,
-    epgUrl: `${host}/xmltv.php?username=${username}&password=${password}`,
-    webtvUrl: `https://${DOMAIN_NAME}/live`,
-    planName: order.planName,
-    startDate: new Date().toISOString().split('T')[0],
-    expiryDate,
-    connections: 4,
-    status: 'ACTIVE'
-  };
-
-  order.provisionedCredentials = credentials;
-  ordersDatabase.set(order.orderId, order);
-
-  res.json({
-    success: true,
-    verified: true,
-    orderId: order.orderId,
-    transactionRef: transactionRef || `tx_cf_${Date.now()}`,
-    subscription: credentials,
-    message: `Payment verified! VIP subscription activated until ${expiryDate}.`
-  });
-});
-
-// -----------------------------------------------------------------------
-// WORKER JOB 4: DAILY OPERATIONAL REPORT
-// -----------------------------------------------------------------------
-app.all(['/api/cron/daily-report', '/api/report/daily'], (_req: Request, res: Response) => {
-  const now = new Date();
-  const dateStr = now.toISOString().split('T')[0];
-  
-  const report = {
-    reportId: `rpt_${dateStr}`,
-    generatedAt: now.toISOString(),
-    domain: DOMAIN_NAME,
-    telemetry: {
-      totalRequestsToday: 184592,
-      edgeCachedHits: 177920,
-      cacheHitRatio: '96.38%',
-      bandwidthTotalGb: 342.8,
-      bandwidthCloudflareSavedGb: 326.1,
-      peakConcurrentViewers: 1420
-    },
-    streamingHealth: {
-      activeChannels: 850,
-      channelsHealthy: 847,
-      channelsFailoverRerouted: 3,
-      avgEdgeLatencyMs: 14.2,
-      dohResolutionUptime: '100%'
-    },
-    businessMetrics: {
-      newCustomerRegistrations: 28,
-      activePaidSubscriptions: 894,
-      totalOrdersToday: 34,
-      revenueTodayUsd: 509.66,
-      chargebackRatio: '0.00%'
-    },
-    topStreams: [
-      { channel: 'PlayBeat Sports Premier 4K', viewers: 412, resolution: '4K' },
-      { channel: 'CM: Hindi Dubbed 1 FHD', viewers: 298, resolution: '1080p' },
-      { channel: 'Geo News HD Pakistan', viewers: 215, resolution: '1080p' },
-      { channel: 'Tears of Steel: Renaissance', viewers: 184, resolution: '4K' }
-    ]
-  };
-
-  res.json({ success: true, report });
-});
-
-// -----------------------------------------------------------------------
-// WORKER JOB 5: CONTINUOUS STREAM MAINTENANCE & AUTO FAILOVER
-// -----------------------------------------------------------------------
-app.all(['/api/cron/maintenance', '/api/system/maintenance'], async (_req: Request, res: Response) => {
-  const startTime = Date.now();
-  
-  // Health checks against upstream nodes
-  const nodesToTest = [
-    { host: 'geotv.space', port: 8880, role: 'API & Master Playlist' },
-    { host: '953303.voxashan.space', port: 80, role: 'Active HLS Video Segments' },
-    { host: '953303.voxmachina.store', port: 80, role: 'Failover Video Node 1' },
-    { host: '953303.xvin.store', port: 80, role: 'Failover Video Node 2' }
-  ];
-
-  const nodeResults = await Promise.all(
-    nodesToTest.map(async (n) => {
-      const doh = await resolveViaCloudflareDoH(n.host);
-      return {
-        host: n.host,
-        resolvedIp: doh.ip,
-        latencyMs: doh.latencyMs,
-        status: doh.latencyMs < 500 ? 'OPERATIONAL' : 'DEGRADED',
-        role: n.role
-      };
-    })
-  );
-
-  // Auto clean stale DNS cache entries
-  const now = Date.now();
-  let purgedCount = 0;
-  for (const [host, entry] of Object.entries(cfDnsCache)) {
-    if (entry.expires < now) {
-      delete cfDnsCache[host];
-      purgedCount++;
-    }
-  }
-
-  const durationMs = Date.now() - startTime;
-
-  res.json({
-    success: true,
-    maintenanceId: `maint_${Date.now()}`,
-    timestamp: new Date().toISOString(),
-    durationMs,
-    edgeNodes: nodeResults,
-    purgedStaleDnsEntries: purgedCount,
-    hlsBufferStatus: 'OPTIMAL',
-    message: 'Continuous maintenance executed successfully. All edge nodes operational with zero lag.'
-  });
-});
-
 // 9. Image Proxy to prevent Mixed-Content warnings for HTTP channel logos
 app.get(['/api/proxy/image', '/api/iptv/image', '/api/geotv/image'], async (req: Request, res: Response) => {
   const imageUrl = req.query.url as string;

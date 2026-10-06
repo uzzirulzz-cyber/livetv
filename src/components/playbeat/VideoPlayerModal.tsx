@@ -19,7 +19,6 @@ import {
   Info, 
   Copy, 
   Check, 
-  ExternalLink, 
   Zap, 
   Globe, 
   Activity, 
@@ -86,18 +85,14 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
   const [showSpeedMenu, setShowSpeedMenu] = useState(false);
   const [showDiagnostics, setShowDiagnostics] = useState(false);
   const [showEpgInfo, setShowEpgInfo] = useState(true);
-  const [showXtreamModal, setShowXtreamModal] = useState(false);
   const [controlsVisible, setControlsVisible] = useState(true);
-  const [copiedLinkType, setCopiedLinkType] = useState<'hls' | 'ts' | 'xtream' | null>(null);
+  const [copiedLinkType, setCopiedLinkType] = useState<'hls' | 'ts' | null>(null);
   const [drawerSearch, setDrawerSearch] = useState('');
   const [needsUserGesture, setNeedsUserGesture] = useState(false);
   
   // Cloudflare Metrics
   const [bufferSeconds, setBufferSeconds] = useState(0);
-  const [cfEdgeIp, setCfEdgeIp] = useState('104.21.68.14');
-  const [dnsLatency, setDnsLatency] = useState(7);
-  const [bandwidthKbps, setBandwidthKbps] = useState(4850);
-  const [droppedFrames, setDroppedFrames] = useState(0);
+  const [bandwidthKbps, setBandwidthKbps] = useState(0);
   const [currentStreamSource, setCurrentStreamSource] = useState('');
 
   const isVodMedia = channel ? (
@@ -119,17 +114,6 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
     }
   };
 
-  // Cloudflare DNS mapping query
-  useEffect(() => {
-    fetch('/api/cloudflare/dns/resolve?domain=geotv.space')
-      .then(r => r.json())
-      .then(d => {
-        if (d.ip) setCfEdgeIp(d.ip);
-        if (d.latencyMs) setDnsLatency(d.latencyMs);
-      })
-      .catch(() => {});
-  }, [channel]);
-
   // Main playback engine initializer
   useEffect(() => {
     if (!isOpen || !channel) {
@@ -143,6 +127,7 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
     destroyHls();
     setIsBuffering(true);
     setNeedsUserGesture(false);
+    setBandwidthKbps(0);
     retryCountRef.current = 0;
 
     const streamId = channel.streamId || (channel.id.replace('geo_', '').replace('geo_live_', ''));
@@ -380,9 +365,7 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
 
   const streamId = channel.streamId || (channel.id.replace('geo_', '').replace('geo_live_', ''));
   const fullHlsUrl = `${window.location.origin}/api/proxy/hls/stream.m3u8?channelId=${streamId}`;
-  const fullTsUrl = channel.streamUrl.startsWith('http')
-    ? channel.streamUrl
-    : `http://geotv.space:8880/live/3fa35bc1/3cc73db1/${streamId}.ts`;
+  const fullTsUrl = channel.streamUrl;
 
   const togglePlay = () => {
     if (!videoRef.current) return;
@@ -463,10 +446,9 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
     }
   };
 
-  const handleCopy = (type: 'hls' | 'ts' | 'xtream') => {
+  const handleCopy = (type: 'hls' | 'ts') => {
     let url = fullHlsUrl;
     if (type === 'ts') url = fullTsUrl;
-    if (type === 'xtream') url = 'http://xtream-masters.com/webplayer/';
     navigator.clipboard.writeText(url);
     setCopiedLinkType(type);
     setTimeout(() => setCopiedLinkType(null), 2500);
@@ -573,16 +555,6 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
 
             {/* Top Right Action Buttons */}
             <div className="flex items-center gap-1.5 sm:gap-2 pointer-events-auto">
-              {/* Xtream-Masters WebPlayer Button */}
-              <button
-                onClick={() => setShowXtreamModal(true)}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-blue-600/30 hover:bg-blue-600/50 border border-blue-500/40 text-xs font-mono text-cyan-200 transition-colors"
-                title="Open Xtream-Masters WebPlayer & Credentials"
-              >
-                <Tv className="w-3.5 h-3.5 text-cyan-400" />
-                <span className="hidden sm:inline">Xtream WebPlayer</span>
-              </button>
-
               <button
                 onClick={() => handleCopy('hls')}
                 className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/10 hover:bg-white/20 text-xs font-mono text-cyan-300 transition-colors"
@@ -648,8 +620,12 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
                   <Globe className="w-4 h-4" />
                   Stream Performance
                 </span>
-                <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-emerald-500/20 text-emerald-300 font-bold">
-                  ACTIVE
+                <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold ${
+                  isPlaying
+                    ? 'bg-emerald-500/20 text-emerald-300'
+                    : 'bg-amber-500/20 text-amber-300'
+                }`}>
+                  {isPlaying ? 'PLAYING' : isBuffering ? 'BUFFERING' : 'WAITING'}
                 </span>
               </div>
 
@@ -659,20 +635,12 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
                   <span className="text-white font-bold">{isVodMedia ? 'Direct MP4 / WebM' : 'M3U8 HLS Live'}</span>
                 </div>
                 <div className="flex justify-between text-slate-400">
-                  <span>Cloudflare Edge IP:</span>
-                  <span className="text-cyan-300">{cfEdgeIp}</span>
-                </div>
-                <div className="flex justify-between text-slate-400">
-                  <span>Latency:</span>
-                  <span className="text-emerald-400">{dnsLatency} ms</span>
-                </div>
-                <div className="flex justify-between text-slate-400">
                   <span>Buffer Seconds:</span>
                   <span className="text-cyan-400 font-bold">{bufferSeconds}s</span>
                 </div>
                 <div className="flex justify-between text-slate-400">
                   <span>Estimated Bitrate:</span>
-                  <span className="text-white">{bandwidthKbps} Kbps</span>
+                  <span className="text-white">{bandwidthKbps > 0 ? `${bandwidthKbps} Kbps` : '—'}</span>
                 </div>
                 <div className="flex justify-between text-slate-400">
                   <span>Playback Speed:</span>
@@ -697,66 +665,6 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
               <p className="text-slate-300 text-xs leading-relaxed line-clamp-3">
                 {channel.currentProgram.synopsis || 'High-definition digital broadcast powered by PlayBeat cloud stream delivery.'}
               </p>
-            </div>
-          )}
-
-          {/* Xtream-Masters WebPlayer Connector Modal */}
-          {showXtreamModal && (
-            <div className="absolute inset-0 bg-black/85 backdrop-blur-md z-40 flex items-center justify-center p-4">
-              <div className="w-full max-w-md bg-slate-950 border border-blue-500/40 rounded-2xl p-6 shadow-2xl space-y-5 text-white">
-                <div className="flex items-center justify-between pb-3 border-b border-white/10">
-                  <div className="flex items-center gap-2">
-                    <Tv className="w-5 h-5 text-cyan-400" />
-                    <h3 className="text-base font-bold font-display">Xtream-Masters WebPlayer</h3>
-                  </div>
-                  <button 
-                    onClick={() => setShowXtreamModal(false)}
-                    className="p-1 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-
-                <p className="text-xs text-slate-300 leading-relaxed">
-                  Use your credentials below inside the official <strong>Xtream-Masters WebPlayer</strong> (<code className="text-cyan-300">http://xtream-masters.com/webplayer/</code>):
-                </p>
-
-                <div className="bg-slate-900/90 border border-white/10 rounded-xl p-3.5 space-y-2.5 font-mono text-xs">
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-400">Server URL:</span>
-                    <span className="text-cyan-300 font-bold select-all">http://geotv.space:8880</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-400">Username:</span>
-                    <span className="text-white font-bold select-all">3fa35bc1</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-400">Password:</span>
-                    <span className="text-white font-bold select-all">3cc73db1</span>
-                  </div>
-                </div>
-
-                <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
-                  <a
-                    href="http://xtream-masters.com/webplayer/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-lg shadow-cyan-500/20"
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                    <span>Open Xtream-Masters WebPlayer</span>
-                  </a>
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText('Server: http://geotv.space:8880 | User: 3fa35bc1 | Pass: 3cc73db1');
-                      setShowXtreamModal(false);
-                    }}
-                    className="w-full sm:w-auto py-2.5 px-4 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold"
-                  >
-                    Copy All
-                  </button>
-                </div>
-              </div>
             </div>
           )}
 

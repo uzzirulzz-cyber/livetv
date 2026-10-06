@@ -44,18 +44,6 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
       streamUrl: RELIABLE_STREAMS.MP4_CINEMA_2
     },
     {
-      id: 'f_sports',
-      title: 'Sky Sports Premier League 4K',
-      subtitle: 'Live On Sky Sports Premier League',
-      category: 'Live Broadcast',
-      rating: 'LIVE',
-      quality: '4K 60FPS',
-      audio: 'Stadium Surround',
-      description: 'Experience ultra-crisp pitchside multi-angle coverage, real-time tactical overlays, and immersive stadium audio engineered for the ultimate sports fan.',
-      backdrop: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=1920&h=1080&q=80',
-      streamUrl: RELIABLE_STREAMS.HLS_ADAPTIVE
-    },
-    {
       id: 'f_deadpool',
       title: 'Deadpool & Wolverine',
       subtitle: 'Marvel Studios Blockbuster',
@@ -107,7 +95,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
             <span className="text-slate-600">·</span>
             <span className="text-emerald-400 font-semibold flex items-center gap-1 text-[11px] bg-emerald-950/70 border border-emerald-500/40 px-2 py-0.5 rounded">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span>100% Free · No Subscription Required</span>
+              <span>Availability depends on your authorized provider</span>
             </span>
           </div>
 
@@ -148,7 +136,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
               className="flex items-center gap-2 px-5 py-3 bg-white/[0.12] hover:bg-white/[0.2] text-white border border-white/20 rounded-lg text-xs sm:text-sm font-bold backdrop-blur-md transition-all active:scale-[0.98]"
             >
               <Tv className="w-4 h-4 text-cyan-400" />
-              <span>EXPLORE 850+ LIVE CHANNELS</span>
+              <span>EXPLORE LIVE CHANNELS</span>
             </button>
 
             <button

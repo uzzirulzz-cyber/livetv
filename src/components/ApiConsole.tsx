@@ -18,19 +18,17 @@ interface ApiConsoleProps {
   onLogAdded: (log: ApiCallLog) => void;
   onClearLogs: () => void;
   isSimulation: boolean;
-  customApiKey: string;
 }
 
 export const ApiConsole: React.FC<ApiConsoleProps> = ({
   apiLogs,
   onLogAdded,
   onClearLogs,
-  isSimulation,
-  customApiKey
+  isSimulation
 }) => {
   const [selectedOperation, setSelectedOperation] = useState<string>('infoapi');
   const [gatewayTarget, setGatewayTarget] = useState<'PROVIDER_DIRECT' | 'PLAYBEAT_WORKER'>('PLAYBEAT_WORKER');
-  const [adminToken, setAdminToken] = useState<string>('test-admin-secret-token');
+  const [adminToken, setAdminToken] = useState<string>('');
   const [params, setParams] = useState<Record<string, string>>({});
   const [isExecuting, setIsExecuting] = useState(false);
   const [lastResponse, setLastResponse] = useState<any>(null);
@@ -149,8 +147,7 @@ export const ApiConsole: React.FC<ApiConsoleProps> = ({
 
   const curls = generateCurlCommands(
     selectedOperation,
-    params,
-    customApiKey || 'special-key'
+    params
   );
 
   const activeCurl = gatewayTarget === 'PLAYBEAT_WORKER' ? playbeatCurl : curls.post;
@@ -204,7 +201,6 @@ export const ApiConsole: React.FC<ApiConsoleProps> = ({
       params,
       {
         simulateFallback: isSimulation,
-        customKey: customApiKey,
         onLog: onLogAdded
       }
     );
@@ -235,7 +231,7 @@ export const ApiConsole: React.FC<ApiConsoleProps> = ({
               <code className="text-indigo-300">
                 {gatewayTarget === 'PLAYBEAT_WORKER'
                   ? `/api/${actionName} (PlayBeat TV Worker)`
-                  : 'https://iptv-api.xtream-masters.com/v3/ (Upstream Direct)'}
+                  : 'Server-side provider API'}
               </code>
             </p>
           </div>
@@ -263,7 +259,7 @@ export const ApiConsole: React.FC<ApiConsoleProps> = ({
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
-                Upstream Direct (v3/)
+                Server-side provider API
               </button>
             </div>
 

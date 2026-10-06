@@ -28,6 +28,7 @@ This repository includes a preconfigured GitHub Actions workflow at [`.github/wo
 3. **Publish to Go Live**:
    Every time you push commits to `main`, GitHub Actions will automatically:
    - Install dependencies and build the Vite frontend
+   - Apply pending `playbeat-catalog` D1 migrations
    - Deploy assets and the edge proxy worker to Cloudflare
    - Update `https://playbeat.live` instantly with 0 downtime!
 
@@ -35,7 +36,7 @@ This repository includes a preconfigured GitHub Actions workflow at [`.github/wo
 
 ### Option B: Direct Cloudflare Dashboard Git Connection
 
-1. Open [Cloudflare Dashboard](https://dash.cloudflare.com/) and select account: **Playbeatdigital@gmail.com's Account** (`20c83732a1af52f80655768cd4dfc251`).
+1. Open [Cloudflare Dashboard](https://dash.cloudflare.com/) and select the account configured for this deployment.
 2. Navigate to **Compute (Workers) > Workers & Pages**.
 3. Click **Create Application** -> Select **Pages** or **Workers** -> **Connect to Git**.
 4. Authenticate your GitHub account and select your `playbeat-live` repository.
@@ -47,25 +48,21 @@ This repository includes a preconfigured GitHub Actions workflow at [`.github/wo
 
 ---
 
-## 🌐 Cloudflare DNS & Nameservers Configuration
+## 🌐 Cloudflare DNS & Nameservers
 
-The domain `playbeat.live` is active on Cloudflare with the following name servers:
-- **Primary NS**: `anirban.ns.cloudflare.com`
-- **Secondary NS**: `nancy.ns.cloudflare.com`
-
-### Active DNS Records:
-| Type | Name | Content | Proxy Status | TTL |
-|------|------|---------|--------------|-----|
-| A | `@` (playbeat.live) | `104.21.68.14` | Proxied (Orange Cloud) | Auto |
-| CNAME | `www` | `playbeat.live` | Proxied (Orange Cloud) | Auto |
-| Worker Domain | `playbeat.live` | Worker `playbeat-live` | Proxied | Auto |
-| Worker Domain | `www.playbeat.live` | Worker `playbeat-live` | Proxied | Auto |
+DNS records, nameserver delegation, SSL mode, and Worker custom-domain routing are not verified by this repository. Check their current values in the Cloudflare dashboard before relying on them; do not use example IP addresses or stale nameserver values from older configuration notes.
 
 ---
 
 ## ⚡ Architecture & Features
 
-- **850+ Live Channels**: 100% free streaming directly from `playbeat.live`.
-- **Lag-Free Edge Proxy**: Video TS segments and HLS M3U8 playlists are dynamically proxied and cached using Cloudflare Workers.
-- **DNS-over-HTTPS (DoH)**: Integrates Cloudflare `1.1.1.1` DoH to bypass ISP streaming blocks and throttle.
-- **Full Reseller & Admin Suite**: Manage lines, playlists, credits, and Cloudflare telemetry at `/admin` (credentials: `admin@playbeat.digital` / `playbeat1122`).
+- **Provider-fed Live TV**: No demonstration/test channels are advertised as live. Channels load only when an authorized HTTPS provider is configured.
+- **D1 Catalog Storage**: `CATALOG_DB` stores channel metadata without upstream stream URLs or provider credentials. The `epg_programs` schema is installed, but XMLTV ingestion is not implemented.
+- **Stream Proxy**: The Worker proxies provider playlists and segments when the provider is configured to use HTTPS.
+- **Admin Suite**: The `/admin` route remains locked until server-side authentication is configured.
+
+### Live catalog and D1 setup
+
+The Worker is bound to the `playbeat-catalog` D1 database in [`wrangler.toml`](./wrangler.toml), and the initial schema is in [`migrations/0001_catalog.sql`](./migrations/0001_catalog.sql). Deployments apply pending migrations before publishing the Worker.
+
+Set `GEOTV_HOST` to an HTTPS endpoint and configure `GEOTV_USER` and `GEOTV_PASS` as Cloudflare Worker secrets. The Worker rejects HTTP provider endpoints because they would expose credentials in transit. Do not put provider credentials in browser code, query strings, or D1. No provider credentials are currently configured in this repository; until a rotated, authorized HTTPS endpoint is configured, the live catalog and playback remain unavailable.
