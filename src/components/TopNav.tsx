@@ -32,6 +32,7 @@ export const TopNav: React.FC<TopNavProps> = ({
 
   const navItems = [
     { id: 'dashboard', label: 'Dashboard' },
+    { id: 'operations', label: 'PlayBeat Ops Robot' },
     { id: 'cloudflare', label: 'Cloudflare & GeoTV Hub' },
     { id: 'lines', label: 'Line Manager' },
     { id: 'playlists', label: 'Playlist Links' },

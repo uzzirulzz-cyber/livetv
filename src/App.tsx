@@ -33,6 +33,7 @@ import { LineDetailModal } from './components/LineDetailModal';
 import { SettingsModal } from './components/SettingsModal';
 import { AdminLoginView } from './components/admin/AdminLoginView';
 import { CloudflareStreamHub } from './components/admin/CloudflareStreamHub';
+import { OpsRobotDashboard } from './components/admin/operations/OpsRobotDashboard';
 
 // PlayBeat Entertainment OTT Consumer Components
 import { PlayBeatHeader } from './components/playbeat/PlayBeatHeader';
@@ -109,7 +110,11 @@ export default function App() {
 
   useEffect(() => {
     const handleUrlChange = () => {
+      const path = window.location.pathname.toLowerCase();
       setCurrentRoute(getInitialRoute());
+      if (path.includes('operations') || path.includes('incidents') || path.includes('maintenance') || path.includes('broadcasts')) {
+        setResellerActiveTab('operations');
+      }
     };
     window.addEventListener('popstate', handleUrlChange);
     window.addEventListener('hashchange', handleUrlChange);
@@ -122,8 +127,16 @@ export default function App() {
   // PlayBeat Consumer Navigation Section: 'home' | 'live' | 'movies' | 'series' | 'guide' | 'devices' | 'support' | 'account'
   const [streamingSection, setStreamingSection] = useState<string>('home');
 
-  // Reseller Management Active Tab: 'dashboard' | 'lines' | 'playlists' | 'ledger' | 'api-console' | 'webhook' | 'rbac'
-  const [resellerActiveTab, setResellerActiveTab] = useState<string>('dashboard');
+  // Reseller Management Active Tab: 'dashboard' | 'operations' | 'cloudflare' | 'lines' | 'playlists' | 'ledger' | 'api-console' | 'webhook' | 'rbac'
+  const [resellerActiveTab, setResellerActiveTab] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const path = window.location.pathname.toLowerCase();
+      if (path.includes('operations') || path.includes('incidents') || path.includes('maintenance') || path.includes('broadcasts')) {
+        return 'operations';
+      }
+    }
+    return 'dashboard';
+  });
 
   // Reseller State
   const [lines, setLines] = useState<CustomerLine[]>([]);
@@ -1218,6 +1231,10 @@ export default function App() {
                 onViewAllLines={() => setResellerActiveTab('lines')}
                 onViewLedger={() => setResellerActiveTab('ledger')}
               />
+            )}
+
+            {resellerActiveTab === 'operations' && (
+              <OpsRobotDashboard />
             )}
 
             {resellerActiveTab === 'cloudflare' && (
