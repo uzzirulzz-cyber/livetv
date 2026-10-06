@@ -112,16 +112,16 @@ export const DevicesView: React.FC<DevicesViewProps> = ({
       ]
     },
     {
-      id: 'pc_mac',
-      title: 'Windows PC & Mac OS',
+      id: 'windows_pc',
+      title: 'Windows 10 & 11 PC',
       icon: Terminal,
       badge: 'Desktop',
-      recommendedApps: ['VLC Media Player', 'IPTV Smarters for Windows/Mac', 'Web Browser Player'],
+      recommendedApps: ['Xtream-Masters OTT Player', 'VLC Media Player'],
       steps: [
-        'Download IPTV Smarters Pro desktop app for Windows/Mac or VLC Media Player.',
-        'For VLC: Press Ctrl+N (Cmd+N on Mac) and paste your PlayBeat M3U Plus URL.',
-        'For IPTV Smarters: Login with your Xtream Codes Server, Username, and Password.',
-        'Or simply watch directly in any modern browser right here on PlayBeat!'
+        'Install Xtream-Masters OTT Player from the Microsoft Store on a 64-bit Windows 10 or Windows 11 PC.',
+        'Open the player and choose an Xtream Codes login or M3U/M3U8 playlist, according to the details supplied by your provider.',
+        'Enter your provider’s server address and account details directly into the player. Do not share them with PlayBeat or paste them into public links.',
+        'Load the playlist and select a channel. The player does not include channels or a subscription; playback depends on your provider and plan.'
       ]
     }
   ];
@@ -230,6 +230,27 @@ export const DevicesView: React.FC<DevicesViewProps> = ({
             ))}
           </div>
         </div>
+
+        {selectedDevice === 'windows_pc' && (
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-xl border border-blue-500/20 bg-blue-950/20 p-4">
+            <div>
+              <h3 className="text-sm font-bold text-white">Xtream-Masters OTT Player for Windows</h3>
+              <p className="mt-1 text-xs text-slate-400">
+                Official Microsoft Store download for Windows 10 and 11 (64-bit). Player app only; channels are not included.
+              </p>
+            </div>
+            <a
+              href="https://apps.microsoft.com/detail/9P22P7SZTM11"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-cyan-500 px-4 py-2 text-xs font-bold text-slate-950 transition-colors hover:bg-cyan-400"
+            >
+              <Download className="h-4 w-4" />
+              Download for Windows
+              <ExternalLink className="h-3.5 w-3.5" />
+            </a>
+          </div>
+        )}
 
         {/* Step-by-Step Instructions */}
         <div className="space-y-4">
