@@ -1,0 +1,14 @@
+name = "playbeat-live"
+main = "src/worker/playbeat-proxy.ts"
+compatibility_date = "2026-09-01"
+account_id = "20c83732a1af52f80655768cd4dfc251"
+workers_dev = true
+
+[vars]
+DOMAIN = "playbeat.live"
+ALLOWED_ORIGIN = "*"
+GEOTV_HOST = "http://geotv.space:8880"
+GEOTV_USER = "3fa35bc1"
+GEOTV_PASS = "3cc73db1"
+CLOUDFLARE_DOH_URL = "https://cloudflare-dns.com/dns-query"
+ENVIRONMENT = "production"

@@ -1,0 +1,7 @@
+{
+  "name": "Star Panel IPTV - Reseller & Line Manager",
+  "description": "Production-grade IPTV reseller management panel and API console for Xtream Codes, ActiveCode, and MAC address lines with automated playlists, credit ledger, and live provider proxy.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
