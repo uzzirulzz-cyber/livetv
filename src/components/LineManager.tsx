@@ -25,6 +25,9 @@ interface LineManagerProps {
   onOpenEditModal: (line: CustomerLine) => void;
   onOpenDeleteModal: (line: CustomerLine) => void;
   onToggleSuspend: (line: CustomerLine) => void;
+  onBulkSuspend?: (ids: string[]) => void;
+  onBulkExtend?: (ids: string[]) => void;
+  onBulkDelete?: (ids: string[]) => void;
 }
 
 export const LineManager: React.FC<LineManagerProps> = ({
@@ -35,12 +38,16 @@ export const LineManager: React.FC<LineManagerProps> = ({
   onOpenRenewModal,
   onOpenEditModal,
   onOpenDeleteModal,
-  onToggleSuspend
+  onToggleSuspend,
+  onBulkSuspend,
+  onBulkExtend,
+  onBulkDelete
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [protocolFilter, setProtocolFilter] = useState<'ALL' | LineType>('ALL');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE' | 'TRIAL' | 'EXPIRED' | 'SUSPENDED'>('ALL');
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const handleCopy = (text: string, id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -51,13 +58,8 @@ export const LineManager: React.FC<LineManagerProps> = ({
 
   const filteredLines = useMemo(() => {
     return lines.filter((line) => {
-      // Protocol filter
       if (protocolFilter !== 'ALL' && line.lineType !== protocolFilter) return false;
-
-      // Status filter
       if (statusFilter !== 'ALL' && line.status !== statusFilter) return false;
-
-      // Search
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         const matchesName = line.name.toLowerCase().includes(q);
@@ -65,12 +67,26 @@ export const LineManager: React.FC<LineManagerProps> = ({
         const matchesNotice = line.notice.toLowerCase().includes(q);
         return matchesName || matchesUser || matchesNotice;
       }
-
       return true;
     });
   }, [lines, protocolFilter, statusFilter, searchQuery]);
 
+  const isAllSelected = filteredLines.length > 0 && filteredLines.every(l => selectedIds.includes(l.id));
+
+  const toggleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filteredLines.map(l => l.id));
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  };
+
   const handleExportCsv = () => {
+    // ... existing implementation
     const headers = ['ID', 'Name', 'Protocol', 'Username', 'Connections', 'Status', 'Expiry Date', 'Notice'];
     const rows = filteredLines.map(l => [
       l.id,
@@ -112,6 +128,14 @@ export const LineManager: React.FC<LineManagerProps> = ({
 
         {/* Right Action buttons */}
         <div className="flex items-center gap-2">
+          {selectedIds.length > 0 && (
+            <div className="flex items-center gap-2 bg-slate-950 px-3 py-1.5 rounded-md border border-slate-700">
+               <span className="text-xs text-indigo-300 font-semibold">{selectedIds.length} selected</span>
+               {onBulkSuspend && <button onClick={() => onBulkSuspend(selectedIds)} className="px-2 py-1 bg-amber-900/30 hover:bg-amber-900/50 text-amber-300 rounded text-[10px] font-bold">Suspend</button>}
+               {onBulkExtend && <button onClick={() => onBulkExtend(selectedIds)} className="px-2 py-1 bg-indigo-900/30 hover:bg-indigo-900/50 text-indigo-300 rounded text-[10px] font-bold">Extend</button>}
+               {onBulkDelete && <button onClick={() => onBulkDelete(selectedIds)} className="px-2 py-1 bg-rose-900/30 hover:bg-rose-900/50 text-rose-300 rounded text-[10px] font-bold">Delete</button>}
+            </div>
+          )}
           <button
             onClick={handleExportCsv}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 rounded-md text-xs font-medium transition-colors"
@@ -173,6 +197,9 @@ export const LineManager: React.FC<LineManagerProps> = ({
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="border-b border-slate-800 bg-slate-950/70 text-slate-400 font-semibold uppercase tracking-wider text-[11px]">
+                <th className="py-3 px-4 w-10">
+                  <input type="checkbox" checked={isAllSelected} onChange={toggleSelectAll} className="accent-indigo-500"/>
+                </th>
                 <th className="py-3 px-4">Subscriber</th>
                 <th className="py-3 px-4">Type</th>
                 <th className="py-3 px-4">Username / ID</th>
@@ -185,7 +212,7 @@ export const LineManager: React.FC<LineManagerProps> = ({
             <tbody className="divide-y divide-slate-800/60">
               {filteredLines.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-slate-400 text-xs">
+                  <td colSpan={8} className="py-12 text-center text-slate-400 text-xs">
                     No IPTV lines match your current filter criteria.
                   </td>
                 </tr>
@@ -194,13 +221,17 @@ export const LineManager: React.FC<LineManagerProps> = ({
                   const isExp = line.status === 'EXPIRED';
                   const isTrial = line.status === 'TRIAL';
                   const isSuspended = line.status === 'SUSPENDED' || line.suspendedLocally;
+                  const isSelected = selectedIds.includes(line.id);
 
                   return (
                     <tr
                       key={line.id}
                       onClick={() => onSelectLine(line)}
-                      className="hover:bg-slate-800/40 transition-colors cursor-pointer group"
+                      className={`${isSelected ? 'bg-indigo-900/20' : ''} hover:bg-slate-800/40 transition-colors cursor-pointer group`}
                     >
+                      <td className="py-3 px-4">
+                        <input type="checkbox" checked={isSelected} onChange={(e) => { e.stopPropagation(); toggleSelect(line.id); }} className="accent-indigo-500"/>
+                      </td>
                       {/* Subscriber */}
                       <td className="py-3 px-4">
                         <div className="font-semibold text-white group-hover:text-indigo-300 transition-colors">
