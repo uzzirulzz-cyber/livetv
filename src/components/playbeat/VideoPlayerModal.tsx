@@ -101,11 +101,11 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
   const [currentStreamSource, setCurrentStreamSource] = useState('');
 
   const isVodMedia = channel ? (
-    channel.isLive === false || 
-    channel.category === 'Movies' || 
-    channel.id.startsWith('movie_') || 
-    channel.id.startsWith('ep_') ||
-    (channel.streamUrl && (channel.streamUrl.endsWith('.mp4') || channel.streamUrl.endsWith('.webm')))
+    (channel.isLive === false || 
+     channel.category === 'Movies' || 
+     channel.id.startsWith('movie_') || 
+     channel.id.startsWith('ep_')) &&
+    !channel.streamUrl?.includes('.m3u8')
   ) : false;
 
   const destroyHls = () => {
