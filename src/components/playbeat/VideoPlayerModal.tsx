@@ -382,7 +382,7 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
   const fullHlsUrl = `${window.location.origin}/api/proxy/hls/stream.m3u8?channelId=${streamId}`;
   const fullTsUrl = channel.streamUrl.startsWith('http')
     ? channel.streamUrl
-    : `http://geotv.space:8880/live/3fa35bc1/3cc73db1/${streamId}.ts`;
+    : `http://geotv.space:8880/live/REDACTED_USER/REDACTED_PASS/${streamId}.ts`;
 
   const togglePlay = () => {
     if (!videoRef.current) return;
@@ -728,11 +728,11 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-slate-400">Username:</span>
-                    <span className="text-white font-bold select-all">3fa35bc1</span>
+                    <span className="text-white font-bold select-all">REDACTED_USER</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-slate-400">Password:</span>
-                    <span className="text-white font-bold select-all">3cc73db1</span>
+                    <span className="text-white font-bold select-all">REDACTED_PASS</span>
                   </div>
                 </div>
 
@@ -748,7 +748,7 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
                   </a>
                   <button
                     onClick={() => {
-                      navigator.clipboard.writeText('Server: http://geotv.space:8880 | User: 3fa35bc1 | Pass: 3cc73db1');
+                      navigator.clipboard.writeText('Server: http://geotv.space:8880 | User: REDACTED_USER | Pass: REDACTED_PASS');
                       setShowXtreamModal(false);
                     }}
                     className="w-full sm:w-auto py-2.5 px-4 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold"

@@ -26,7 +26,7 @@ export interface Channel {
   epgId: string;
   isPremium: boolean;
   isLive: boolean;
-  resolution: '4K' | '1080p' | '720p';
+  resolution: '4K' | '1080p' | '720p' | 'HD' | 'SD';
   currentProgram: {
     title: string;
     startTime: string;

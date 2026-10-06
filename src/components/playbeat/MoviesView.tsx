@@ -75,7 +75,7 @@ export const MoviesView: React.FC<MoviesViewProps> = ({
               </span>
             </h3>
             <p className="text-xs text-slate-300 mt-0.5">
-              Watch on the official Xtream-Masters WebPlayer at <code className="text-cyan-300">http://xtream-masters.com/webplayer/</code> with Host <strong className="text-white">geotv.space:8880</strong>, User <strong className="text-white">3fa35bc1</strong>, Pass <strong className="text-white">3cc73db1</strong>.
+              Watch on the official Xtream-Masters WebPlayer at <code className="text-cyan-300">http://xtream-masters.com/webplayer/</code> with Host <strong className="text-white">geotv.space:8880</strong>, User <strong className="text-white">REDACTED_USER</strong>, Pass <strong className="text-white">REDACTED_PASS</strong>.
             </p>
           </div>
         </div>

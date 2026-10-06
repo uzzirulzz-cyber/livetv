@@ -20,7 +20,7 @@ This repository includes a preconfigured GitHub Actions workflow at [`.github/wo
 
 2. **Add GitHub Repository Secrets**:
    Go to your GitHub repository -> **Settings** -> **Secrets and variables** -> **Actions** -> **New repository secret**:
-   - `CLOUDFLARE_API_TOKEN`: `cfat_IGSxAUk5mhviwhOD4NP5vEP1pW3k8yoTSTmNGsnTedce6b4b`
+   - `CLOUDFLARE_API_TOKEN`: `REDACTED_CF_TOKEN`
    - `CLOUDFLARE_ACCOUNT_ID`: `20c83732a1af52f80655768cd4dfc251`
 
 3. **Publish to Go Live**:
@@ -63,7 +63,6 @@ The domain `playbeat.live` is active on Cloudflare with the following name serve
 
 ## ⚡ Architecture & Features
 
-- **850+ Live Channels**: 100% free streaming directly from `playbeat.live`.
+- **Free-to-air channels**: a curated catalog of channels their owners provide free (Free-TV list), in `src/data/freeChannels.ts`.
 - **Lag-Free Edge Proxy**: Video TS segments and HLS M3U8 playlists are dynamically proxied and cached using Cloudflare Workers.
-- **DNS-over-HTTPS (DoH)**: Integrates Cloudflare `1.1.1.1` DoH to bypass ISP streaming blocks and throttle.
-- **Full Reseller & Admin Suite**: Manage lines, playlists, credits, and Cloudflare telemetry at `/admin` (credentials: `admin@playbeat.digital` / `playbeat1122`).
+- **Admin suite**: manage lines, playlists and credits at `/admin`. Set credentials outside the repo.

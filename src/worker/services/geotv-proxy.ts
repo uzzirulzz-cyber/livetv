@@ -141,8 +141,8 @@ export async function fetchGeoTvChannels(
   }
 
   const host = env.GEOTV_HOST || 'http://geotv.space:8880';
-  const user = env.GEOTV_USER || '3fa35bc1';
-  const pass = env.GEOTV_PASS || '3cc73db1';
+  const user = env.GEOTV_USER || 'REDACTED_USER';
+  const pass = env.GEOTV_PASS || 'REDACTED_PASS';
 
   const playlistUrl = `${host}/get.php?username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}&type=m3u_plus&output=ts`;
 
@@ -328,8 +328,8 @@ export async function fetchGeoTvHlsStream(
   rawUrl?: string
 ): Promise<Response> {
   const host = env.GEOTV_HOST || 'http://geotv.space:8880';
-  const user = env.GEOTV_USER || '3fa35bc1';
-  const pass = env.GEOTV_PASS || '3cc73db1';
+  const user = env.GEOTV_USER || 'REDACTED_USER';
+  const pass = env.GEOTV_PASS || 'REDACTED_PASS';
 
   let targetUrl = rawUrl;
   if (!targetUrl && channelId) {

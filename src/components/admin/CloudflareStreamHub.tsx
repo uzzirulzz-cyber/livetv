@@ -88,16 +88,16 @@ export const CloudflareStreamHub: React.FC<CloudflareStreamHubProps> = ({
 
   const geoTvInfo = {
     host: 'http://geotv.space:8880',
-    username: '3fa35bc1',
+    username: 'REDACTED_USER',
     password: '••••••••',
-    rawPass: '3cc73db1',
+    rawPass: 'REDACTED_PASS',
     package: 'World Package, Channels + Vods (Family)',
     renewal: '05-11-2026',
-    m3uPlus: 'http://geotv.space:8880/get.php?username=3fa35bc1&password=3cc73db1&type=m3u_plus&output=ts',
-    m3uStandard: 'http://geotv.space:8880/get.php?username=3fa35bc1&password=3cc73db1&type=m3u&output=ts',
-    webtvList: 'http://geotv.space:8880/get.php?username=3fa35bc1&password=3cc73db1&type=webtvlist&output=mpegts',
+    m3uPlus: 'http://geotv.space:8880/get.php?username=REDACTED_USER&password=REDACTED_PASS&type=m3u_plus&output=ts',
+    m3uStandard: 'http://geotv.space:8880/get.php?username=REDACTED_USER&password=REDACTED_PASS&type=m3u&output=ts',
+    webtvList: 'http://geotv.space:8880/get.php?username=REDACTED_USER&password=REDACTED_PASS&type=webtvlist&output=mpegts',
     proxyHlsExample: '/api/proxy/hls/stream.m3u8?channelId=823012',
-    proxyTsExample: '/api/proxy/stream?url=' + encodeURIComponent('http://geotv.space:8880/live/3fa35bc1/3cc73db1/823012.ts')
+    proxyTsExample: '/api/proxy/stream?url=' + encodeURIComponent('http://geotv.space:8880/live/REDACTED_USER/REDACTED_PASS/823012.ts')
   };
 
   const handleCopy = (text: string, key: string) => {
@@ -561,9 +561,9 @@ export const CloudflareStreamHub: React.FC<CloudflareStreamHubProps> = ({
                   <div className="p-2 bg-slate-950 border border-slate-800 rounded space-y-1">
                     <div className="text-[10px] text-slate-400">Secret Name: <strong className="text-white">CLOUDFLARE_API_TOKEN</strong></div>
                     <div className="flex items-center justify-between text-[11px] font-mono text-cyan-300">
-                      <span className="truncate">cfat_IGSxAUk5mhviwh...</span>
+                      <span className="truncate">REDACTED_CF_TOKEN</span>
                       <button
-                        onClick={() => handleCopy("cfat_IGSxAUk5mhviwhOD4NP5vEP1pW3k8yoTSTmNGsnTedce6b4b", "sec_token")}
+                        onClick={() => handleCopy("REDACTED_CF_TOKEN", "sec_token")}
                         className="text-slate-400 hover:text-white ml-1"
                       >
                         {copiedKey === 'sec_token' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}

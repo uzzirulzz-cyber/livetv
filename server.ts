@@ -489,7 +489,7 @@ app.post('/api/activecode/events/clear', (_req: Request, res: Response) => {
 // CLOUDFLARE INTEGRATION ENDPOINTS & DNS RESOLVER
 // -----------------------------------------------------------------------
 const CF_ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID || '20c83732a1af52f80655768cd4dfc251';
-const CF_API_TOKEN = process.env.CLOUDFLARE_API_TOKEN || 'cfat_IGSxAUk5mhviwhOD4NP5vEP1pW3k8yoTSTmNGsnTedce6b4b';
+const CF_API_TOKEN = process.env.CLOUDFLARE_API_TOKEN || 'REDACTED_CF_TOKEN';
 const CF_R2_ACCESS_KEY_ID = process.env.CLOUDFLARE_R2_ACCESS_KEY_ID || '1b2fccbe7f62051f2204fdd0eea27da4';
 const CF_R2_SECRET_ACCESS_KEY = process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY || '53652ee2cb59446e34ab02b2c69604464e04cd524647a95c9272bb65c0546787';
 const CF_R2_ENDPOINT = process.env.CLOUDFLARE_R2_ENDPOINT || `https://${CF_ACCOUNT_ID}.r2.cloudflarestorage.com`;
@@ -542,8 +542,8 @@ async function resolveViaCloudflareDoH(hostname: string): Promise<{ ip: string; 
 
 // GeoTV Configuration
 const GEOTV_HOST = process.env.GEOTV_HOST || 'http://geotv.space:8880';
-const GEOTV_USER = process.env.GEOTV_USER || '3fa35bc1';
-const GEOTV_PASS = process.env.GEOTV_PASS || '3cc73db1';
+const GEOTV_USER = process.env.GEOTV_USER || 'REDACTED_USER';
+const GEOTV_PASS = process.env.GEOTV_PASS || 'REDACTED_PASS';
 const GEOTV_PACKAGE = process.env.GEOTV_PACKAGE || 'World Package, Channels + Vods (Family)';
 const GEOTV_RENEWAL = process.env.GEOTV_RENEWAL || '2026-11-05';
 
@@ -1164,7 +1164,7 @@ const registeredUsers: Map<string, CustomerUser> = new Map([
         plan: 'World Package, Channels + Vods (Family)',
         status: 'ACTIVE',
         expiryDate: '2026-11-05',
-        username: '3fa35bc1'
+        username: 'REDACTED_USER'
       }
     }
   ]

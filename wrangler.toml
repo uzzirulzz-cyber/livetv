@@ -11,8 +11,5 @@ binding = "ASSETS"
 [vars]
 DOMAIN = "playbeat.live"
 ALLOWED_ORIGIN = "*"
-GEOTV_HOST = "http://geotv.space:8880"
-GEOTV_USER = "3fa35bc1"
-GEOTV_PASS = "3cc73db1"
 CLOUDFLARE_DOH_URL = "https://cloudflare-dns.com/dns-query"
 ENVIRONMENT = "production"

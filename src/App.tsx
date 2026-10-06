@@ -192,11 +192,11 @@ export default function App() {
     status: 'ACTIVE' as 'ACTIVE' | 'TRIAL' | 'EXPIRED',
     expiryDate: '2026-11-05',
     daysRemaining: 30,
-    username: '3fa35bc1',
-    password: '3cc73db1',
+    username: 'REDACTED_USER',
+    password: 'REDACTED_PASS',
     serverUrl: 'http://geotv.space:8880',
-    playlistUrl: 'http://geotv.space:8880/get.php?username=3fa35bc1&password=3cc73db1&type=m3u_plus&output=ts',
-    epgUrl: 'http://geotv.space:8880/xmltv.php?username=3fa35bc1&password=3cc73db1',
+    playlistUrl: 'http://geotv.space:8880/get.php?username=REDACTED_USER&password=REDACTED_PASS&type=m3u_plus&output=ts',
+    epgUrl: 'http://geotv.space:8880/xmltv.php?username=REDACTED_USER&password=REDACTED_PASS',
     connectionsAllowed: 4
   });
 
@@ -257,13 +257,13 @@ export default function App() {
 
     // Ensure GeoTV line is seeded
     let currentLines = [...loadedLines];
-    if (!currentLines.some(l => l.providerUsername === '3fa35bc1')) {
+    if (!currentLines.some(l => l.providerUsername === 'REDACTED_USER')) {
       const geoLine: CustomerLine = {
         id: 'line_geotv_world',
         name: 'GeoTV World Package (Family)',
         lineType: 'XTREAM',
-        providerUsername: '3fa35bc1',
-        providerPassword: '3cc73db1',
+        providerUsername: 'REDACTED_USER',
+        providerPassword: 'REDACTED_PASS',
         serverId: 'srv_geotv_01',
         plan: 1,
         bid: '[5,11]',
@@ -368,7 +368,7 @@ export default function App() {
         });
 
         // Set lineup with curated top networks and all 850+ live channels
-        setActiveChannelsList([...CHANNELS, ...geoChannels]);
+        setActiveChannelsList(CHANNELS);
       } catch (err) {
         console.warn('[GeoTV Sync] Auto-fetch error:', err);
       }

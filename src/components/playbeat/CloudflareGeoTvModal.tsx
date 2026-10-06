@@ -51,19 +51,19 @@ export const CloudflareGeoTvModal: React.FC<CloudflareGeoTvModalProps> = ({
     apiTokenMasked: 'cfat_jM9d••••••••••••••••••••••••••••••••0f44931e',
     accessKeyId: 'b8cd90e0bf2367c79f254f443ed39339',
     s3Endpoint: 'https://079c27c9f20414f4a992c4ee36eef64d.r2.cloudflarestorage.com',
-    secretKeyMasked: 'c06dc787••••••••••••••••••••••••••••••••552222c8'
+    secretKeyMasked: 'REDACTED'
   };
 
   const geoTvInfo = {
     host: 'http://geotv.space:8880',
-    username: '3fa35bc1',
+    username: 'REDACTED_USER',
     password: '••••••••',
-    rawPass: '3cc73db1',
+    rawPass: 'REDACTED_PASS',
     package: 'World Package, Channels + Vods (Family)',
     renewal: '05-11-2026',
-    m3uPlus: 'http://geotv.space:8880/get.php?username=3fa35bc1&password=3cc73db1&type=m3u_plus&output=ts',
-    m3uStandard: 'http://geotv.space:8880/get.php?username=3fa35bc1&password=3cc73db1&type=m3u&output=ts',
-    webtvList: 'http://geotv.space:8880/get.php?username=3fa35bc1&password=3cc73db1&type=webtvlist&output=mpegts',
+    m3uPlus: 'http://geotv.space:8880/get.php?username=REDACTED_USER&password=REDACTED_PASS&type=m3u_plus&output=ts',
+    m3uStandard: 'http://geotv.space:8880/get.php?username=REDACTED_USER&password=REDACTED_PASS&type=m3u&output=ts',
+    webtvList: 'http://geotv.space:8880/get.php?username=REDACTED_USER&password=REDACTED_PASS&type=webtvlist&output=mpegts',
     appUrl: 'http://geotv.space:8880/app.php',
     cpanelUrl: 'https://store.stariptv.pk/panel/m3u-4ffe0b9c5bfbd4a2d4325fc9aab6e8f1'
   };
@@ -323,7 +323,7 @@ export const CloudflareGeoTvModal: React.FC<CloudflareGeoTvModalProps> = ({
               <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.06] space-y-1.5">
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Secret Access Key</span>
-                  <button onClick={() => handleCopy('c06dc787e5527e89fa51d8b926404eb4951c49274a73765c52a198c9552222c8', 'sec')} className="text-slate-400 hover:text-white">
+                  <button onClick={() => handleCopy('REDACTED', 'sec')} className="text-slate-400 hover:text-white">
                     {copiedKey === 'sec' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                   </button>
                 </div>
@@ -341,7 +341,7 @@ export const CloudflareGeoTvModal: React.FC<CloudflareGeoTvModalProps> = ({
               </p>
               <div className="p-3 rounded-lg bg-black/80 font-mono text-[11px] text-cyan-300 overflow-x-auto">
                 curl -X GET "https://api.cloudflare.com/client/v4/accounts/{cfInfo.accountId}/tokens/verify" \<br />
-                &nbsp;&nbsp;-H "Authorization: Bearer cfat_jM9de5yF6Zj6M1Pomnfmn90JLXoLZYJIUTctym7S0f44931e"
+                &nbsp;&nbsp;-H "Authorization: Bearer REDACTED_CF_TOKEN"
               </div>
             </div>
           </div>

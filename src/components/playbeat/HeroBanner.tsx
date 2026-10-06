@@ -148,7 +148,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
               className="flex items-center gap-2 px-5 py-3 bg-white/[0.12] hover:bg-white/[0.2] text-white border border-white/20 rounded-lg text-xs sm:text-sm font-bold backdrop-blur-md transition-all active:scale-[0.98]"
             >
               <Tv className="w-4 h-4 text-cyan-400" />
-              <span>EXPLORE 850+ LIVE CHANNELS</span>
+              <span>EXPLORE FREE LIVE CHANNELS</span>
             </button>
 
             <button
