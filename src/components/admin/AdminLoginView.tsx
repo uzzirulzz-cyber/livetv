@@ -1,14 +1,46 @@
-import React from 'react';
-import { Shield, ArrowLeft } from 'lucide-react';
+import React, { useState } from 'react';
+import { Shield, ArrowLeft, Loader2 } from 'lucide-react';
 import { PlayBeatLogo } from '../common/PlayBeatLogo';
 
 interface AdminLoginViewProps {
   onBackToStorefront: () => void;
+  onAuthenticated: (token: string) => void;
 }
 
 export const AdminLoginView: React.FC<AdminLoginViewProps> = ({
-  onBackToStorefront
+  onBackToStorefront,
+  onAuthenticated
 }) => {
+  const [token, setToken] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [isVerifying, setIsVerifying] = useState(false);
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError(null);
+    setIsVerifying(true);
+    try {
+      const response = await fetch('/api/admin/verify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({})
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Admin sign-in failed.');
+      }
+      onAuthenticated(token);
+      setToken('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Admin sign-in failed.');
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#050811] text-slate-100 flex flex-col justify-between relative overflow-hidden font-sans">
       {/* Background Ambience */}
@@ -39,13 +71,37 @@ export const AdminLoginView: React.FC<AdminLoginViewProps> = ({
           <div className="text-center space-y-3 flex flex-col items-center">
             <PlayBeatLogo size="lg" />
             <p className="text-xs text-slate-400">
-              The administration portal is unavailable until server-side authentication is configured.
+              Sign in with the admin token configured as a secret in Cloudflare Worker settings.
             </p>
           </div>
 
-          <div className="rounded-xl border border-amber-500/30 bg-amber-950/30 p-4 text-xs leading-relaxed text-amber-100">
-            Access is locked because this app does not yet have a server-validated admin sign-in. Browser-only passwords and session flags are not secure.
-          </div>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <label className="block space-y-2 text-xs text-slate-300">
+              <span>Admin token</span>
+              <input
+                type="password"
+                autoComplete="current-password"
+                value={token}
+                onChange={(event) => setToken(event.target.value)}
+                required
+                className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2.5 font-mono text-white outline-none focus:border-cyan-500"
+                placeholder="Enter the ADMIN_TOKEN Worker secret"
+              />
+            </label>
+            {error && (
+              <div role="alert" className="rounded-lg border border-rose-500/30 bg-rose-950/30 p-3 text-xs text-rose-200">
+                {error}
+              </div>
+            )}
+            <button
+              type="submit"
+              disabled={isVerifying || !token}
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-cyan-500 px-4 py-2.5 text-sm font-bold text-slate-950 transition-colors hover:bg-cyan-400 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isVerifying && <Loader2 className="h-4 w-4 animate-spin" />}
+              {isVerifying ? 'Verifying…' : 'Sign in securely'}
+            </button>
+          </form>
 
           {/* Storefront return */}
           <div className="pt-2 text-center">

@@ -1,4 +1,5 @@
 import { ApiCallLog, ProviderCreditLog, ProviderInfo } from '../types/iptv';
+import { adminFetch } from './adminAuth';
 
 export interface ProviderCallResult<T = any> {
   success: boolean;
@@ -33,7 +34,7 @@ export async function executeProviderCall<T = any>(
   const curls = generateCurlCommands(type, params);
 
   try {
-    const response = await fetch('/api/provider/call', {
+    const response = await adminFetch('/api/provider/call', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

@@ -59,10 +59,14 @@ DNS records, nameserver delegation, SSL mode, and Worker custom-domain routing a
 - **Provider-fed Live TV**: No demonstration/test channels are advertised as live. Channels load only when an authorized HTTPS provider is configured.
 - **D1 Catalog Storage**: `CATALOG_DB` stores channel metadata without upstream stream URLs or provider credentials. The `epg_programs` schema is installed, but XMLTV ingestion is not implemented.
 - **Stream Proxy**: The Worker proxies provider playlists and segments when the provider is configured to use HTTPS.
-- **Admin Suite**: The `/admin` route remains locked until server-side authentication is configured.
+- **Admin Suite**: `/admin` validates the `ADMIN_TOKEN` Worker secret on the server. Set a strong random value as a Cloudflare Worker secret before signing in; the browser keeps it in memory only and clears it on sign-out or reload. Never commit or share the token.
 
 ### Live catalog and D1 setup
 
 The Worker is bound to the `playbeat-catalog` D1 database in [`wrangler.toml`](./wrangler.toml), and the initial schema is in [`migrations/0001_catalog.sql`](./migrations/0001_catalog.sql). Deployments apply pending migrations before publishing the Worker.
 
 Set `GEOTV_HOST` to an HTTPS endpoint and configure `GEOTV_USER` and `GEOTV_PASS` as Cloudflare Worker secrets. The Worker rejects HTTP provider endpoints because they would expose credentials in transit. Do not put provider credentials in browser code, query strings, or D1. No provider credentials are currently configured in this repository; until a rotated, authorized HTTPS endpoint is configured, the live catalog and playback remain unavailable.
+
+### Admin sign-in
+
+In Cloudflare Dashboard, open **Workers & Pages → `playbeat-live` → Settings → Variables and Secrets**. Add `ADMIN_TOKEN` as a secret with a strong, randomly generated value. After deploying, open `/admin` and enter that same value to sign in. The token is validated by the Worker and held only in page memory; sign out or reload to clear it.

@@ -60,6 +60,7 @@ import {
   PLANS as PLAYBEAT_PLANS 
 } from './services/catalogData';
 import { Channel, Movie, Series, Episode, SubscriptionPlan } from './types/playbeat';
+import { adminFetch, setAdminToken } from './services/adminAuth';
 
 import { 
   CheckCircle2, 
@@ -208,7 +209,7 @@ export default function App() {
 
   const fetchAuditLogs = async () => {
     try {
-      const res = await fetch('/api/audit-logs');
+      const res = await adminFetch('/api/audit-logs');
       if (res.ok) {
         const data = await res.json();
         setAuditLogs(data.logs || []);
@@ -220,7 +221,7 @@ export default function App() {
 
   const recordAudit = async (action: string, targetType: string, targetId: string, metadata: any = {}) => {
     try {
-      const res = await fetch('/api/audit-logs', {
+      const res = await adminFetch('/api/audit-logs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1026,7 +1027,13 @@ export default function App() {
         /* ========================================================
            ADMIN GATEWAY: SECURE LOGIN
            ======================================================== */
-        <AdminLoginView onBackToStorefront={() => navigateTo('storefront')} />
+        <AdminLoginView
+          onBackToStorefront={() => navigateTo('storefront')}
+          onAuthenticated={(token) => {
+            setAdminToken(token);
+            setIsAdminAuthenticated(true);
+          }}
+        />
       ) : (
         /* ========================================================
            MODE 2: PLAYBEAT RESELLER MANAGEMENT & ADMIN SUITE
@@ -1073,7 +1080,7 @@ export default function App() {
               <button
                 onClick={() => {
                   setIsAdminAuthenticated(false);
-                  sessionStorage.removeItem('pb_admin_auth');
+                  setAdminToken(null);
                   showToast('Signed out of Admin Console', 'info');
                 }}
                 className="ml-2 px-2.5 py-1 rounded text-[10px] font-mono font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30 hover:bg-rose-500/30 transition-colors"
@@ -1130,7 +1137,7 @@ export default function App() {
               <CloudflareStreamHub
                 onPlayChannel={handleWatchChannel}
                 onRefreshAllChannels={() => {
-                  fetch('/api/iptv/geotv/channels')
+                  adminFetch('/api/iptv/geotv/channels')
                     .then(r => r.json())
                     .then(d => {
                       if (d.success && Array.isArray(d.channels)) {

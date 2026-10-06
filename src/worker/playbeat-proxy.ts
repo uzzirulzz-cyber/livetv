@@ -80,6 +80,19 @@ export default {
 
     if (request.method === "OPTIONS") return withCors(new Response(null, { status: 204 }), env);
 
+    if (url.pathname === "/api/admin/verify") {
+      if (request.method !== "POST") {
+        return json({ success: false, error: "Use POST." }, 405, env);
+      }
+      if (!env.ADMIN_TOKEN) {
+        return json({ success: false, error: "Admin authentication is not configured." }, 503, env);
+      }
+      if (!(await authorized(request, env))) {
+        return json({ success: false, error: "Invalid admin token." }, 401, env);
+      }
+      return json({ success: true }, 200, env);
+    }
+
     // 1. GeoTV Channels list with Cloudflare cache & secure authentication
     if (url.pathname === "/api/iptv/channels" || url.pathname === "/api/geotv/channels" || url.pathname === "/api/iptv/geotv/channels") {
       try {

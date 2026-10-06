@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ApiCallLog } from '../types/iptv';
 import { executeProviderCall, generateCurlCommands } from '../services/api';
+import { adminFetch } from '../services/adminAuth';
 import { 
   Terminal, 
   Send, 
@@ -161,7 +162,7 @@ export const ApiConsole: React.FC<ApiConsoleProps> = ({
 
     if (gatewayTarget === 'PLAYBEAT_WORKER') {
       try {
-        const res = await fetch(`/api/${actionName}`, {
+        const res = await adminFetch(`/api/${actionName}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

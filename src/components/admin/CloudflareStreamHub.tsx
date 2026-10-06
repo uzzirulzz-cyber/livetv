@@ -34,6 +34,7 @@ import {
   FolderGit2
 } from 'lucide-react';
 import { Channel } from '../../types/playbeat';
+import { adminFetch } from '../../services/adminAuth';
 import { PlayBeatLogo } from '../common/PlayBeatLogo';
 
 interface CloudflareStreamHubProps {
@@ -85,7 +86,7 @@ export const CloudflareStreamHub: React.FC<CloudflareStreamHubProps> = ({
   const verifyCloudflare = async () => {
     setIsVerifyingCf(true);
     try {
-      const res = await fetch('/api/cloudflare/verify');
+      const res = await adminFetch('/api/cloudflare/verify');
       const data = await res.json();
       setCfVerifyResult(data);
     } catch (err: any) {
@@ -98,7 +99,7 @@ export const CloudflareStreamHub: React.FC<CloudflareStreamHubProps> = ({
   const syncDnsZone = async () => {
     setIsSyncingDns(true);
     try {
-      const res = await fetch('/api/cloudflare/dns/setup-zone', { method: 'POST' });
+      const res = await adminFetch('/api/cloudflare/dns/setup-zone', { method: 'POST' });
       const data = await res.json();
       if (!res.ok || !data.success) {
         throw new Error(data.error || 'DNS setup is not configured.');
@@ -116,7 +117,7 @@ export const CloudflareStreamHub: React.FC<CloudflareStreamHubProps> = ({
   const runDailyReport = async () => {
     setIsLoadingReport(true);
     try {
-      const res = await fetch('/api/cron/daily-report');
+      const res = await adminFetch('/api/cron/daily-report');
       const data = await res.json();
       if (!res.ok || !data.success) {
         throw new Error(data.error || 'Daily report is not configured.');
@@ -134,7 +135,7 @@ export const CloudflareStreamHub: React.FC<CloudflareStreamHubProps> = ({
   const runMaintenance = async () => {
     setIsRunningMaintenance(true);
     try {
-      const res = await fetch('/api/cron/maintenance');
+      const res = await adminFetch('/api/cron/maintenance');
       const data = await res.json();
       if (!res.ok || !data.success) {
         throw new Error(data.error || 'Maintenance is not configured.');
@@ -151,7 +152,7 @@ export const CloudflareStreamHub: React.FC<CloudflareStreamHubProps> = ({
 
   const testUserRegistration = async () => {
     try {
-      const res = await fetch('/api/user/register', {
+      const res = await adminFetch('/api/user/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -173,7 +174,7 @@ export const CloudflareStreamHub: React.FC<CloudflareStreamHubProps> = ({
   const testCheckoutVerification = async () => {
     try {
       // 1. Create order
-      const orderRes = await fetch('/api/checkout/create-order', {
+      const orderRes = await adminFetch('/api/checkout/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -189,7 +190,7 @@ export const CloudflareStreamHub: React.FC<CloudflareStreamHubProps> = ({
       }
 
       // 2. Verify payment & provision
-      const verifyRes = await fetch('/api/checkout/verify-payment', {
+      const verifyRes = await adminFetch('/api/checkout/verify-payment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -239,7 +240,7 @@ export const CloudflareStreamHub: React.FC<CloudflareStreamHubProps> = ({
   const loadChannels = async (forceRefresh = false) => {
     setIsLoadingChannels(true);
     try {
-      const res = await fetch(`/api/iptv/geotv/channels${forceRefresh ? '?refresh=1' : ''}`);
+      const res = await adminFetch(`/api/iptv/geotv/channels${forceRefresh ? '?refresh=1' : ''}`);
       const data = await res.json();
       if (!res.ok || !data.success || !Array.isArray(data.channels)) {
         setChannels([]);
@@ -265,7 +266,7 @@ export const CloudflareStreamHub: React.FC<CloudflareStreamHubProps> = ({
     testCloudflareDns();
     runDailyReport();
     runMaintenance();
-    fetch('/api/cloudflare/dns/setup-zone')
+    adminFetch('/api/cloudflare/dns/setup-zone')
       .then(async (res) => {
         const data = await res.json();
         if (!res.ok || !data.success) {

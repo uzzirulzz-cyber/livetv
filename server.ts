@@ -18,6 +18,11 @@ const ADMIN_TOKEN = process.env.ADMIN_TOKEN;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+app.post('/api/admin/verify', (req: Request, res: Response) => {
+  if (!requireAdmin(req, res)) return;
+  res.json({ success: true });
+});
+
 // In-memory or env-backed state
 let currentApiKey = process.env.STAR_IPTV_API_KEY || process.env.IPTV_API_KEY || '';
 const PROVIDER_BASE_URL = 'https://iptv-api.xtream-masters.com/v3/';
