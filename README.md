@@ -20,8 +20,10 @@ This repository includes a preconfigured GitHub Actions workflow at [`.github/wo
 
 2. **Add GitHub Repository Secrets**:
    Go to your GitHub repository -> **Settings** -> **Secrets and variables** -> **Actions** -> **New repository secret**:
-   - `CLOUDFLARE_API_TOKEN`: `cfat_IGSxAUk5mhviwhOD4NP5vEP1pW3k8yoTSTmNGsnTedce6b4b`
-   - `CLOUDFLARE_ACCOUNT_ID`: `20c83732a1af52f80655768cd4dfc251`
+   - `CLOUDFLARE_API_TOKEN`: a newly issued token scoped to deploy the required Worker.
+   - `CLOUDFLARE_ACCOUNT_ID`: your Cloudflare account ID.
+
+   Do not put tokens or provider credentials in source files. Rotate any credentials that were previously committed.
 
 3. **Publish to Go Live**:
    Every time you push commits to `main`, GitHub Actions will automatically:
@@ -39,7 +41,7 @@ This repository includes a preconfigured GitHub Actions workflow at [`.github/wo
 4. Authenticate your GitHub account and select your `playbeat-live` repository.
 5. Set Build Settings:
    - **Framework preset**: Vite
-   - **Build command**: `npm run build`
+   - **Build command**: `bun run build`
    - **Build output directory**: `dist`
 6. Click **Save and Deploy**. Cloudflare will continuously deploy your commits!
 
