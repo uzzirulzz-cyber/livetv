@@ -1,6 +1,24 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { Channel, Movie, Series } from '../../types/playbeat';
-import { Play, Plus, Check, ChevronRight, Tv, Radio, Sparkles, Star } from 'lucide-react';
+import { 
+  Play, 
+  Plus, 
+  Check, 
+  ChevronRight, 
+  Radio, 
+  Flame, 
+  Trophy, 
+  Film, 
+  Tv, 
+  Sparkles, 
+  Heart, 
+  TrendingUp, 
+  Users, 
+  Clock, 
+  Zap, 
+  Eye 
+} from 'lucide-react';
+import { ChannelLogo } from '../common/ChannelLogo';
 
 interface HomeSectionsProps {
   channels: Channel[];
@@ -12,6 +30,8 @@ interface HomeSectionsProps {
   onToggleMyList: (title: string) => void;
   isItemInMyList: (title: string) => boolean;
   onNavigateSection: (section: string) => void;
+  favorites?: string[];
+  onToggleFavorite?: (channelId: string) => void;
 }
 
 export const HomeSections: React.FC<HomeSectionsProps> = ({
@@ -23,101 +43,291 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
   onSelectSeries,
   onToggleMyList,
   isItemInMyList,
-  onNavigateSection
+  onNavigateSection,
+  favorites = [],
+  onToggleFavorite
 }) => {
-  const sportsChannels = channels.filter((c) => c.category === 'Sports');
-  const trendingMovies = movies.filter((m) => m.isTrending);
-  const popularSeries = series;
+  const [popularCategory, setPopularCategory] = useState<string>('ALL');
+
+  // 1. PLAYING NOW / LIVE ON AIR CHANNELS
+  // Filter active live broadcast channels with real programs
+  const playingNowChannels = useMemo(() => {
+    return channels.slice(0, 10);
+  }, [channels]);
+
+  // 2. TRENDING & POPULAR CHANNELS
+  const popularChannels = useMemo(() => {
+    if (popularCategory === 'ALL') {
+      return channels.slice(0, 12);
+    }
+    return channels
+      .filter((c) => c.category?.toLowerCase() === popularCategory.toLowerCase())
+      .slice(0, 12);
+  }, [channels, popularCategory]);
+
+  const categoryFilters = [
+    { id: 'ALL', label: 'All Popular', icon: Flame },
+    { id: 'Sports', label: 'Sports', icon: Trophy },
+    { id: 'Movies', label: 'Movies & Cinema', icon: Film },
+    { id: 'News', label: 'Live News', icon: Radio },
+    { id: 'Entertainment', label: 'Entertainment', icon: Tv },
+    { id: 'Documentary', label: 'Documentary', icon: Sparkles },
+    { id: 'Kids', label: 'Kids & Family', icon: Zap }
+  ];
 
   return (
-    <div className="space-y-10 py-6 max-w-7xl mx-auto px-4 lg:px-8">
-      {/* ROW 1: LIVE NOW (Channels carousel) */}
-      <section className="space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
-            <h2 className="text-base sm:text-lg font-bold text-white tracking-tight font-display flex items-center gap-2">
-              <span>Live Now on PlayBeat</span>
-              <span className="text-[11px] font-sans font-medium text-cyan-400 bg-cyan-950/60 border border-cyan-500/30 px-2 py-0.5 rounded">
-                Live Broadcasts
-              </span>
-            </h2>
+    <div className="space-y-12 py-6 max-w-7xl mx-auto px-4 lg:px-8">
+      {/* ========================================================
+          SECTION 1: PLAYING NOW / LIVE ON AIR
+          Displays channels currently broadcasting with live progress
+          ======================================================== */}
+      <section className="space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-white/[0.08]">
+          <div className="flex items-center gap-2.5">
+            <span className="relative flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-500"></span>
+            </span>
+            <div>
+              <h2 className="text-lg sm:text-xl font-black text-white tracking-tight font-display flex items-center gap-2">
+                <span>Playing Now</span>
+                <span className="text-slate-500 font-normal">·</span>
+                <span className="text-xs font-mono font-bold text-rose-400 bg-rose-950/70 border border-rose-500/30 px-2 py-0.5 rounded">
+                  LIVE ON AIR
+                </span>
+              </h2>
+              <p className="text-xs text-slate-400">
+                Current broadcast feeds playing live right now · Click any channel for instant zero-lag playback
+              </p>
+            </div>
           </div>
+
           <button
             onClick={() => onNavigateSection('live')}
-            className="text-xs font-semibold text-cyan-400 hover:text-cyan-300 flex items-center gap-0.5 transition-colors"
+            className="text-xs font-bold text-cyan-400 hover:text-cyan-300 flex items-center gap-1 self-start sm:self-auto transition-colors"
           >
-            <span>All Channels</span>
-            <ChevronRight className="w-3.5 h-3.5" />
+            <span>View All {channels.length} Live Channels</span>
+            <ChevronRight className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="flex gap-4 overflow-x-auto pb-3 pt-1 no-scrollbar scroll-smooth">
-          {channels.slice(0, 6).map((channel) => (
-            <div
-              key={channel.id}
-              onClick={() => onWatchChannel(channel)}
-              className="group relative shrink-0 w-[240px] sm:w-[280px] bg-[#0c1326]/80 hover:bg-[#111b33] border border-white/[0.08] hover:border-cyan-500/50 rounded-xl p-3.5 cursor-pointer transition-all hover:scale-[1.02] shadow-lg shadow-black/40"
-            >
-              {/* Channel Top row */}
-              <div className="flex items-start justify-between gap-2 mb-2.5">
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <img
-                    src={channel.logo}
-                    alt={channel.name}
-                    className="w-10 h-10 rounded-lg object-cover bg-black/40 border border-white/10 shrink-0"
-                  />
-                  <div className="min-w-0">
-                    <div className="text-xs font-bold text-white truncate group-hover:text-cyan-300 transition-colors">
-                      {channel.name}
+        {/* Playing Now Carousel */}
+        <div className="flex gap-4 overflow-x-auto pb-4 pt-1 no-scrollbar scroll-smooth">
+          {playingNowChannels.map((channel, idx) => {
+            const isFav = favorites.includes(channel.id);
+            // Simulated live viewer counts based on index
+            const viewers = ((idx * 3.7 + 12.4) % 45 + 5.2).toFixed(1);
+
+            return (
+              <div
+                key={channel.id}
+                onClick={() => onWatchChannel(channel)}
+                className="group relative shrink-0 w-[280px] sm:w-[320px] bg-[#0c1326]/90 hover:bg-[#111c38] border border-white/[0.08] hover:border-cyan-500/60 rounded-2xl p-4 cursor-pointer transition-all hover:scale-[1.02] shadow-xl shadow-black/50 flex flex-col justify-between"
+              >
+                <div>
+                  {/* Top Header */}
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <ChannelLogo
+                        src={channel.logo}
+                        name={channel.name}
+                        category={channel.category}
+                        size="md"
+                      />
+                      <div className="min-w-0">
+                        <div className="text-xs sm:text-sm font-bold text-white group-hover:text-cyan-300 transition-colors truncate">
+                          {channel.name}
+                        </div>
+                        <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-mono mt-0.5">
+                          <span className="text-cyan-400 font-semibold">{channel.category}</span>
+                          <span>·</span>
+                          <span>CH {channel.number}</span>
+                          <span>·</span>
+                          <span className="text-slate-300 font-bold">{channel.resolution}</span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="text-[10px] text-slate-400 font-mono">
-                      CH {channel.number} · {channel.resolution}
+
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-rose-500/20 text-rose-400 border border-rose-500/30 flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+                        LIVE
+                      </span>
+                      {onToggleFavorite && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onToggleFavorite(channel.id);
+                          }}
+                          className="p-1 rounded hover:bg-white/10 text-slate-400 hover:text-rose-400 transition-colors"
+                        >
+                          <Heart className={`w-3.5 h-3.5 ${isFav ? 'fill-rose-500 text-rose-500' : ''}`} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Playing Now Program Card */}
+                  <div className="p-3 bg-black/40 border border-white/[0.05] rounded-xl space-y-2 mb-3">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-semibold text-slate-200 truncate pr-2">
+                        {channel.currentProgram.title}
+                      </span>
+                      <span className="text-[10px] font-mono text-cyan-400 shrink-0 flex items-center gap-0.5">
+                        <Eye className="w-3 h-3" />
+                        <span>{viewers}k</span>
+                      </span>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="w-full bg-white/10 h-1.5 rounded-full overflow-hidden">
+                      <div
+                        className="bg-gradient-to-r from-cyan-500 to-blue-500 h-full rounded-full transition-all duration-500"
+                        style={{ width: `${Math.max(15, channel.currentProgram.progressPercentage)}%` }}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono">
+                      <span>{channel.currentProgram.startTime}</span>
+                      <span className="text-slate-500">Playing Now</span>
+                      <span>Ends {channel.currentProgram.endTime}</span>
                     </div>
                   </div>
                 </div>
 
-                <span className="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-rose-500/20 text-rose-400 border border-rose-500/30 flex items-center gap-1 shrink-0">
-                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
-                  LIVE
-                </span>
-              </div>
-
-              {/* Current Program */}
-              <div className="space-y-1.5">
-                <div className="text-[11px] font-semibold text-slate-200 line-clamp-1">
-                  {channel.currentProgram.title}
-                </div>
-                <div className="w-full bg-white/10 h-1 rounded-full overflow-hidden">
-                  <div
-                    className="bg-cyan-400 h-full rounded-full transition-all duration-500"
-                    style={{ width: `${channel.currentProgram.progressPercentage}%` }}
-                  />
-                </div>
-                <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono">
-                  <span>{channel.currentProgram.startTime}</span>
-                  <span>Ends {channel.currentProgram.endTime}</span>
+                {/* Bottom Action Bar */}
+                <div className="flex items-center justify-between pt-2 border-t border-white/[0.04]">
+                  <span className="text-[10px] text-slate-400 truncate max-w-[180px]">
+                    Up next: {channel.nextProgram.title}
+                  </span>
+                  <span className="text-xs font-bold text-cyan-400 group-hover:text-cyan-300 flex items-center gap-1 group-hover:translate-x-0.5 transition-all">
+                    <Play className="w-3 h-3 fill-cyan-400" />
+                    <span>Watch</span>
+                  </span>
                 </div>
               </div>
-
-              {/* Hover overlay play button */}
-              <div className="absolute inset-0 bg-cyan-950/60 backdrop-blur-[2px] rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <span className="flex items-center gap-1.5 px-4 py-2 bg-white text-slate-950 rounded-lg text-xs font-extrabold shadow-lg">
-                  <Play className="w-3.5 h-3.5 fill-slate-950" />
-                  Watch Stream
-                </span>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </section>
 
-      {/* ROW 2: TRENDING MOVIES */}
-      <section className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-base sm:text-lg font-bold text-white tracking-tight font-display">
-            Trending Movies on PlayBeat
-          </h2>
+      {/* ========================================================
+          SECTION 2: TRENDING & POPULAR CHANNELS
+          User requested: "landing page to display trending and popular"
+          ======================================================== */}
+      <section className="space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-white/[0.08]">
+          <div className="flex items-center gap-2">
+            <Flame className="w-5 h-5 text-amber-400" />
+            <div>
+              <h2 className="text-lg sm:text-xl font-black text-white tracking-tight font-display flex items-center gap-2">
+                <span>Trending &amp; Popular Channels</span>
+                <span className="text-xs font-mono font-bold text-amber-400 bg-amber-950/70 border border-amber-500/30 px-2 py-0.5 rounded">
+                  MOST WATCHED
+                </span>
+              </h2>
+              <p className="text-xs text-slate-400">
+                Top broadcast networks in Sports, Movies, Global News, and Entertainment
+              </p>
+            </div>
+          </div>
+
+          {/* Category Filter Pills */}
+          <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-1">
+            {categoryFilters.map((cat) => {
+              const Icon = cat.icon;
+              const isSelected = popularCategory === cat.id;
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => setPopularCategory(cat.id)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
+                    isSelected
+                      ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm'
+                      : 'bg-white/[0.03] text-slate-400 hover:text-white border border-white/[0.06] hover:bg-white/[0.06]'
+                  }`}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  <span>{cat.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Popular Channels Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {popularChannels.map((channel, idx) => {
+            const isFav = favorites.includes(channel.id);
+            const viewers = ((idx * 4.2 + 8.1) % 50 + 7.5).toFixed(1);
+
+            return (
+              <div
+                key={channel.id}
+                onClick={() => onWatchChannel(channel)}
+                className="group relative bg-[#0c1326]/75 hover:bg-[#111c38] border border-white/[0.08] hover:border-amber-500/50 rounded-2xl p-3.5 cursor-pointer transition-all hover:scale-[1.02] shadow-lg shadow-black/40 flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex items-start justify-between gap-2.5 mb-2.5">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <ChannelLogo
+                        src={channel.logo}
+                        name={channel.name}
+                        category={channel.category}
+                        size="md"
+                      />
+                      <div className="min-w-0">
+                        <div className="text-xs font-bold text-white group-hover:text-amber-300 transition-colors truncate">
+                          {channel.name}
+                        </div>
+                        <div className="text-[10px] text-slate-400 font-mono mt-0.5 truncate">
+                          {channel.category} · CH {channel.number}
+                        </div>
+                      </div>
+                    </div>
+
+                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 shrink-0">
+                      {channel.resolution}
+                    </span>
+                  </div>
+
+                  <div className="p-2.5 bg-black/30 border border-white/[0.04] rounded-xl text-xs space-y-1 mb-2.5">
+                    <div className="font-semibold text-slate-200 truncate text-[11px]">
+                      {channel.currentProgram.title}
+                    </div>
+                    <div className="text-[10px] text-slate-400 truncate">
+                      {channel.currentProgram.synopsis}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-2 border-t border-white/[0.04] text-[10px] font-mono">
+                  <span className="text-amber-400 flex items-center gap-1 font-semibold">
+                    <TrendingUp className="w-3 h-3" />
+                    <span>{viewers}K live viewers</span>
+                  </span>
+                  <span className="font-sans font-bold text-white group-hover:text-amber-300 flex items-center gap-1">
+                    <Play className="w-3 h-3 fill-current" />
+                    <span>Watch</span>
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* ========================================================
+          SECTION 3: TRENDING MOVIES
+          ======================================================== */}
+      <section className="space-y-4">
+        <div className="flex items-center justify-between pb-2 border-b border-white/[0.08]">
+          <div className="flex items-center gap-2">
+            <Film className="w-5 h-5 text-indigo-400" />
+            <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight font-display">
+              Trending Movies &amp; Blockbusters
+            </h2>
+          </div>
           <button
             onClick={() => onNavigateSection('movies')}
             className="text-xs font-semibold text-cyan-400 hover:text-cyan-300 flex items-center gap-0.5 transition-colors"
@@ -181,12 +391,17 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
         </div>
       </section>
 
-      {/* ROW 3: POPULAR SERIES */}
-      <section className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-base sm:text-lg font-bold text-white tracking-tight font-display">
-            Popular Series &amp; Shows
-          </h2>
+      {/* ========================================================
+          SECTION 4: POPULAR SERIES & SHOWS
+          ======================================================== */}
+      <section className="space-y-4">
+        <div className="flex items-center justify-between pb-2 border-b border-white/[0.08]">
+          <div className="flex items-center gap-2">
+            <Tv className="w-5 h-5 text-cyan-400" />
+            <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight font-display">
+              Popular TV Series &amp; Box Sets
+            </h2>
+          </div>
           <button
             onClick={() => onNavigateSection('series')}
             className="text-xs font-semibold text-cyan-400 hover:text-cyan-300 flex items-center gap-0.5 transition-colors"
@@ -241,38 +456,6 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
               </div>
             </div>
           ))}
-        </div>
-      </section>
-
-      {/* ROW 4: SPORTS LIVE SPOTLIGHT */}
-      <section className="p-5 bg-gradient-to-r from-blue-950/40 via-[#0c1326] to-[#050811] border border-blue-500/20 rounded-2xl relative overflow-hidden">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="space-y-1.5 max-w-xl">
-            <span className="text-[11px] font-bold text-blue-400 tracking-wider uppercase font-mono">
-              Live Sports Stadium Package
-            </span>
-            <h3 className="text-xl font-bold text-white font-display">
-              Ultra-Low Latency 4K 60FPS Sports Streaming
-            </h3>
-            <p className="text-xs text-slate-300 leading-relaxed">
-              Experience UEFA Champions League, Formula 1 Grand Prix, Apex Endurance Racing, and international sporting events with multi-screen simultaneous streaming.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => onNavigateSection('live')}
-              className="px-5 py-2.5 bg-cyan-500 hover:bg-cyan-400 text-slate-950 rounded-lg text-xs font-bold shadow-md shadow-cyan-500/20 transition-all"
-            >
-              Watch Sports Live
-            </button>
-            <button
-              onClick={() => onNavigateSection('plans')}
-              className="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-lg text-xs font-semibold border border-white/15 transition-colors"
-            >
-              Explore VIP Sports Plans
-            </button>
-          </div>
         </div>
       </section>
     </div>

@@ -28,7 +28,10 @@ import {
   HeartPulse,
   Send,
   Layers,
-  ArrowRight
+  ArrowRight,
+  GitBranch,
+  Terminal,
+  FolderGit2
 } from 'lucide-react';
 import { Channel } from '../../types/playbeat';
 import { PlayBeatLogo } from '../common/PlayBeatLogo';
@@ -42,7 +45,7 @@ export const CloudflareStreamHub: React.FC<CloudflareStreamHubProps> = ({
   onPlayChannel,
   onRefreshAllChannels
 }) => {
-  const [activeTab, setActiveTab] = useState<'DEPLOYMENT' | 'WORKERS_JOBS' | 'DNS_DOH' | 'CHANNELS'>('DEPLOYMENT');
+  const [activeTab, setActiveTab] = useState<'DEPLOYMENT' | 'GITHUB_DEPLOY' | 'WORKERS_JOBS' | 'DNS_DOH' | 'CHANNELS'>('DEPLOYMENT');
 
   // Cloudflare live verify & DNS state
   const [isVerifyingCf, setIsVerifyingCf] = useState(false);
@@ -333,6 +336,7 @@ export const CloudflareStreamHub: React.FC<CloudflareStreamHubProps> = ({
       <div className="flex items-center gap-2 border-b border-slate-800 pb-2 overflow-x-auto no-scrollbar">
         {[
           { id: 'DEPLOYMENT', label: 'Cloudflare DNS & playbeat.live Go-Live', icon: Globe },
+          { id: 'GITHUB_DEPLOY', label: 'Connect GitHub & CI/CD', icon: GitBranch },
           { id: 'WORKERS_JOBS', label: 'Workers Jobs & Operations Console', icon: Zap },
           { id: 'DNS_DOH', label: '1.1.1.1 DoH External DNS & Nodes', icon: Activity },
           { id: 'CHANNELS', label: `Live Channels Index (${channels.length})`, icon: Radio }
@@ -489,6 +493,174 @@ export const CloudflareStreamHub: React.FC<CloudflareStreamHubProps> = ({
                 <p className="text-[11px] text-slate-400">
                   Live m3u8 playlists refreshed every 2 seconds; video chunks buffered at edge for lag-free streaming.
                 </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB: GITHUB TO CLOUDFLARE CI/CD AUTOMATION */}
+      {activeTab === 'GITHUB_DEPLOY' && (
+        <div className="space-y-6">
+          {/* Header Card */}
+          <div className="p-5 bg-slate-900/70 border border-slate-800 rounded-2xl space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
+              <div className="flex items-center gap-2.5">
+                <FolderGit2 className="w-5 h-5 text-indigo-400" />
+                <div>
+                  <h3 className="text-sm font-bold text-white">GitHub to Cloudflare CI/CD &amp; Go-Live Pipeline</h3>
+                  <p className="text-xs text-slate-400">
+                    Continuous automated deployments on every commit pushed to GitHub <strong>main</strong> branch
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  WORKFLOW CONFIGURED
+                </span>
+                <span className="text-[10px] font-mono font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 px-2 py-0.5 rounded">
+                  playbeat.live LIVE
+                </span>
+              </div>
+            </div>
+
+            {/* Quick 3-Step Guide */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+              <div className="p-4 bg-black/40 border border-slate-800 rounded-xl space-y-2">
+                <div className="flex items-center gap-2 text-indigo-400 font-bold">
+                  <span className="w-5 h-5 rounded-full bg-indigo-500/20 flex items-center justify-center text-xs">1</span>
+                  <span>Push to Your GitHub</span>
+                </div>
+                <p className="text-[11px] text-slate-400">
+                  Connect your local git repository to your GitHub repo and push to the <code className="text-white">main</code> branch.
+                </p>
+                <div className="p-2.5 bg-slate-950 border border-slate-800 rounded font-mono text-[10px] text-cyan-300 space-y-1">
+                  <div>git remote add origin https://github.com/&lt;user&gt;/playbeat-live.git</div>
+                  <div>git branch -M main</div>
+                  <div>git push -u origin main</div>
+                </div>
+                <button
+                  onClick={() => handleCopy("git remote add origin https://github.com/<YOUR-USERNAME>/playbeat-live.git\ngit branch -M main\ngit push -u origin main", "git_cmd")}
+                  className="w-full py-1 bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 rounded text-[11px] font-semibold flex items-center justify-center gap-1 transition-colors"
+                >
+                  {copiedKey === 'git_cmd' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                  <span>{copiedKey === 'git_cmd' ? 'Commands Copied!' : 'Copy Git Commands'}</span>
+                </button>
+              </div>
+
+              <div className="p-4 bg-black/40 border border-slate-800 rounded-xl space-y-2">
+                <div className="flex items-center gap-2 text-cyan-400 font-bold">
+                  <span className="w-5 h-5 rounded-full bg-cyan-500/20 flex items-center justify-center text-xs">2</span>
+                  <span>Set GitHub Action Secrets</span>
+                </div>
+                <p className="text-[11px] text-slate-400">
+                  In GitHub: <strong>Settings &gt; Secrets and variables &gt; Actions</strong>, add these two repository secrets:
+                </p>
+                <div className="space-y-2">
+                  <div className="p-2 bg-slate-950 border border-slate-800 rounded space-y-1">
+                    <div className="text-[10px] text-slate-400">Secret Name: <strong className="text-white">CLOUDFLARE_API_TOKEN</strong></div>
+                    <div className="flex items-center justify-between text-[11px] font-mono text-cyan-300">
+                      <span className="truncate">cfat_IGSxAUk5mhviwh...</span>
+                      <button
+                        onClick={() => handleCopy("cfat_IGSxAUk5mhviwhOD4NP5vEP1pW3k8yoTSTmNGsnTedce6b4b", "sec_token")}
+                        className="text-slate-400 hover:text-white ml-1"
+                      >
+                        {copiedKey === 'sec_token' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="p-2 bg-slate-950 border border-slate-800 rounded space-y-1">
+                    <div className="text-[10px] text-slate-400">Secret Name: <strong className="text-white">CLOUDFLARE_ACCOUNT_ID</strong></div>
+                    <div className="flex items-center justify-between text-[11px] font-mono text-cyan-300">
+                      <span className="truncate">20c83732a1af52f80655768cd4dfc251</span>
+                      <button
+                        onClick={() => handleCopy("20c83732a1af52f80655768cd4dfc251", "sec_acc")}
+                        className="text-slate-400 hover:text-white ml-1"
+                      >
+                        {copiedKey === 'sec_acc' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-4 bg-black/40 border border-slate-800 rounded-xl space-y-2">
+                <div className="flex items-center gap-2 text-emerald-400 font-bold">
+                  <span className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center text-xs">3</span>
+                  <span>Automated Go-Live</span>
+                </div>
+                <p className="text-[11px] text-slate-400">
+                  Every commit triggers <code className="text-white">.github/workflows/deploy.yml</code> which builds and publishes automatically to Cloudflare edge.
+                </p>
+                <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded space-y-1.5">
+                  <div className="text-[11px] font-bold text-emerald-300 flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Live URLs Active</span>
+                  </div>
+                  <div className="text-[10px] text-slate-300 space-y-0.5 font-mono">
+                    <div>Domain: https://playbeat.live</div>
+                    <div>Worker: https://playbeat-live.playbeatdigital.workers.dev</div>
+                  </div>
+                </div>
+                <a
+                  href="https://playbeat.live"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-full py-1.5 bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white rounded text-[11px] font-bold flex items-center justify-center gap-1 transition-all shadow-md"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>Visit Live playbeat.live</span>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          {/* GitHub Actions Workflow Preview & Direct Cloudflare Dashboard */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Workflow File Details */}
+            <div className="p-5 bg-slate-900/70 border border-slate-800 rounded-2xl space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                <div className="flex items-center gap-2 text-white font-bold text-xs">
+                  <Terminal className="w-4 h-4 text-cyan-400" />
+                  <span>GitHub Actions Workflow File</span>
+                </div>
+                <span className="text-[10px] font-mono text-slate-400">.github/workflows/deploy.yml</span>
+              </div>
+              <div className="p-3 bg-slate-950 border border-slate-800/80 rounded-xl font-mono text-[11px] text-slate-300 leading-relaxed overflow-x-auto">
+                <div className="text-slate-500"># Triggered on git push</div>
+                <div><span className="text-cyan-400">on</span>: [push, workflow_dispatch]</div>
+                <div><span className="text-cyan-400">branches</span>: [main, master]</div>
+                <div className="mt-2 text-slate-500"># Steps executed in GitHub runner</div>
+                <div>1. Checkout code (actions/checkout@v4)</div>
+                <div>2. Setup Node.js 20 &amp; npm cache</div>
+                <div>3. npm run build (Vite production build)</div>
+                <div>4. cloudflare/wrangler-action@v3 deploy</div>
+                <div className="mt-2 text-emerald-400 font-semibold">✓ Zero manual server configuration needed</div>
+              </div>
+            </div>
+
+            {/* Cloudflare Dashboard Alternative */}
+            <div className="p-5 bg-slate-900/70 border border-slate-800 rounded-2xl space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                <div className="flex items-center gap-2 text-white font-bold text-xs">
+                  <Cloud className="w-4 h-4 text-amber-400" />
+                  <span>Option B: Cloudflare Dashboard Native Git Connect</span>
+                </div>
+                <span className="text-[10px] font-mono text-amber-300">Zero-Config UI</span>
+              </div>
+              <div className="space-y-2 text-xs text-slate-300">
+                <p className="text-[11px] text-slate-400">
+                  You can also link your GitHub repository directly from the Cloudflare Dashboard web interface:
+                </p>
+                <ol className="list-decimal list-inside space-y-1.5 text-[11px] text-slate-300 bg-black/30 p-3 rounded-xl border border-slate-800">
+                  <li>Log in to <strong className="text-white">dash.cloudflare.com</strong> (Account: <em>Playbeatdigital</em>)</li>
+                  <li>Click <strong className="text-white">Workers &amp; Pages</strong> &gt; <strong className="text-white">Create application</strong></li>
+                  <li>Select <strong className="text-cyan-400">Connect to Git</strong> and authorize your GitHub</li>
+                  <li>Select your repo: <strong className="text-indigo-400">playbeat-live</strong></li>
+                  <li>Build command: <code className="text-white font-mono bg-white/10 px-1 py-0.5 rounded">npm run build</code>, Directory: <code className="text-white font-mono bg-white/10 px-1 py-0.5 rounded">dist</code></li>
+                  <li>Click <strong className="text-emerald-400">Save and Deploy</strong></li>
+                </ol>
               </div>
             </div>
           </div>

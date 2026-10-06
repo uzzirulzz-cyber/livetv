@@ -22,6 +22,7 @@ import {
   ShieldCheck,
   Wifi
 } from 'lucide-react';
+import { ChannelLogo } from '../common/ChannelLogo';
 
 interface LiveTvViewProps {
   channels: Channel[];
@@ -245,17 +246,12 @@ export const LiveTvView: React.FC<LiveTvViewProps> = ({
                         {/* Top Header of Card */}
                         <div className="flex items-start justify-between gap-2 mb-3">
                           <div className="flex items-center gap-3 min-w-0">
-                            {channel.logo ? (
-                              <img
-                                src={channel.logo}
-                                alt={channel.name}
-                                className="w-12 h-12 rounded-xl object-cover bg-black/50 border border-white/10 shrink-0"
-                              />
-                            ) : (
-                              <div className="w-12 h-12 rounded-xl bg-cyan-500/20 text-cyan-400 font-bold flex items-center justify-center text-sm shrink-0 border border-cyan-500/30">
-                                TV
-                              </div>
-                            )}
+                            <ChannelLogo
+                              src={channel.logo}
+                              name={channel.name}
+                              category={channel.category}
+                              size="lg"
+                            />
                             <div className="min-w-0 truncate">
                               <div className="text-xs font-bold text-white group-hover:text-cyan-300 transition-colors truncate">
                                 {channel.name}

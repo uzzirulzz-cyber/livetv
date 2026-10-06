@@ -79,7 +79,7 @@ export default {
     if (request.method === "OPTIONS") return withCors(new Response(null, { status: 204 }), env);
 
     // 1. GeoTV Channels list with Cloudflare cache & secure authentication
-    if (url.pathname === "/api/iptv/channels" || url.pathname === "/api/geotv/channels") {
+    if (url.pathname === "/api/iptv/channels" || url.pathname === "/api/geotv/channels" || url.pathname === "/api/iptv/geotv/channels") {
       try {
         const force = url.searchParams.get("refresh") === "1" || url.searchParams.get("force") === "1";
         const result = await fetchGeoTvChannels(env, { force });
@@ -229,7 +229,12 @@ export default {
 
     const match = url.pathname.match(/^\/api\/([a-z_]+)$/);
     const action = match && ACTIONS[match[1]];
-    if (!action) return json({ status: "error", msg: "Not found" }, 404, env);
+    if (!action) {
+      if (env.ASSETS) {
+        return env.ASSETS.fetch(request);
+      }
+      return json({ status: "error", msg: "Not found" }, 404, env);
+    }
     if (request.method !== "POST") return json({ status: "error", msg: "Use POST" }, 405, env);
     if (!(await authorized(request, env))) return json({ status: "error", msg: "Unauthorized" }, 401, env);
     const apiKey = env.IPTV_API_KEY || env.STAR_IPTV_API_KEY;

@@ -11,6 +11,7 @@ import {
   Info,
   Tv
 } from 'lucide-react';
+import { ChannelLogo } from '../common/ChannelLogo';
 
 interface EpgGuideViewProps {
   channels: Channel[];
@@ -113,10 +114,11 @@ export const EpgGuideView: React.FC<EpgGuideViewProps> = ({ channels, onWatchCha
                     {/* Channel */}
                     <td className="py-4 px-5">
                       <div className="flex items-center gap-3">
-                        <img
+                        <ChannelLogo
                           src={ch.logo}
-                          alt={ch.name}
-                          className="w-10 h-10 rounded-lg object-cover bg-black/50 border border-white/10 shrink-0"
+                          name={ch.name}
+                          category={ch.category}
+                          size="md"
                         />
                         <div>
                           <div className="font-bold text-white group-hover:text-cyan-300 transition-colors">

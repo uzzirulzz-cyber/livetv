@@ -4,24 +4,24 @@ export type { Channel, EpgProgram, Movie, Series, SubscriptionPlan, RegisteredDe
 
 export const CHANNELS: Channel[] = [
   {
-    id: 'ch_pb_sports_1',
-    name: 'PlayBeat Sports Premier 4K',
+    id: 'ch_sky_sports_1',
+    name: 'Sky Sports Premier League 4K',
     number: 101,
     logo: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=120&h=120&q=80',
     category: 'Sports',
-    country: 'Global',
+    country: 'United Kingdom',
     language: 'English',
     streamUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-    epgId: 'EPG_PBS_1',
+    epgId: 'EPG_SKY_1',
     isPremium: true,
     isLive: true,
     resolution: '4K',
     currentProgram: {
-      title: 'UEFA Champions Tour Highlights & Tactical Analysis',
+      title: 'Premier League Live: Matchday Super Sunday',
       startTime: '21:00',
       endTime: '22:30',
       progressPercentage: 68,
-      synopsis: 'Live tactical deep-dive, multi-angle camera replays, and expert pitchside commentary.'
+      synopsis: 'Live tactical deep-dive, multi-angle camera replays, and pitchside commentary.'
     },
     nextProgram: {
       title: 'Motorsport Grand Prix Qualifiers Live',
@@ -30,15 +30,15 @@ export const CHANNELS: Channel[] = [
     }
   },
   {
-    id: 'ch_pb_cinema_action',
-    name: 'PlayBeat CineMax Action',
+    id: 'ch_hbo_max_hd',
+    name: 'HBO Max HD',
     number: 102,
     logo: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=120&h=120&q=80',
     category: 'Movies',
     country: 'United States',
     language: 'English',
     streamUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
-    epgId: 'EPG_PBC_2',
+    epgId: 'EPG_HBO_2',
     isPremium: true,
     isLive: true,
     resolution: '4K',
@@ -56,15 +56,15 @@ export const CHANNELS: Channel[] = [
     }
   },
   {
-    id: 'ch_pb_news_world',
-    name: 'PlayBeat Global 24 News',
+    id: 'ch_bbc_world_news',
+    name: 'BBC World News HD',
     number: 103,
     logo: 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&w=120&h=120&q=80',
     category: 'News',
     country: 'United Kingdom',
     language: 'English',
     streamUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
-    epgId: 'EPG_PBN_3',
+    epgId: 'EPG_BBC_3',
     isPremium: false,
     isLive: true,
     resolution: '1080p',
@@ -82,15 +82,15 @@ export const CHANNELS: Channel[] = [
     }
   },
   {
-    id: 'ch_pb_nat_geo',
-    name: 'PlayBeat Discovery Nature',
+    id: 'ch_nat_geo_wild',
+    name: 'National Geographic Wild HD',
     number: 104,
     logo: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=120&h=120&q=80',
     category: 'Documentary',
     country: 'International',
     language: 'English',
     streamUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
-    epgId: 'EPG_PBD_4',
+    epgId: 'EPG_NAT_4',
     isPremium: false,
     isLive: true,
     resolution: '4K',
@@ -108,15 +108,15 @@ export const CHANNELS: Channel[] = [
     }
   },
   {
-    id: 'ch_pb_kids_toon',
-    name: 'PlayBeat Kids ToonLand',
+    id: 'ch_cartoon_network',
+    name: 'Cartoon Network Live',
     number: 105,
     logo: 'https://images.unsplash.com/photo-1563089145-599997674d42?auto=format&fit=crop&w=120&h=120&q=80',
     category: 'Kids',
     country: 'Global',
     language: 'Multi-lingual',
     streamUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
-    epgId: 'EPG_PBK_5',
+    epgId: 'EPG_CN_5',
     isPremium: false,
     isLive: true,
     resolution: '1080p',
@@ -134,15 +134,15 @@ export const CHANNELS: Channel[] = [
     }
   },
   {
-    id: 'ch_pb_music_club',
-    name: 'PlayBeat Club Hits & EDM Live',
+    id: 'ch_mtv_live',
+    name: 'MTV Live Hits HD',
     number: 106,
     logo: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=120&h=120&q=80',
     category: 'Music',
     country: 'Europe',
     language: 'English',
     streamUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
-    epgId: 'EPG_PBM_6',
+    epgId: 'EPG_MTV_6',
     isPremium: false,
     isLive: true,
     resolution: '1080p',
@@ -160,15 +160,15 @@ export const CHANNELS: Channel[] = [
     }
   },
   {
-    id: 'ch_pb_lifestyle_gourmet',
-    name: 'PlayBeat Lifestyle & Chef Studio',
+    id: 'ch_discovery_hd',
+    name: 'Discovery Channel HD',
     number: 107,
     logo: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=120&h=120&q=80',
-    category: 'Lifestyle',
+    category: 'Documentary',
     country: 'International',
     language: 'English',
     streamUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
-    epgId: 'EPG_PBL_7',
+    epgId: 'EPG_DISC_7',
     isPremium: false,
     isLive: true,
     resolution: '1080p',
@@ -177,38 +177,142 @@ export const CHANNELS: Channel[] = [
       startTime: '21:00',
       endTime: '22:00',
       progressPercentage: 80,
-      synopsis: 'Michelin star chefs travel authentic farm-to-table culinary sanctuaries worldwide.'
+      synopsis: 'Exploration of authentic regional craft and world cultures.'
     },
     nextProgram: {
-      title: 'Architectural Marvels: Sustainable Coastal Villas',
+      title: 'Architectural Marvels: Sustainable Coastal Engineering',
       startTime: '22:00',
       endTime: '23:00'
     }
   },
   {
-    id: 'ch_pb_sports_racing',
-    name: 'PlayBeat Apex Racing TV',
+    id: 'ch_espn_live',
+    name: 'ESPN Sports Live',
     number: 108,
     logo: 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=120&h=120&q=80',
     category: 'Sports',
-    country: 'Monaco / EU',
+    country: 'United States',
     language: 'English',
     streamUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyBlazes.mp4',
-    epgId: 'EPG_PBS_8',
+    epgId: 'EPG_ESPN_8',
     isPremium: true,
     isLive: true,
     resolution: '4K',
     currentProgram: {
-      title: 'GT Supercup Endurance 6-Hour Stream',
+      title: 'SportsCenter Live & Prime Game Highlights',
       startTime: '18:00',
       endTime: '00:00',
       progressPercentage: 62,
-      synopsis: 'Endurance motorsport with live onboard cockpit telemetry and telemetry pit radio.'
+      synopsis: 'Live commentary, sports analysis, and scores across global leagues.'
     },
     nextProgram: {
       title: 'Superbike Championship Highlights',
       startTime: '00:00',
       endTime: '01:30'
+    }
+  },
+  {
+    id: 'ch_star_sports_1',
+    name: 'Star Sports 1 Cricket HD',
+    number: 109,
+    logo: 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?auto=format&fit=crop&w=120&h=120&q=80',
+    category: 'Sports',
+    country: 'India',
+    language: 'Hindi / English',
+    streamUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+    epgId: 'EPG_STAR_9',
+    isPremium: true,
+    isLive: true,
+    resolution: '1080p',
+    currentProgram: {
+      title: 'Live Cricket Arena: T20 Super Clash',
+      startTime: '19:00',
+      endTime: '23:00',
+      progressPercentage: 70,
+      synopsis: 'Live cricket broadcast, ball-by-ball analysis, pitch reports, and hawk-eye graphics.'
+    },
+    nextProgram: {
+      title: 'Post Match Analysis & Press Conference',
+      startTime: '23:00',
+      endTime: '00:00'
+    }
+  },
+  {
+    id: 'ch_sony_max_hd',
+    name: 'Sony MAX HD',
+    number: 110,
+    logo: 'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=120&h=120&q=80',
+    category: 'Movies',
+    country: 'India',
+    language: 'Hindi',
+    streamUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
+    epgId: 'EPG_SONY_10',
+    isPremium: false,
+    isLive: true,
+    resolution: '1080p',
+    currentProgram: {
+      title: 'Blockbuster Cinema: Prime Bollywood Premiere',
+      startTime: '20:00',
+      endTime: '23:30',
+      progressPercentage: 50,
+      synopsis: 'High-octane entertainment featuring blockbuster Indian cinema in full digital sound.'
+    },
+    nextProgram: {
+      title: 'Action Night Express',
+      startTime: '23:30',
+      endTime: '02:00'
+    }
+  },
+  {
+    id: 'ch_geo_news_hd',
+    name: 'Geo News Live HD',
+    number: 111,
+    logo: 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=120&h=120&q=80',
+    category: 'News',
+    country: 'Pakistan',
+    language: 'Urdu',
+    streamUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+    epgId: 'EPG_GEO_11',
+    isPremium: false,
+    isLive: true,
+    resolution: '1080p',
+    currentProgram: {
+      title: 'Khabarnama & National Headlines Bulletin',
+      startTime: '21:00',
+      endTime: '22:00',
+      progressPercentage: 80,
+      synopsis: 'Real-time breaking news updates, analytical discussions, and national coverage.'
+    },
+    nextProgram: {
+      title: 'Capital Talk Special Analysis',
+      startTime: '22:00',
+      endTime: '23:00'
+    }
+  },
+  {
+    id: 'ch_ary_digital_hd',
+    name: 'ARY Digital Live HD',
+    number: 112,
+    logo: 'https://images.unsplash.com/photo-1522869635100-9f4c5e86aa37?auto=format&fit=crop&w=120&h=120&q=80',
+    category: 'Entertainment',
+    country: 'Pakistan',
+    language: 'Urdu',
+    streamUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
+    epgId: 'EPG_ARY_12',
+    isPremium: false,
+    isLive: true,
+    resolution: '1080p',
+    currentProgram: {
+      title: 'Prime Time Drama Serial — Episode 24',
+      startTime: '20:00',
+      endTime: '21:30',
+      progressPercentage: 60,
+      synopsis: 'Top-rated television family drama broadcast with high emotional engagement.'
+    },
+    nextProgram: {
+      title: 'Jeeto Pakistan Special Show',
+      startTime: '21:30',
+      endTime: '23:00'
     }
   }
 ];

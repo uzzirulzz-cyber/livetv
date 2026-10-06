@@ -297,22 +297,30 @@ export default function App() {
     fetchAuditLogs();
   }, []);
 
-  // Automatically fetch and embed all 850+ GeoTV live channels into PlayBeat
+  // Automatically fetch and embed all 850+ GeoTV live channels into active lineup
   useEffect(() => {
     let isMounted = true;
-    fetch('/api/iptv/geotv/channels')
-      .then((r) => r.json())
-      .then((data) => {
+    const fetchChannels = async () => {
+      try {
+        let res = await fetch('/api/iptv/geotv/channels');
+        if (!res.ok) {
+          res = await fetch('/api/iptv/channels');
+        }
+        const data = await res.json();
         if (!isMounted || !data.success || !Array.isArray(data.channels)) return;
-        // Map authentic broadcast channel names without any brand prefix
+
+        // Map authentic broadcast channel names without any added prefix
         const geoChannels: Channel[] = data.channels.map((c: any, idx: number) => {
-          const authenticName = String(c.name || 'Live Channel').trim();
+          const rawName = String(c.name || c.rawName || 'Live Channel').trim();
+          // Clean technical provider prefixes while preserving authentic original name
+          const authenticName = rawName.replace(/^(CM:\s*|IN\s*-\s*|PK\s*-\s*|EN\s*-\s*|UK\s*-\s*|SL\s*)/i, '').trim();
           const streamId = c.streamId || String(idx + 1);
           const hlsUrl = c.hlsUrl || `/api/proxy/hls/stream.m3u8?channelId=${streamId}`;
           const tsUrl = c.tsUrl || `/api/proxy/stream?url=${encodeURIComponent(c.streamUrl || '')}`;
-          const logoUrl = c.logo && c.logo.startsWith('http://')
-            ? `/api/proxy/image?url=${encodeURIComponent(c.logo)}`
-            : (c.logo || 'https://images.unsplash.com/photo-1594909122845-11baa439b7bf?auto=format&fit=crop&w=120&h=120&q=80');
+          const rawLogo = c.logo || c.rawLogo || '';
+          const logoUrl = rawLogo && rawLogo.startsWith('http://')
+            ? `/api/proxy/image?url=${encodeURIComponent(rawLogo)}`
+            : rawLogo;
 
           return {
             id: `geo_live_${idx + 1}`,
@@ -346,12 +354,14 @@ export default function App() {
           };
         });
 
-        // Put the 850 authentic live channels directly into active channels list
-        setActiveChannelsList([...geoChannels, ...CHANNELS]);
-      })
-      .catch((err) => {
+        // Set lineup with curated top networks and all 850+ live channels
+        setActiveChannelsList([...CHANNELS, ...geoChannels]);
+      } catch (err) {
         console.warn('[GeoTV Sync] Auto-fetch error:', err);
-      });
+      }
+    };
+
+    fetchChannels();
 
     return () => {
       isMounted = false;
@@ -989,6 +999,8 @@ export default function App() {
                     setStreamingSection(sec);
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }}
+                  favorites={favorites}
+                  onToggleFavorite={handleToggleFavorite}
                 />
               </>
             )}

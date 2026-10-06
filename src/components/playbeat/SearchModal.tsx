@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Channel, Movie, Series } from '../../types/playbeat';
 import { Search, X, Play, Tv, Film, Layers, ChevronRight, Star } from 'lucide-react';
+import { ChannelLogo } from '../common/ChannelLogo';
 
 interface SearchModalProps {
   isOpen: boolean;
@@ -125,7 +126,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
                         className="p-2.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.05] flex items-center justify-between cursor-pointer transition-colors group"
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
-                          <img src={c.logo} alt={c.name} className="w-8 h-8 rounded-lg object-cover shrink-0" />
+                          <ChannelLogo src={c.logo} name={c.name} category={c.category} size="sm" />
                           <div className="truncate">
                             <span className="text-xs font-bold text-white block truncate group-hover:text-cyan-300">
                               {c.name}

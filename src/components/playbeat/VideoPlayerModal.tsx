@@ -30,6 +30,7 @@ import {
   Search,
   RefreshCw
 } from 'lucide-react';
+import { ChannelLogo } from '../common/ChannelLogo';
 
 interface VideoPlayerModalProps {
   channel: Channel | null;
@@ -373,10 +374,11 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
           >
             {/* Channel Info & Live Badges */}
             <div className="flex items-center gap-3">
-              <img
+              <ChannelLogo
                 src={channel.logo}
-                alt={channel.name}
-                className="w-10 h-10 rounded-lg object-cover bg-black/60 border border-white/20 shrink-0"
+                name={channel.name}
+                category={channel.category}
+                size="md"
               />
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
@@ -628,10 +630,11 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
                         : 'bg-white/[0.04] border-white/[0.08] text-slate-300 hover:bg-white/[0.08]'
                     }`}
                   >
-                    <img
+                    <ChannelLogo
                       src={c.logo}
-                      alt={c.name}
-                      className="w-8 h-8 rounded object-cover bg-black/50 shrink-0"
+                      name={c.name}
+                      category={c.category}
+                      size="sm"
                     />
                     <div className="min-w-0 flex-1">
                       <div className="text-xs font-bold truncate">{c.name}</div>

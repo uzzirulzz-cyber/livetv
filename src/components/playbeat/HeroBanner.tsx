@@ -33,7 +33,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
     {
       id: 'f_sports',
       title: 'UEFA Champions Tour Highlights',
-      subtitle: 'Live On PlayBeat Sports Premier 4K',
+      subtitle: 'Live On Sky Sports Premier League 4K',
       category: 'Live Sports',
       rating: 'Live',
       quality: '4K 60FPS',

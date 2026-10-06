@@ -4,6 +4,10 @@ compatibility_date = "2026-09-01"
 account_id = "20c83732a1af52f80655768cd4dfc251"
 workers_dev = true
 
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+
 [vars]
 DOMAIN = "playbeat.live"
 ALLOWED_ORIGIN = "*"
