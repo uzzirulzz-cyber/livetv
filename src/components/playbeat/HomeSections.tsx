@@ -198,7 +198,7 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
                 {/* Bottom Action Bar */}
                 <div className="flex items-center justify-between pt-2 border-t border-white/[0.04]">
                   <span className="text-[10px] text-slate-400 truncate max-w-[180px]">
-                    Up next: {channel.nextProgram.title}
+                    Up next: {channel.nextProgram?.title ?? 'Schedule unavailable'}
                   </span>
                   <span className="text-xs font-bold text-cyan-400 group-hover:text-cyan-300 flex items-center gap-1 group-hover:translate-x-0.5 transition-all">
                     <Play className="w-3 h-3 fill-cyan-400" />
