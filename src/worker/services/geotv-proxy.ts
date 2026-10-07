@@ -266,14 +266,10 @@ export async function fetchGeoTvChannels(
     throw new Error(`Upstream GeoTV returned HTTP ${playlistResponse.status}: ${playlistResponse.statusText}`);
   }
 
-  const text = await playlistResponse.text();
-  const lines = text.split('\n');
-
   const parsedChannels: any[] = [];
   let currentItem: any = null;
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
+  const processPlaylistLine = (rawLine: string): void => {
+    const line = rawLine.trim();
     if (line.startsWith('#EXTINF:')) {
       const logoMatch = line.match(/tvg-logo="([^"]*)"/);
       const epgMatch = line.match(/tvg-id="([^"]*)"/);
@@ -309,6 +305,32 @@ export async function fetchGeoTvChannels(
         currentItem = null;
       }
     }
+  };
+
+  if (!playlistResponse.body) {
+    throw new Error('Provider returned an empty playlist response.');
+  }
+  const reader = playlistResponse.body.getReader();
+  const decoder = new TextDecoder();
+  let bufferedLine = '';
+  try {
+    while (true) {
+      const { value, done } = await reader.read();
+      bufferedLine += decoder.decode(value, { stream: !done });
+      let newlineIndex = bufferedLine.indexOf('\n');
+      while (newlineIndex >= 0) {
+        processPlaylistLine(bufferedLine.slice(0, newlineIndex).replace(/\r$/, ''));
+        bufferedLine = bufferedLine.slice(newlineIndex + 1);
+        newlineIndex = bufferedLine.indexOf('\n');
+      }
+      if (done) {
+        if (bufferedLine) processPlaylistLine(bufferedLine);
+        break;
+      }
+    }
+  } catch (error) {
+    await reader.cancel(error);
+    throw error;
   }
 
   cachedChannelList = {
