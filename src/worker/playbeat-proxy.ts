@@ -6,6 +6,7 @@ import {
   resolveCloudflareDoh 
 } from "./services/geotv-proxy";
 import { persistChannelCatalog, readChannelCatalog } from "./services/catalog-store";
+import { withGeoTvProvider } from "./services/provider-config";
 
 // PlayBeat TV – secure Cloudflare Worker proxy for the Xtream-Masters v3 reseller API
 // and GeoTV IPTV streaming & image caching.
@@ -144,8 +145,23 @@ export default {
     if (url.pathname === "/api/iptv/hls/stream.m3u8" || url.pathname === "/api/proxy/hls/stream.m3u8") {
       const channelId = url.searchParams.get("channelId") || "";
       const targetUrl = url.searchParams.get("url") || undefined;
-      const hlsRes = await fetchGeoTvHlsStream(env, channelId, targetUrl);
-      return withCors(hlsRes, env);
+      try {
+        const providerEnv = withGeoTvProvider(env);
+        const segmentPath = `${env.PLAYBACK_BASE_URL}/broadcast/api/iptv/segment`;
+        const hlsRes = await fetchGeoTvHlsStream(providerEnv, channelId, targetUrl, segmentPath);
+        return withCors(hlsRes, env);
+      } catch (err) {
+        const providerError = err instanceof Error && err.message === "GeoTV provider is not configured";
+        const insecureProvider = err instanceof Error && err.message === "GeoTV provider must be configured with HTTPS.";
+        if (providerError || insecureProvider) {
+          return json({
+            success: false,
+            error: insecureProvider ? "Provider playlist must use HTTPS." : "GeoTV provider is not configured.",
+          }, 503, env);
+        }
+        console.error("[GeoTV HLS] stream request failed:", err instanceof Error ? err.name : "Unknown error");
+        return json({ success: false, error: "Stream is temporarily unavailable." }, 502, env);
+      }
     }
 
     // 4. Cloudflare-accelerated Video TS Segment Proxy

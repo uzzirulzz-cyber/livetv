@@ -1,5 +1,5 @@
 import type { Env } from './env';
-import { fetchGeoTvHlsStream, fetchGeoTvSegment, isAllowedHost } from './services/geotv-proxy';
+import { fetchGeoTvSegment, isAllowedHost } from './services/geotv-proxy';
 
 interface ChannelRow {
   stream_id: string;
@@ -41,12 +41,13 @@ export default {
           return withCors(new Response('Channel not found in catalog', { status: 404 }));
         }
 
-        return withCors(await fetchGeoTvHlsStream(
-          env,
-          channel.stream_id,
-          undefined,
-          '/broadcast/api/iptv/segment'
-        ));
+        if (!env.CATALOG) {
+          return withCors(new Response('Catalog Worker service binding is not configured', { status: 503 }));
+        }
+        const catalogRequest = new Request(
+          `https://catalog.internal/api/iptv/hls/stream.m3u8?channelId=${encodeURIComponent(channel.stream_id)}`
+        );
+        return withCors(await env.CATALOG.fetch(catalogRequest));
       } catch (error) {
         console.error('[Broadcast HLS] stream request failed:', error instanceof Error ? error.name : 'Unknown error');
         return withCors(new Response('Stream is temporarily unavailable', { status: 502 }));

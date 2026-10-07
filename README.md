@@ -65,7 +65,9 @@ The `playbeat.live` zone routes web traffic to the `playbeat-live` Worker throug
 
 The catalog Worker is bound to the `playbeat-catalog` D1 database in [`wrangler.toml`](./wrangler.toml), and the initial schema is in [`migrations/0001_catalog.sql`](./migrations/0001_catalog.sql). The playback Worker uses the same database through [`wrangler.broadcast.toml`](./wrangler.broadcast.toml). Deployments apply pending migrations before publishing either Worker.
 
-Set `GEOTV_HOST`, `GEOTV_USER`, and `GEOTV_PASS` as secrets on both Workers (`playbeat-live` and `playbeat-broadcast`). The provider endpoint must use HTTPS. Do not put provider credentials in browser code, query strings, or D1. Until rotated, authorized HTTPS credentials are configured, provider refresh and live playback remain unavailable.
+Set `M3U_PLAYLIST_URL` on the `playbeat-live` Worker to a rotated, authorized HTTPS Xtream playlist URL with `username` and `password` query parameters. The catalog Worker rejects HTTP URLs and does not expose the secret to clients. The `playbeat-broadcast` Worker accesses catalog-worker playback over a private service binding and does not need a duplicate provider secret. Do not put provider credentials in browser code, public URLs, or D1. The current playlist URL is HTTP, so catalog refresh and live playback remain disabled until it is replaced with a secure HTTPS URL.
+
+Movies and series are not currently imported into D1. The provider must supply an authorized HTTPS Xtream API endpoint before VOD catalog ingestion can be implemented and verified; demo movie and series entries in the frontend are not provider catalog data.
 
 ### Admin sign-in
 

@@ -141,9 +141,13 @@ export async function fetchGeoTvChannels(
     };
   }
 
-  const host = env.GEOTV_HOST;
-  const user = env.GEOTV_USER;
-  const pass = env.GEOTV_PASS;
+  const configuredPlaylist = env.M3U_PLAYLIST_URL ? new URL(env.M3U_PLAYLIST_URL) : null;
+  if (configuredPlaylist && configuredPlaylist.protocol !== 'https:') {
+    throw new Error('GeoTV provider must be configured with HTTPS.');
+  }
+  const host = configuredPlaylist?.origin ?? env.GEOTV_HOST;
+  const user = configuredPlaylist?.searchParams.get('username') ?? env.GEOTV_USER;
+  const pass = configuredPlaylist?.searchParams.get('password') ?? env.GEOTV_PASS;
 
   if (!host || !user || !pass) throw new Error('GeoTV provider configuration is incomplete.');
   if (new URL(host).protocol !== 'https:') {

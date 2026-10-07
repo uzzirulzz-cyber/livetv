@@ -7,3 +7,7 @@ workers_dev = true
 binding = "CATALOG_DB"
 database_name = "playbeat-catalog"
 database_id = "75e2c1c3-a1cc-4b6d-b8f4-4afb403f3e2b"
+
+[[services]]
+binding = "CATALOG"
+service = "playbeat-live"

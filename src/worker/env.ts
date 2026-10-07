@@ -12,9 +12,13 @@ export interface Env {
   GEOTV_HOST?: string;
   GEOTV_USER?: string;
   GEOTV_PASS?: string;
+  M3U_PLAYLIST_URL?: string;
   CLOUDFLARE_ACCOUNT_ID?: string;
   CLOUDFLARE_API_TOKEN?: string;
   DB?: any;
+  CATALOG?: {
+    fetch(request: Request): Promise<Response>;
+  };
   CATALOG_DB?: {
     prepare(query: string): {
       all<T>(): Promise<{ results: T[] }>;
