@@ -286,6 +286,7 @@ export default {
 
 async function runCatalogSync(env: any, source: "scheduled" | "request"): Promise<void> {
   const startedAt = new Date().toISOString();
+  let stage: "provider" | "catalog" | "status" = "provider";
   try {
     if (!env.CATALOG_DB) throw new Error("Channel catalog storage is not configured.");
 
@@ -294,7 +295,9 @@ async function runCatalogSync(env: any, source: "scheduled" | "request"): Promis
       throw new Error("The provider returned an empty channel catalog.");
     }
 
+    stage = "catalog";
     await persistChannelCatalog(env.CATALOG_DB, result.channels);
+    stage = "status";
     await recordCatalogSync(env.BUCKET, {
       source,
       status: "success",
@@ -305,16 +308,28 @@ async function runCatalogSync(env: any, source: "scheduled" | "request"): Promis
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "";
+    const errorType = error instanceof Error ? error.name : "Unknown";
     const upstreamStatus = message.match(/returned HTTP (\d{3})/);
-    const errorSummary = upstreamStatus
-      ? `Provider returned HTTP ${upstreamStatus[1]}.`
-      : message.includes("HTTPS")
-      ? "Provider HTTPS configuration is required."
-      : message.includes("not configured") || message.includes("incomplete")
-        ? "Provider configuration is incomplete."
-        : message.includes("empty channel catalog")
-          ? "Provider returned no channels."
-          : "Provider fetch or catalog storage failed.";
+    let errorSummary: string;
+    if (upstreamStatus) {
+      errorSummary = `Provider returned HTTP ${upstreamStatus[1]}.`;
+    } else if (message.includes("empty channel catalog")) {
+      errorSummary = "Provider returned no channels.";
+    } else if (message.includes("HTTPS")) {
+      errorSummary = "Provider HTTPS configuration is required.";
+    } else if (message.includes("not configured") || message.includes("incomplete")) {
+      errorSummary = "Provider configuration is incomplete.";
+    } else if (stage === "provider" && errorType === "TypeError") {
+      errorSummary = "Provider network request failed.";
+    } else if (stage === "provider") {
+      errorSummary = "Provider request failed.";
+    } else if (stage === "catalog" && /7500|write quota/i.test(message)) {
+      errorSummary = "D1 daily row-write quota exceeded.";
+    } else if (stage === "catalog") {
+      errorSummary = "Catalog database write failed.";
+    } else {
+      errorSummary = "Catalog sync status storage failed.";
+    }
 
     if (env.BUCKET) {
       await recordCatalogSync(env.BUCKET, {
