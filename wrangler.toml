@@ -19,3 +19,7 @@ binding = "CATALOG_DB"
 database_name = "playbeat-catalog"
 database_id = "75e2c1c3-a1cc-4b6d-b8f4-4afb403f3e2b"
 migrations_dir = "migrations"
+
+[[analytics_engine_datasets]]
+binding = "222"
+dataset = "313"
