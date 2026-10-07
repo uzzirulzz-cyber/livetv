@@ -210,23 +210,17 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
         </div>
       </section>
 
-      {/* ========================================================
-          SECTION 2: TRENDING & POPULAR CHANNELS
-          User requested: "landing page to display trending and popular"
-          ======================================================== */}
+      {channels.length > 0 && (
       <section className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-white/[0.08]">
           <div className="flex items-center gap-2">
-            <Flame className="w-5 h-5 text-amber-400" />
+            <Tv className="w-5 h-5 text-amber-400" />
             <div>
               <h2 className="text-lg sm:text-xl font-black text-white tracking-tight font-display flex items-center gap-2">
-                <span>What’s Popular Right Now</span>
-                <span className="text-xs font-mono font-bold text-amber-200 bg-amber-950/70 border border-amber-500/30 px-2 py-0.5 rounded">
-                  FEATURED PICKS
-                </span>
+                <span>More Live Channels</span>
               </h2>
               <p className="text-xs text-slate-400">
-                A curated selection of featured channels. Availability depends on verified provider feeds.
+                Additional channels grouped by provider-supplied category.
               </p>
             </div>
           </div>
@@ -302,7 +296,7 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
                 <div className="flex items-center justify-between pt-3 border-t border-white/[0.06] text-[10px] font-mono">
                   <span className="text-amber-200/80 flex items-center gap-1 font-semibold">
                     <Sparkles className="w-3 h-3" />
-                    <span>{channel.resolution} · Featured</span>
+                    <span>{channel.resolution}</span>
                   </span>
                   <span className="font-sans font-bold text-white group-hover:text-amber-300 flex items-center gap-1">
                     <Play className="w-3 h-3 fill-current" />
@@ -314,6 +308,7 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
           })}
         </div>
       </section>
+      )}
 
       {/* ========================================================
           SECTION 3: TRENDING MOVIES
