@@ -102,15 +102,11 @@ export default {
     }
 
     if (url.pathname === "/api/catalog/sync-status") {
-      if (!env.CATALOG_DB) {
-        return json({ success: false, error: "Channel catalog storage is not configured." }, 503, env);
+      if (!env.BUCKET) {
+        return json({ success: false, error: "Catalog sync status storage is not configured." }, 503, env);
       }
-      const latestRun = await env.CATALOG_DB.prepare(`
-        SELECT source, status, channel_count, started_at, finished_at, error_summary
-        FROM catalog_sync_runs
-        ORDER BY run_id DESC
-        LIMIT 1
-      `).first();
+      const latestStatus = await env.BUCKET.get("catalog-sync/latest.json");
+      const latestRun = latestStatus ? await latestStatus.json() : null;
       return json({ success: true, latestRun }, 200, env);
     }
 
@@ -288,7 +284,7 @@ async function runCatalogSync(env: any, source: "scheduled" | "request"): Promis
     }
 
     await persistChannelCatalog(env.CATALOG_DB, result.channels);
-    await recordCatalogSync(env.CATALOG_DB, {
+    await recordCatalogSync(env.BUCKET, {
       source,
       status: "success",
       channelCount: result.channels.length,
@@ -306,8 +302,8 @@ async function runCatalogSync(env: any, source: "scheduled" | "request"): Promis
           ? "Provider returned no channels."
           : "Provider fetch or catalog storage failed.";
 
-    if (env.CATALOG_DB) {
-      await recordCatalogSync(env.CATALOG_DB, {
+    if (env.BUCKET) {
+      await recordCatalogSync(env.BUCKET, {
         source,
         status: "failed",
         channelCount: 0,
@@ -322,7 +318,7 @@ async function runCatalogSync(env: any, source: "scheduled" | "request"): Promis
 }
 
 async function recordCatalogSync(
-  database: any,
+  bucket: any,
   run: {
     source: "scheduled" | "request";
     status: "success" | "failed";
@@ -332,23 +328,16 @@ async function recordCatalogSync(
     errorSummary: string | null;
   }
 ): Promise<void> {
-  await database.prepare(`
-    INSERT INTO catalog_sync_runs (source, status, channel_count, started_at, finished_at, error_summary)
-    VALUES (?, ?, ?, ?, ?, ?)
-  `).bind(
-    run.source,
-    run.status,
-    run.channelCount,
-    run.startedAt,
-    run.finishedAt,
-    run.errorSummary
-  ).run();
-  await database.prepare(`
-    DELETE FROM catalog_sync_runs
-    WHERE run_id NOT IN (
-      SELECT run_id FROM catalog_sync_runs ORDER BY run_id DESC LIMIT 30
-    )
-  `).run();
+  await bucket.put("catalog-sync/latest.json", JSON.stringify({
+    source: run.source,
+    status: run.status,
+    channelCount: run.channelCount,
+    startedAt: run.startedAt,
+    finishedAt: run.finishedAt,
+    error: run.errorSummary,
+  }), {
+    httpMetadata: { contentType: "application/json" },
+  });
 }
 
 // ---------- ActiveCode activation callback ----------

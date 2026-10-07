@@ -28,9 +28,16 @@ export interface Env {
         all<T>(): Promise<{ results: T[] }>;
         first<T>(): Promise<T | null>;
       };
-      run(): Promise<unknown>;
     };
     batch(statements: { run(): Promise<unknown> }[]): Promise<unknown[]>;
+  };
+  BUCKET?: {
+    get(key: string): Promise<{ json<T>(): Promise<T> } | null>;
+    put(
+      key: string,
+      value: string,
+      options?: { httpMetadata?: { contentType?: string } }
+    ): Promise<unknown>;
   };
   CACHE?: any;
   ACTIVATIONS?: any;

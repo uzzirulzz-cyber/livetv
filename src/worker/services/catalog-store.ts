@@ -36,15 +36,22 @@ interface CatalogRow {
   stream_id: string;
 }
 
+interface PersistableCatalogChannel extends CatalogChannel {
+  id: string;
+  name: string;
+  streamId: string;
+}
+
+const CATALOG_SELECT = `
+  SELECT channel_id, name, raw_name, logo_url, group_title, category, epg_id, stream_id
+  FROM catalog_channels
+`;
+
 export async function readChannelCatalog(
   database: CatalogDatabase,
   playbackBaseUrl: string
 ): Promise<CatalogChannel[]> {
-  const { results } = await database.prepare(`
-    SELECT channel_id, name, raw_name, logo_url, group_title, category, epg_id, stream_id
-    FROM catalog_channels
-    ORDER BY group_title, name
-  `).all<CatalogRow>();
+  const { results } = await database.prepare(`${CATALOG_SELECT} ORDER BY group_title, name`).all<CatalogRow>();
 
   return results.map((row) => ({
     id: row.channel_id,
@@ -68,16 +75,38 @@ export async function persistChannelCatalog(
     throw new Error('Channel catalog exceeded the supported size.');
   }
   if (channels.length === 0) {
-    await database.prepare('DELETE FROM catalog_channels').run();
     return;
   }
 
-  const syncedAt = new Date().toISOString();
-  const statements = channels.map((channel) => {
+  const validatedChannels: PersistableCatalogChannel[] = [];
+  for (const channel of channels) {
     if (!channel.id || !channel.name || !channel.streamId) {
       throw new Error('Channel catalog contains an incomplete record.');
     }
+    validatedChannels.push({
+      ...channel,
+      id: channel.id,
+      name: channel.name,
+      streamId: channel.streamId,
+    });
+  }
 
+  const { results: storedChannels } = await database.prepare(CATALOG_SELECT).all<CatalogRow>();
+  const storedById = new Map(storedChannels.map((channel) => [channel.channel_id, channel]));
+  const incomingIds = new Set(validatedChannels.map((channel) => channel.id));
+  const syncedAt = new Date().toISOString();
+  const changedChannels = validatedChannels.filter((channel) => {
+    const stored = storedById.get(channel.id);
+    return !stored
+      || stored.name !== channel.name
+      || stored.raw_name !== (channel.rawName ?? null)
+      || stored.logo_url !== (channel.rawLogo ?? null)
+      || stored.group_title !== (channel.group ?? 'General')
+      || stored.category !== (channel.category ?? 'Entertainment')
+      || stored.epg_id !== (channel.epgId ?? null)
+      || stored.stream_id !== channel.streamId;
+  });
+  const upserts = changedChannels.map((channel) => {
     return database.prepare(`
       INSERT INTO catalog_channels (
         channel_id, name, raw_name, logo_url, group_title,
@@ -105,11 +134,15 @@ export async function persistChannelCatalog(
     );
   });
 
-  for (let index = 0; index < statements.length; index += 100) {
-    await database.batch(statements.slice(index, index + 100));
+  for (let index = 0; index < upserts.length; index += 100) {
+    await database.batch(upserts.slice(index, index + 100));
   }
 
-  await database.prepare('DELETE FROM catalog_channels WHERE last_synced_at <> ?')
-    .bind(syncedAt)
-    .run();
+  const removedChannels = storedChannels.filter((channel) => !incomingIds.has(channel.channel_id));
+  const deletes = removedChannels.map((channel) => database.prepare(
+    'DELETE FROM catalog_channels WHERE channel_id = ?'
+  ).bind(channel.channel_id));
+  for (let index = 0; index < deletes.length; index += 100) {
+    await database.batch(deletes.slice(index, index + 100));
+  }
 }
