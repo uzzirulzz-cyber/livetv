@@ -8,6 +8,7 @@ export interface Env {
   ENCRYPTION_KEY?: string;
   ADMIN_TOKEN?: string;
   ALLOWED_ORIGIN?: string;
+  PLAYBACK_BASE_URL: string;
   GEOTV_HOST?: string;
   GEOTV_USER?: string;
   GEOTV_PASS?: string;
@@ -16,8 +17,12 @@ export interface Env {
   DB?: any;
   CATALOG_DB?: {
     prepare(query: string): {
+      all<T>(): Promise<{ results: T[] }>;
+      first<T>(): Promise<T | null>;
       bind(...values: (string | number | null)[]): {
         run(): Promise<unknown>;
+        all<T>(): Promise<{ results: T[] }>;
+        first<T>(): Promise<T | null>;
       };
     };
     batch(statements: { run(): Promise<unknown> }[]): Promise<unknown[]>;

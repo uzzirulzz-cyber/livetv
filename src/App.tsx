@@ -284,7 +284,7 @@ export default function App() {
           const name = String(channel.name || channel.rawName || 'Live Channel').trim();
           const streamId = String(channel.streamId || index + 1);
           const group = String(channel.group || 'General');
-          const hlsUrl = channel.hlsUrl || '/api/iptv/hls/stream.m3u8?channelId=' + encodeURIComponent(streamId);
+          const hlsUrl = channel.hlsUrl || '/broadcast/api/iptv/hls/stream.m3u8?channelId=' + encodeURIComponent(streamId);
 
           return {
             id: String(channel.id || 'geo_live_' + streamId),

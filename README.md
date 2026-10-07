@@ -50,7 +50,7 @@ This repository includes a preconfigured GitHub Actions workflow at [`.github/wo
 
 ## 🌐 Cloudflare DNS & Nameservers
 
-The Wrangler configuration routes `playbeat.live/*` to the `playbeat-live` Worker when deployed. This Worker serves the built SPA assets and API requests. Existing proxied DNS records are retained; do not replace them with guessed IPs or convert the apex to a Worker custom domain. The zone must be active on Cloudflare and proxied for Worker routes to run. Nameserver delegation and SSL mode remain zone-level settings and should be checked in Cloudflare.
+The `playbeat.live` zone routes web traffic to the `playbeat-live` Worker through its existing Cloudflare dashboard route. Keep that route in the dashboard; it is intentionally not managed by Wrangler because the deployment token does not have DNS-route write access. Existing proxied DNS records are retained; do not replace them with guessed IPs or convert the apex to a Worker custom domain. Nameserver delegation and SSL mode remain zone-level settings.
 
 ---
 
@@ -58,14 +58,14 @@ The Wrangler configuration routes `playbeat.live/*` to the `playbeat-live` Worke
 
 - **Provider-fed Live TV**: No demonstration/test channels are advertised as live. Channels load only when an authorized HTTPS provider is configured.
 - **D1 Catalog Storage**: `CATALOG_DB` stores channel metadata without upstream stream URLs or provider credentials. The `epg_programs` schema is installed, but XMLTV ingestion is not implemented.
-- **Stream Proxy**: The Worker proxies provider playlists and segments when the provider is configured to use HTTPS.
+- **Stream Proxy**: `playbeat-broadcast` reads each requested channel's stream ID from D1, then proxies HLS playlists and segments. The main Worker reads channel metadata from D1 and only synchronizes from the provider when the catalog is empty or explicitly refreshed.
 - **Admin Suite**: `/admin` validates the `ADMIN_TOKEN` Worker secret on the server. Set a strong random value as a Cloudflare Worker secret before signing in; the browser keeps it in memory only and clears it on sign-out or reload. Never commit or share the token.
 
 ### Live catalog and D1 setup
 
-The Worker is bound to the `playbeat-catalog` D1 database in [`wrangler.toml`](./wrangler.toml), and the initial schema is in [`migrations/0001_catalog.sql`](./migrations/0001_catalog.sql). Deployments apply pending migrations before publishing the Worker.
+The catalog Worker is bound to the `playbeat-catalog` D1 database in [`wrangler.toml`](./wrangler.toml), and the initial schema is in [`migrations/0001_catalog.sql`](./migrations/0001_catalog.sql). The playback Worker uses the same database through [`wrangler.broadcast.toml`](./wrangler.broadcast.toml). Deployments apply pending migrations before publishing either Worker.
 
-Set `GEOTV_HOST` to an HTTPS endpoint and configure `GEOTV_USER` and `GEOTV_PASS` as Cloudflare Worker secrets. The Worker rejects HTTP provider endpoints because they would expose credentials in transit. Do not put provider credentials in browser code, query strings, or D1. No provider credentials are currently configured in this repository; until a rotated, authorized HTTPS endpoint is configured, the live catalog and playback remain unavailable.
+Set `GEOTV_HOST`, `GEOTV_USER`, and `GEOTV_PASS` as secrets on both Workers (`playbeat-live` and `playbeat-broadcast`). The provider endpoint must use HTTPS. Do not put provider credentials in browser code, query strings, or D1. Until rotated, authorized HTTPS credentials are configured, provider refresh and live playback remain unavailable.
 
 ### Admin sign-in
 

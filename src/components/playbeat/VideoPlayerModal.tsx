@@ -162,7 +162,7 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
     } else {
       // LIVE BROADCAST CHANNEL: HLS adaptive or direct TS
       setStreamMode('cloudflare-hls');
-      const hlsUrl = channel.hlsUrl || (channel.streamUrl?.includes('.m3u8') ? channel.streamUrl : `/api/proxy/hls/stream.m3u8?channelId=${streamId}`);
+      const hlsUrl = channel.hlsUrl || (channel.streamUrl?.includes('.m3u8') ? channel.streamUrl : `/broadcast/api/iptv/hls/stream.m3u8?channelId=${streamId}`);
       setCurrentStreamSource(hlsUrl);
 
       if (Hls.isSupported()) {
@@ -364,7 +364,7 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
   const nextChannel = allChannels[(currentIndex + 1) % allChannels.length];
 
   const streamId = channel.streamId || (channel.id.replace('geo_', '').replace('geo_live_', ''));
-  const fullHlsUrl = `${window.location.origin}/api/proxy/hls/stream.m3u8?channelId=${streamId}`;
+  const fullHlsUrl = `${window.location.origin}/broadcast/api/iptv/hls/stream.m3u8?channelId=${streamId}`;
   const fullTsUrl = channel.streamUrl;
 
   const togglePlay = () => {

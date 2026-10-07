@@ -79,7 +79,7 @@ export const CloudflareGeoTvModal: React.FC<CloudflareGeoTvModalProps> = ({
         if (onLoadLiveChannels) {
           const converted: Channel[] = data.channels.map((c: any, idx: number) => {
             const streamId = c.streamId || String(idx + 1);
-            const hlsUrl = c.hlsUrl || `/api/proxy/hls/stream.m3u8?channelId=${streamId}`;
+            const hlsUrl = c.hlsUrl || `/broadcast/api/iptv/hls/stream.m3u8?channelId=${streamId}`;
             const tsUrl = c.tsUrl || `/api/proxy/stream?url=${encodeURIComponent(c.streamUrl || '')}`;
             const logoUrl = c.logo && c.logo.startsWith('http://')
               ? `/api/proxy/image?url=${encodeURIComponent(c.logo)}`

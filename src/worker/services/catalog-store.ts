@@ -3,7 +3,9 @@ interface CatalogDatabase {
     run(): Promise<unknown>;
     bind(...values: (string | number | null)[]): {
       run(): Promise<unknown>;
+      all<T>(): Promise<{ results: T[] }>;
     };
+    all<T>(): Promise<{ results: T[] }>;
   };
   batch(statements: { run(): Promise<unknown> }[]): Promise<unknown[]>;
 }
@@ -13,13 +15,50 @@ interface CatalogChannel {
   name?: string;
   rawName?: string;
   rawLogo?: string;
+  logo?: string;
   group?: string;
   category?: string;
   epgId?: string;
   streamId?: string;
+  hlsUrl?: string;
 }
 
 export const MAX_CATALOG_CHANNELS = 15_000;
+
+interface CatalogRow {
+  channel_id: string;
+  name: string;
+  raw_name: string | null;
+  logo_url: string | null;
+  group_title: string;
+  category: string;
+  epg_id: string | null;
+  stream_id: string;
+}
+
+export async function readChannelCatalog(
+  database: CatalogDatabase,
+  playbackBaseUrl: string
+): Promise<CatalogChannel[]> {
+  const { results } = await database.prepare(`
+    SELECT channel_id, name, raw_name, logo_url, group_title, category, epg_id, stream_id
+    FROM catalog_channels
+    ORDER BY group_title, name
+  `).all<CatalogRow>();
+
+  return results.map((row) => ({
+    id: row.channel_id,
+    name: row.name,
+    rawName: row.raw_name ?? undefined,
+    rawLogo: row.logo_url ?? undefined,
+    logo: row.logo_url ? `/api/iptv/image?url=${encodeURIComponent(row.logo_url)}` : '',
+    group: row.group_title,
+    category: row.category,
+    epgId: row.epg_id ?? undefined,
+    streamId: row.stream_id,
+    hlsUrl: `${playbackBaseUrl}/broadcast/api/iptv/hls/stream.m3u8?channelId=${encodeURIComponent(row.stream_id)}`,
+  }));
+}
 
 export async function persistChannelCatalog(
   database: CatalogDatabase,

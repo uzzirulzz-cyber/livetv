@@ -334,7 +334,8 @@ export async function fetchGeoTvImage(env: Env, imageUrl: string, request?: Requ
 export async function fetchGeoTvHlsStream(
   env: Env,
   channelId: string,
-  rawUrl?: string
+  rawUrl?: string,
+  segmentPath = '/api/iptv/segment'
 ): Promise<Response> {
   const host = env.GEOTV_HOST;
   const user = env.GEOTV_USER;
@@ -396,7 +397,7 @@ export async function fetchGeoTvHlsStream(
     const fullSegmentUrl = trimmed.startsWith('http')
       ? trimmed
       : `${baseUrl}${trimmed.startsWith('/') ? '' : '/'}${trimmed}`;
-    return `/api/iptv/segment?url=${encodeURIComponent(fullSegmentUrl)}`;
+    return `${segmentPath}?url=${encodeURIComponent(fullSegmentUrl)}`;
   });
 
   const rewrittenPlaylist = rewrittenLines.join('\n');

@@ -1,0 +1,85 @@
+import type { Env } from './env';
+import { fetchGeoTvHlsStream, fetchGeoTvSegment, isAllowedHost } from './services/geotv-proxy';
+
+interface ChannelRow {
+  stream_id: string;
+}
+
+export default {
+  async fetch(request: Request, env: Env): Promise<Response> {
+    const url = new URL(request.url);
+
+    if (request.method === 'OPTIONS') {
+      return withCors(new Response(null, { status: 204 }));
+    }
+
+    if (url.pathname === '/broadcast/health') {
+      return withCors(Response.json({ status: 'ok', service: 'playbeat-broadcast' }));
+    }
+
+    if (request.method !== 'GET') {
+      return withCors(new Response('Method not allowed', { status: 405 }));
+    }
+
+    if (url.pathname === '/broadcast/api/iptv/hls/stream.m3u8') {
+      if (!env.CATALOG_DB) {
+        return withCors(new Response('Channel catalog storage is not configured', { status: 503 }));
+      }
+
+      const channelId = url.searchParams.get('channelId') || '';
+      if (!/^(?:geo_)?\d{1,18}$/.test(channelId)) {
+        return withCors(new Response('Invalid channelId', { status: 400 }));
+      }
+
+      try {
+        const channel = await env.CATALOG_DB
+          .prepare('SELECT stream_id FROM catalog_channels WHERE channel_id = ?1 OR stream_id = ?2 LIMIT 1')
+          .bind(channelId, channelId.replace(/^geo_/, ''))
+          .first<ChannelRow>();
+
+        if (!channel) {
+          return withCors(new Response('Channel not found in catalog', { status: 404 }));
+        }
+
+        return withCors(await fetchGeoTvHlsStream(
+          env,
+          channel.stream_id,
+          undefined,
+          '/broadcast/api/iptv/segment'
+        ));
+      } catch (error) {
+        console.error('[Broadcast HLS] stream request failed:', error instanceof Error ? error.name : 'Unknown error');
+        return withCors(new Response('Stream is temporarily unavailable', { status: 502 }));
+      }
+    }
+
+    if (url.pathname === '/broadcast/api/iptv/segment') {
+      const segmentUrl = url.searchParams.get('url') || '';
+      if (!segmentUrl || !isAllowedHost(segmentUrl) || new URL(segmentUrl).protocol !== 'https:') {
+        return withCors(new Response('Invalid or disallowed segment URL', { status: 400 }));
+      }
+
+      try {
+        return withCors(await fetchGeoTvSegment(env, segmentUrl));
+      } catch (error) {
+        console.error('[Broadcast HLS] segment request failed:', error instanceof Error ? error.name : 'Unknown error');
+        return withCors(new Response('Stream segment is temporarily unavailable', { status: 502 }));
+      }
+    }
+
+    return withCors(new Response('Not found', { status: 404 }));
+  },
+};
+
+function withCors(response: Response): Response {
+  const headers = new Headers(response.headers);
+  headers.set('Access-Control-Allow-Origin', '*');
+  headers.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  headers.set('Access-Control-Allow-Headers', 'Range, Content-Type');
+  headers.set('Access-Control-Expose-Headers', 'Accept-Ranges, Content-Length, Content-Range');
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}

@@ -5,14 +5,13 @@ import {
   fetchGeoTvSegment, 
   resolveCloudflareDoh 
 } from "./services/geotv-proxy";
-import { persistChannelCatalog } from "./services/catalog-store";
+import { persistChannelCatalog, readChannelCatalog } from "./services/catalog-store";
 
 // PlayBeat TV – secure Cloudflare Worker proxy for the Xtream-Masters v3 reseller API
 // and GeoTV IPTV streaming & image caching.
 // Secrets: IPTV_API_KEY, ADMIN_TOKEN, GEOTV_HOST, GEOTV_USER, GEOTV_PASS, CLOUDFLARE_API_TOKEN
 
 const UPSTREAM = "https://iptv-api.xtream-masters.com/v3/";
-let catalogStoredInIsolate = false;
 
 // ---------- validators ----------
 const CRED_RE = /^[a-z0-9._-]{6,23}$/;              // doc: 6–23 chars, a-z 0-9 . _ -
@@ -96,17 +95,29 @@ export default {
     // 1. GeoTV Channels list with Cloudflare cache & secure authentication
     if (url.pathname === "/api/iptv/channels" || url.pathname === "/api/geotv/channels" || url.pathname === "/api/iptv/geotv/channels") {
       try {
+        if (!env.CATALOG_DB) {
+          return json({ success: false, error: "Channel catalog storage is not configured." }, 503, env);
+        }
         const force = url.searchParams.get("refresh") === "1" || url.searchParams.get("force") === "1";
-        const result = await fetchGeoTvChannels(env, { force });
-        if (result.channels.length > 0 && (!result.cached || !catalogStoredInIsolate)) {
-          if (!env.CATALOG_DB) {
-            return json({ success: false, error: "Channel catalog storage is not configured." }, 503, env);
+        let channels = force ? [] : await readChannelCatalog(env.CATALOG_DB, env.PLAYBACK_BASE_URL);
+        let refreshed = false;
+        if (force || channels.length === 0) {
+          const result = await fetchGeoTvChannels(env, { force });
+          if (result.channels.length === 0) {
+            return json({ success: false, error: "The provider returned an empty channel catalog." }, 503, env);
           }
           await persistChannelCatalog(env.CATALOG_DB, result.channels);
-          catalogStoredInIsolate = true;
+          channels = await readChannelCatalog(env.CATALOG_DB, env.PLAYBACK_BASE_URL);
+          refreshed = true;
         }
         return withCors(
-          new Response(JSON.stringify({ ...result, catalogPersisted: catalogStoredInIsolate }), {
+          new Response(JSON.stringify({
+            success: true,
+            cached: !refreshed,
+            count: channels.length,
+            channels,
+            catalogPersisted: true,
+          }), {
             status: 200,
             headers: {
               "Content-Type": "application/json; charset=utf-8",
