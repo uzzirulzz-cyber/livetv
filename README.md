@@ -67,7 +67,7 @@ The catalog Worker is bound to the `playbeat-catalog` D1 database in [`wrangler.
 
 Set `M3U_PLAYLIST_URL` on the `playbeat-live` Worker as a secret with the authorized playlist URL, including its `username` and `password` query parameters. Provider credentials are kept in the Worker secret and are not stored in D1 or returned in channel metadata. The `playbeat-broadcast` Worker forwards HLS segment requests over its private service binding so credentials remain on the catalog Worker.
 
-The configured `advance.playbeat.live:8880` provider only supports HTTP. `ALLOW_INSECURE_GEOTV` therefore enables plaintext origin requests to that exact configured origin only; HTTP is not encrypted between Cloudflare and the provider, so credentials and streams may be observed or modified on that network leg. Browser-to-Cloudflare traffic remains HTTPS. Do not reuse this setting for arbitrary origins. Rotate provider credentials if they are exposed.
+The configured `advance.playbeat.live` provider only supports HTTP. `ALLOW_INSECURE_GEOTV` therefore enables plaintext origin requests to that exact configured host only; HTTP is not encrypted between Cloudflare and the provider, so credentials and streams may be observed or modified on that network leg. Browser-to-Cloudflare traffic remains HTTPS. Do not reuse this setting for arbitrary origins. Rotate provider credentials if they are exposed.
 
 Movies and series are not currently imported into D1. VOD ingestion requires an authorized Xtream API endpoint; demo movie and series entries in the frontend are not provider catalog data.
 

@@ -202,12 +202,12 @@ export async function fetchGeoTvChannels(
   }
 
   const configuredPlaylist = env.M3U_PLAYLIST_URL ? new URL(env.M3U_PLAYLIST_URL) : null;
-  const host = configuredPlaylist?.origin ?? env.GEOTV_HOST;
+  const host = env.GEOTV_ALLOWED_ORIGIN ?? configuredPlaylist?.origin ?? env.GEOTV_HOST;
   const user = configuredPlaylist?.searchParams.get('username') ?? env.GEOTV_USER;
   const pass = configuredPlaylist?.searchParams.get('password') ?? env.GEOTV_PASS;
 
   if (!host || !user || !pass) throw new Error('GeoTV provider configuration is incomplete.');
-  const providerOrigin = env.GEOTV_ALLOWED_ORIGIN ?? host;
+  const providerOrigin = host;
   if (!isAllowedProviderUrl(host, env, providerOrigin)) {
     throw new Error('GeoTV provider must be configured with HTTPS.');
   }
