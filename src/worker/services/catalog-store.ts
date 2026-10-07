@@ -19,11 +19,13 @@ interface CatalogChannel {
   streamId?: string;
 }
 
+export const MAX_CATALOG_CHANNELS = 15_000;
+
 export async function persistChannelCatalog(
   database: CatalogDatabase,
   channels: CatalogChannel[]
 ): Promise<void> {
-  if (channels.length > 5000) {
+  if (channels.length > MAX_CATALOG_CHANNELS) {
     throw new Error('Channel catalog exceeded the supported size.');
   }
   if (channels.length === 0) {

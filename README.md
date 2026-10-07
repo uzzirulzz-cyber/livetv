@@ -42,7 +42,7 @@ This repository includes a preconfigured GitHub Actions workflow at [`.github/wo
 4. Authenticate your GitHub account and select your `playbeat-live` repository.
 5. Set Build Settings:
    - **Framework preset**: Vite
-   - **Build command**: `bun run build`
+   - **Build command**: `npm run build`
    - **Build output directory**: `dist`
 6. Click **Save and Deploy**. Cloudflare will continuously deploy your commits!
 
@@ -50,7 +50,7 @@ This repository includes a preconfigured GitHub Actions workflow at [`.github/wo
 
 ## 🌐 Cloudflare DNS & Nameservers
 
-DNS records, nameserver delegation, SSL mode, and Worker custom-domain routing are not verified by this repository. Check their current values in the Cloudflare dashboard before relying on them; do not use example IP addresses or stale nameserver values from older configuration notes.
+The Wrangler configuration routes `playbeat.live/*` to the `playbeat-live` Worker when deployed. This Worker serves the built SPA assets and API requests. Existing proxied DNS records are retained; do not replace them with guessed IPs or convert the apex to a Worker custom domain. The zone must be active on Cloudflare and proxied for Worker routes to run. Nameserver delegation and SSL mode remain zone-level settings and should be checked in Cloudflare.
 
 ---
 

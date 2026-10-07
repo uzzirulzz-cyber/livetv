@@ -1,4 +1,5 @@
 import type { Env } from '../env';
+import { MAX_CATALOG_CHANNELS } from './catalog-store';
 
 // Cloudflare 1.1.1.1 DoH DNS Cache entry
 interface DohCacheEntry {
@@ -202,6 +203,9 @@ export async function fetchGeoTvChannels(
         currentItem.hlsUrl = `/api/iptv/hls/stream.m3u8?channelId=${streamId}`;
         currentItem.tsUrl = `/api/iptv/stream?channelId=${streamId}`;
         parsedChannels.push(currentItem);
+        if (parsedChannels.length > MAX_CATALOG_CHANNELS) {
+          throw new Error(`Provider playlist exceeds the ${MAX_CATALOG_CHANNELS}-channel limit.`);
+        }
         currentItem = null;
       }
     }
