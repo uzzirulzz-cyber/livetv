@@ -305,7 +305,10 @@ async function runCatalogSync(env: any, source: "scheduled" | "request"): Promis
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "";
-    const errorSummary = message.includes("HTTPS")
+    const upstreamStatus = message.match(/returned HTTP (\d{3})/);
+    const errorSummary = upstreamStatus
+      ? `Provider returned HTTP ${upstreamStatus[1]}.`
+      : message.includes("HTTPS")
       ? "Provider HTTPS configuration is required."
       : message.includes("not configured") || message.includes("incomplete")
         ? "Provider configuration is incomplete."
