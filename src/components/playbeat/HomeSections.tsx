@@ -111,8 +111,27 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
         </div>
 
         {playingNowChannels.length === 0 && (
-          <div className="rounded-2xl border border-white/10 bg-[#0c1326]/70 px-5 py-8 text-center text-sm text-slate-400">
-            No live channels are configured yet. Secure provider setup is required before channels can be listed.
+          <div className="relative overflow-hidden rounded-2xl border border-amber-200/15 bg-gradient-to-r from-amber-200/[0.07] via-[#0b1220] to-[#0b1220] px-5 py-7 sm:px-8">
+            <div className="absolute -right-8 -top-16 h-48 w-48 rounded-full border border-amber-200/10" />
+            <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-3">
+                <div className="rounded-xl border border-amber-200/20 bg-amber-200/[0.07] p-2.5 text-amber-200">
+                  <Radio className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="text-sm font-bold text-white">Your live lineup starts here</div>
+                  <p className="mt-1 max-w-xl text-xs leading-5 text-slate-400">
+                    Connect an authorized HTTPS provider to load real channels and schedule details.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => onNavigateSection('live')}
+                className="inline-flex shrink-0 items-center gap-1.5 self-start rounded-lg border border-amber-200/20 bg-amber-200/[0.06] px-3.5 py-2 text-xs font-bold text-amber-100 transition hover:bg-amber-200/10 sm:self-auto"
+              >
+                Browse Live TV <ChevronRight className="h-3.5 w-3.5" />
+              </button>
+            </div>
           </div>
         )}
 
@@ -384,9 +403,15 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
           })}
         </div>
         {movies.length === 0 && (
-          <p className="text-sm text-slate-400">
-            No provider movie catalog is connected. Sample titles and artwork are hidden.
-          </p>
+          <div className="rounded-xl border border-white/[0.08] bg-white/[0.025] px-5 py-5">
+            <div className="flex items-center gap-3">
+              <Film className="h-5 w-5 shrink-0 text-amber-300" />
+              <div>
+                <div className="text-sm font-semibold text-slate-200">Movie catalog awaiting provider connection</div>
+                <p className="mt-1 text-xs text-slate-500">Only provider-supplied titles and artwork will appear here.</p>
+              </div>
+            </div>
+          </div>
         )}
       </section>
 
@@ -457,9 +482,15 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
           ))}
         </div>
         {series.length === 0 && (
-          <p className="text-sm text-slate-400">
-            No provider series catalog is connected. Sample titles and artwork are hidden.
-          </p>
+          <div className="rounded-xl border border-white/[0.08] bg-white/[0.025] px-5 py-5">
+            <div className="flex items-center gap-3">
+              <Tv className="h-5 w-5 shrink-0 text-amber-300" />
+              <div>
+                <div className="text-sm font-semibold text-slate-200">Series catalog awaiting provider connection</div>
+                <p className="mt-1 text-xs text-slate-500">Episodes and artwork will appear when a secure VOD catalog is configured.</p>
+              </div>
+            </div>
+          </div>
         )}
       </section>
     </div>

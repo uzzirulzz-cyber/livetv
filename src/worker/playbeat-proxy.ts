@@ -70,6 +70,14 @@ export const ACTIONS: Record<string, ActionDef> = {
 
 // ---------- main handler ----------
 export default {
+  async scheduled(
+    controller: { scheduledTime: number; cron: string },
+    env: any,
+    ctx: { waitUntil(promise: Promise<unknown>): void }
+  ) {
+    ctx.waitUntil(runCatalogSync(env, "scheduled"));
+  },
+
   async fetch(request: Request, env: any) {
     const url = new URL(request.url);
 
@@ -93,6 +101,19 @@ export default {
       return json({ success: true }, 200, env);
     }
 
+    if (url.pathname === "/api/catalog/sync-status") {
+      if (!env.CATALOG_DB) {
+        return json({ success: false, error: "Channel catalog storage is not configured." }, 503, env);
+      }
+      const latestRun = await env.CATALOG_DB.prepare(`
+        SELECT source, status, channel_count, started_at, finished_at, error_summary
+        FROM catalog_sync_runs
+        ORDER BY run_id DESC
+        LIMIT 1
+      `).first();
+      return json({ success: true, latestRun }, 200, env);
+    }
+
     // 1. GeoTV Channels list with Cloudflare cache & secure authentication
     if (url.pathname === "/api/iptv/channels" || url.pathname === "/api/geotv/channels" || url.pathname === "/api/iptv/geotv/channels") {
       try {
@@ -103,11 +124,7 @@ export default {
         let channels = force ? [] : await readChannelCatalog(env.CATALOG_DB, env.PLAYBACK_BASE_URL);
         let refreshed = false;
         if (force || channels.length === 0) {
-          const result = await fetchGeoTvChannels(env, { force });
-          if (result.channels.length === 0) {
-            return json({ success: false, error: "The provider returned an empty channel catalog." }, 503, env);
-          }
-          await persistChannelCatalog(env.CATALOG_DB, result.channels);
+          await runCatalogSync(env, "request");
           channels = await readChannelCatalog(env.CATALOG_DB, env.PLAYBACK_BASE_URL);
           refreshed = true;
         }
@@ -259,6 +276,80 @@ export default {
     }
   },
 };
+
+async function runCatalogSync(env: any, source: "scheduled" | "request"): Promise<void> {
+  const startedAt = new Date().toISOString();
+  try {
+    if (!env.CATALOG_DB) throw new Error("Channel catalog storage is not configured.");
+
+    const result = await fetchGeoTvChannels(env, { force: true });
+    if (result.channels.length === 0) {
+      throw new Error("The provider returned an empty channel catalog.");
+    }
+
+    await persistChannelCatalog(env.CATALOG_DB, result.channels);
+    await recordCatalogSync(env.CATALOG_DB, {
+      source,
+      status: "success",
+      channelCount: result.channels.length,
+      startedAt,
+      finishedAt: new Date().toISOString(),
+      errorSummary: null,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    const errorSummary = message.includes("HTTPS")
+      ? "Provider HTTPS configuration is required."
+      : message.includes("not configured") || message.includes("incomplete")
+        ? "Provider configuration is incomplete."
+        : message.includes("empty channel catalog")
+          ? "Provider returned no channels."
+          : "Provider fetch or catalog storage failed.";
+
+    if (env.CATALOG_DB) {
+      await recordCatalogSync(env.CATALOG_DB, {
+        source,
+        status: "failed",
+        channelCount: 0,
+        startedAt,
+        finishedAt: new Date().toISOString(),
+        errorSummary,
+      });
+    }
+    console.error("[GeoTV catalog] synchronization failed:", error instanceof Error ? error.name : "Unknown error");
+    throw error;
+  }
+}
+
+async function recordCatalogSync(
+  database: any,
+  run: {
+    source: "scheduled" | "request";
+    status: "success" | "failed";
+    channelCount: number;
+    startedAt: string;
+    finishedAt: string;
+    errorSummary: string | null;
+  }
+): Promise<void> {
+  await database.prepare(`
+    INSERT INTO catalog_sync_runs (source, status, channel_count, started_at, finished_at, error_summary)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `).bind(
+    run.source,
+    run.status,
+    run.channelCount,
+    run.startedAt,
+    run.finishedAt,
+    run.errorSummary
+  ).run();
+  await database.prepare(`
+    DELETE FROM catalog_sync_runs
+    WHERE run_id NOT IN (
+      SELECT run_id FROM catalog_sync_runs ORDER BY run_id DESC LIMIT 30
+    )
+  `).run();
+}
 
 // ---------- ActiveCode activation callback ----------
 export async function handleCallback(request: Request, env: any, url: URL): Promise<Response> {

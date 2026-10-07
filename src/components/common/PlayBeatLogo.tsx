@@ -31,7 +31,7 @@ export const PlayBeatLogo: React.FC<PlayBeatLogoProps> = ({
         viewBox="0 0 160 160"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        className="shrink-0 drop-shadow-[0_4px_16px_rgba(6,182,212,0.35)]"
+        className="shrink-0 drop-shadow-[0_4px_16px_rgba(245,158,11,0.3)]"
       >
         <defs>
           {/* Chrome Bevel Gradient */}
@@ -43,20 +43,20 @@ export const PlayBeatLogo: React.FC<PlayBeatLogoProps> = ({
             <stop offset="100%" stopColor="#334155" />
           </linearGradient>
 
-          {/* Deep Metallic Blue Inner Gradient */}
+          {/* Deep Metallic Gold Inner Gradient */}
           <linearGradient id="blueCore" x1="20%" y1="0%" x2="80%" y2="100%">
-            <stop offset="0%" stopColor="#0284c7" />
-            <stop offset="40%" stopColor="#0369a1" />
-            <stop offset="80%" stopColor="#075985" />
-            <stop offset="100%" stopColor="#0c4a6e" />
+            <stop offset="0%" stopColor="#fcd34d" />
+            <stop offset="40%" stopColor="#f59e0b" />
+            <stop offset="80%" stopColor="#b45309" />
+            <stop offset="100%" stopColor="#78350f" />
           </linearGradient>
 
-          {/* Electric Cyan Neon Glow for Audio Pulse */}
+          {/* Warm Gold Glow for Audio Pulse */}
           <linearGradient id="cyanPulse" x1="0%" y1="50%" x2="100%" y2="50%">
-            <stop offset="0%" stopColor="#38bdf8" />
-            <stop offset="30%" stopColor="#00f2fe" />
-            <stop offset="70%" stopColor="#22d3ee" />
-            <stop offset="100%" stopColor="#38bdf8" />
+            <stop offset="0%" stopColor="#fbbf24" />
+            <stop offset="30%" stopColor="#fff1a8" />
+            <stop offset="70%" stopColor="#fcd34d" />
+            <stop offset="100%" stopColor="#fbbf24" />
           </linearGradient>
 
           {/* Chrome Text Metallic Gradients */}
@@ -68,10 +68,10 @@ export const PlayBeatLogo: React.FC<PlayBeatLogoProps> = ({
           </linearGradient>
 
           <linearGradient id="blueText" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#38bdf8" />
-            <stop offset="45%" stopColor="#0284c7" />
-            <stop offset="85%" stopColor="#0369a1" />
-            <stop offset="100%" stopColor="#0c4a6e" />
+            <stop offset="0%" stopColor="#fef3c7" />
+            <stop offset="45%" stopColor="#fbbf24" />
+            <stop offset="85%" stopColor="#d97706" />
+            <stop offset="100%" stopColor="#92400e" />
           </linearGradient>
 
           {/* Drop Glow Filter */}
@@ -146,19 +146,19 @@ export const PlayBeatLogo: React.FC<PlayBeatLogoProps> = ({
             <span className="bg-gradient-to-b from-white via-slate-200 to-slate-400 bg-clip-text text-transparent drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] font-black">
               Play
             </span>
-            {/* Beat in Vibrant Cobalt / Cyan Blue */}
-            <span className="bg-gradient-to-b from-cyan-300 via-blue-500 to-blue-700 bg-clip-text text-transparent drop-shadow-[0_2px_10px_rgba(6,182,212,0.5)] font-black ml-0.5">
+            {/* Beat in warm gold */}
+            <span className="bg-gradient-to-b from-amber-200 via-amber-400 to-amber-700 bg-clip-text text-transparent drop-shadow-[0_2px_10px_rgba(245,158,11,0.35)] font-black ml-0.5">
               Beat
             </span>
           </div>
 
           {/* ENTERTAINMENT Subtitle with accent lines */}
           <div className="flex items-center gap-1.5 mt-0.5">
-            <span className="h-[1px] w-3.5 bg-gradient-to-r from-transparent to-cyan-400 opacity-80" />
+            <span className="h-[1px] w-3.5 bg-gradient-to-r from-transparent to-amber-300 opacity-80" />
             <span className={`font-sans uppercase font-bold tracking-[0.28em] text-slate-300 text-center ${sub}`}>
               ENTERTAINMENT
             </span>
-            <span className="h-[1px] w-3.5 bg-gradient-to-l from-transparent to-cyan-400 opacity-80" />
+            <span className="h-[1px] w-3.5 bg-gradient-to-l from-transparent to-amber-300 opacity-80" />
           </div>
         </div>
       )}

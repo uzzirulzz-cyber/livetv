@@ -58,12 +58,12 @@ The `playbeat.live` zone routes web traffic to the `playbeat-live` Worker throug
 
 - **Provider-fed Live TV**: No demonstration/test channels are advertised as live. Channels load only when an authorized HTTPS provider is configured.
 - **D1 Catalog Storage**: `CATALOG_DB` stores channel metadata without upstream stream URLs or provider credentials. The `epg_programs` schema is installed, but XMLTV ingestion is not implemented.
-- **Stream Proxy**: `playbeat-broadcast` reads each requested channel's stream ID from D1, then proxies HLS playlists and segments. The main Worker reads channel metadata from D1 and only synchronizes from the provider when the catalog is empty or explicitly refreshed.
+- **Stream Proxy**: `playbeat-broadcast` reads each requested channel's stream ID from D1, then proxies HLS playlists and segments. The main Worker refreshes the live catalog every six hours and also supports an explicit refresh when the catalog is empty or requested.
 - **Admin Suite**: `/admin` validates the `ADMIN_TOKEN` Worker secret on the server. Set a strong random value as a Cloudflare Worker secret before signing in; the browser keeps it in memory only and clears it on sign-out or reload. Never commit or share the token.
 
 ### Live catalog and D1 setup
 
-The catalog Worker is bound to the `playbeat-catalog` D1 database in [`wrangler.toml`](./wrangler.toml), and the initial schema is in [`migrations/0001_catalog.sql`](./migrations/0001_catalog.sql). The playback Worker uses the same database through [`wrangler.broadcast.toml`](./wrangler.broadcast.toml). Deployments apply pending migrations before publishing either Worker.
+The catalog Worker is bound to the `playbeat-catalog` D1 database in [`wrangler.toml`](./wrangler.toml), and the schema is in [`migrations/`](./migrations). The playback Worker uses the same database through [`wrangler.broadcast.toml`](./wrangler.broadcast.toml). Deployments apply pending migrations before publishing either Worker. A Cron Trigger refreshes the live channel catalog every six hours; `/api/catalog/sync-status` reports the latest result without exposing provider details. The most recent 30 sync results are retained in D1.
 
 Set `M3U_PLAYLIST_URL` on the `playbeat-live` Worker to a rotated, authorized HTTPS Xtream playlist URL with `username` and `password` query parameters. The catalog Worker rejects HTTP URLs and does not expose the secret to clients. The `playbeat-broadcast` Worker accesses catalog-worker playback over a private service binding and does not need a duplicate provider secret. Do not put provider credentials in browser code, public URLs, or D1. The current playlist URL is HTTP, so catalog refresh and live playback remain disabled until it is replaced with a secure HTTPS URL.
 

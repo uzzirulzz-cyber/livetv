@@ -831,13 +831,13 @@ export default function App() {
           />
 
           {/* Subheader / Open Storefront Badge */}
-          <div className="bg-gradient-to-r from-emerald-950/40 via-cyan-950/20 to-slate-950 border-b border-emerald-500/20 px-4 py-2 text-xs flex flex-wrap items-center justify-between gap-3 max-w-7xl mx-auto w-full">
+          <div className="bg-gradient-to-r from-amber-950/35 via-[#0b1425] to-slate-950 border-b border-amber-200/15 px-4 py-2 text-xs flex flex-wrap items-center justify-between gap-3 max-w-7xl mx-auto w-full">
             <div className="flex items-center gap-2 text-slate-300">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="w-2 h-2 rounded-full bg-amber-300" />
               <span className="font-semibold text-white">PLAYBEAT ENTERTAIN:</span>
-              <span className="text-emerald-400 font-mono text-[11px] font-bold">LIVE TV</span>
+              <span className="text-amber-200 font-mono text-[11px] font-bold">PROVIDER SETUP REQUIRED</span>
               <span className="text-slate-600 hidden sm:inline">|</span>
-              <span className="text-cyan-300 hidden sm:inline">Provider setup required · {activeChannelsList.length} configured feeds</span>
+              <span className="text-slate-300 hidden sm:inline">{activeChannelsList.length} provider catalog entries</span>
             </div>
 
             <div className="flex items-center gap-2">
@@ -846,9 +846,9 @@ export default function App() {
                   setStreamingSection('live');
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
-                className="text-[11px] font-bold text-cyan-300 hover:text-white bg-cyan-950/60 border border-cyan-500/40 px-2.5 py-1 rounded-md transition-colors flex items-center gap-1"
+                className="text-[11px] font-bold text-amber-100 hover:text-white bg-amber-200/[0.06] border border-amber-200/20 px-2.5 py-1 rounded-md transition-colors flex items-center gap-1"
               >
-                <Tv className="w-3 h-3 text-cyan-400" />
+                <Tv className="w-3 h-3 text-amber-300" />
                 <span>Browse Live TV</span>
               </button>
             </div>
@@ -868,7 +868,7 @@ export default function App() {
                       showToast('Live channels are unavailable until secure provider configuration is completed.', 'error');
                     }
                   }}
-                  onOpenPlans={() => setIsPlansModalOpen(true)}
+                  onNavigate={setStreamingSection}
                 />
 
                 <HomeSections
