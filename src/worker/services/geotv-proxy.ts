@@ -136,6 +136,16 @@ function restoreProviderCredentials(url: string, user?: string, pass?: string): 
   return parsed.href;
 }
 
+function safeTransportCode(error: unknown): string {
+  if (!(error instanceof Error)) return 'Unknown';
+  const cause = error.cause;
+  if (cause && typeof cause === 'object' && 'code' in cause) {
+    const code = cause.code;
+    if (typeof code === 'string' && /^[A-Z0-9_]{1,32}$/.test(code)) return code;
+  }
+  return error.name;
+}
+
 /**
  * Cleans raw broadcast channel names from technical prefixes without altering their authentic name
  */
@@ -217,13 +227,18 @@ export async function fetchGeoTvChannels(
   const hostUrl = new URL(playlistUrl);
   await resolveCloudflareDoh(hostUrl.hostname);
 
-  const upstreamRes = await fetch(playlistUrl, {
-    redirect: 'manual',
-    headers: {
-      'User-Agent': 'PlayBeat-Worker/3.0 (Cloudflare-Edge-Sync)',
-      Accept: '*/*',
-    },
-  });
+  let upstreamRes: Response;
+  try {
+    upstreamRes = await fetch(playlistUrl, {
+      redirect: 'manual',
+      headers: {
+        'User-Agent': 'PlayBeat-Worker/3.0 (Cloudflare-Edge-Sync)',
+        Accept: '*/*',
+      },
+    });
+  } catch (error) {
+    throw new Error(`Provider transport failed (${safeTransportCode(error)}).`);
+  }
   const playlistRedirect = upstreamRes.headers.get('location');
   let playlistResponse = upstreamRes;
   if (playlistRedirect && upstreamRes.status >= 300 && upstreamRes.status < 400) {
@@ -231,13 +246,17 @@ export async function fetchGeoTvChannels(
     if (!isAllowedProviderUrl(redirectedUrl.href, env, providerOrigin)) {
       throw new Error('Provider playlist redirect is outside the configured origin.');
     }
-    playlistResponse = await fetch(redirectedUrl, {
-      redirect: 'manual',
-      headers: {
-        'User-Agent': 'PlayBeat-Worker/3.0 (Cloudflare-Edge-Sync)',
-        Accept: '*/*',
-      },
-    });
+    try {
+      playlistResponse = await fetch(redirectedUrl, {
+        redirect: 'manual',
+        headers: {
+          'User-Agent': 'PlayBeat-Worker/3.0 (Cloudflare-Edge-Sync)',
+          Accept: '*/*',
+        },
+      });
+    } catch (error) {
+      throw new Error(`Provider transport failed (${safeTransportCode(error)}).`);
+    }
   }
   if (playlistResponse.status >= 300 && playlistResponse.status < 400) {
     throw new Error('Provider returned an unsupported playlist redirect.');

@@ -319,6 +319,8 @@ async function runCatalogSync(env: any, source: "scheduled" | "request"): Promis
       errorSummary = "Provider HTTPS configuration is required.";
     } else if (message.includes("not configured") || message.includes("incomplete")) {
       errorSummary = "Provider configuration is incomplete.";
+    } else if (message.startsWith("Provider transport failed (")) {
+      errorSummary = message;
     } else if (stage === "provider" && errorType === "TypeError") {
       errorSummary = "Provider network request failed.";
     } else if (stage === "provider") {
