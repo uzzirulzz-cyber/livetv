@@ -322,7 +322,7 @@ async function runCatalogSync(env: any, source: "scheduled" | "request"): Promis
     } else if (message.startsWith("Provider transport failed (")) {
       errorSummary = message;
     } else if (stage === "provider" && errorType === "TypeError") {
-      errorSummary = "Provider network request failed.";
+      errorSummary = `Provider request failed (${errorType}: ${safeProviderErrorMessage(message, env)}).`;
     } else if (stage === "provider") {
       errorSummary = "Provider request failed.";
     } else if (stage === "catalog" && /7500|write quota/i.test(message)) {
@@ -346,6 +346,22 @@ async function runCatalogSync(env: any, source: "scheduled" | "request"): Promis
     console.error("[GeoTV catalog] synchronization failed:", error instanceof Error ? error.name : "Unknown error");
     throw error;
   }
+}
+
+function safeProviderErrorMessage(message: string, env: any): string {
+  let safeMessage = message
+    .replace(/https?:\/\/[^\s"'<>]+/gi, '[URL]')
+    .replace(/((?:username|password)=)[^&\s]+/gi, '$1[redacted]');
+  for (const secret of [env.GEOTV_USER, env.GEOTV_PASS]) {
+    if (typeof secret === "string" && secret.length > 0) {
+      safeMessage = safeMessage.replaceAll(secret, "[redacted]");
+      safeMessage = safeMessage.replaceAll(encodeURIComponent(secret), "[redacted]");
+    }
+  }
+  if (typeof env.M3U_PLAYLIST_URL === "string") {
+    safeMessage = safeMessage.replaceAll(env.M3U_PLAYLIST_URL, "[provider URL redacted]");
+  }
+  return safeMessage.slice(0, 140) || "unknown provider error";
 }
 
 async function recordCatalogSync(
