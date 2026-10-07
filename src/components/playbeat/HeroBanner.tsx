@@ -2,11 +2,12 @@ import React from 'react';
 import { ArrowRight, Clapperboard, Radio, ShieldCheck, Tv } from 'lucide-react';
 
 interface HeroBannerProps {
+  channelCount: number;
   onWatchLive: () => void;
   onNavigate: (section: string) => void;
 }
 
-export const HeroBanner: React.FC<HeroBannerProps> = ({ onWatchLive, onNavigate }) => (
+export const HeroBanner: React.FC<HeroBannerProps> = ({ channelCount, onWatchLive, onNavigate }) => (
   <section className="relative isolate overflow-hidden border-b border-amber-300/10 bg-[#060912]">
     <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_78%_40%,rgba(21,72,132,0.42),transparent_44%),radial-gradient(ellipse_at_12%_100%,rgba(173,111,24,0.13),transparent_38%)]" />
     <div className="absolute inset-0 -z-10 opacity-[0.16] [background-image:linear-gradient(rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.08)_1px,transparent_1px)] [background-size:72px_72px] [mask-image:linear-gradient(to_right,transparent,black,transparent)]" />
@@ -88,9 +89,13 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ onWatchLive, onNavigate 
             <div className="flex items-start gap-3">
               <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-amber-300 shadow-[0_0_12px_rgba(252,211,77,0.55)]" />
               <div>
-                <div className="text-sm font-bold text-white">Provider connection needed</div>
+                <div className="text-sm font-bold text-white">
+                  {channelCount > 0 ? `${channelCount.toLocaleString()} cached channel listings` : 'Provider connection needed'}
+                </div>
                 <p className="mt-1 text-xs leading-5 text-slate-400">
-                  Connect an authorized provider to load real channels, titles, and artwork.
+                  {channelCount > 0
+                    ? 'An authorized HTTPS provider is needed to refresh listings and verify live playback.'
+                    : 'Connect an authorized provider to load real channels, titles, and artwork.'}
                 </p>
               </div>
             </div>

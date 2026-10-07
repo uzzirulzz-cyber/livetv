@@ -835,9 +835,13 @@ export default function App() {
             <div className="flex items-center gap-2 text-slate-300">
               <span className="w-2 h-2 rounded-full bg-amber-300" />
               <span className="font-semibold text-white">PLAYBEAT ENTERTAIN:</span>
-              <span className="text-amber-200 font-mono text-[11px] font-bold">PROVIDER SETUP REQUIRED</span>
+              <span className="text-amber-200 font-mono text-[11px] font-bold">
+                {activeChannelsList.length > 0 ? 'CATALOG LOADED' : 'PROVIDER SETUP REQUIRED'}
+              </span>
               <span className="text-slate-600 hidden sm:inline">|</span>
-              <span className="text-slate-300 hidden sm:inline">{activeChannelsList.length} provider catalog entries</span>
+              <span className="text-slate-300 hidden sm:inline">
+                {activeChannelsList.length.toLocaleString()} cached channel listings · playback requires an active provider
+              </span>
             </div>
 
             <div className="flex items-center gap-2">
@@ -859,6 +863,7 @@ export default function App() {
             {streamingSection === 'home' && (
               <>
                 <HeroBanner
+                  channelCount={activeChannelsList.length}
                   onWatchLive={() => {
                     const sportsCh = activeChannelsList.find((c) => c.category === 'Sports') || activeChannelsList[0];
                     if (sportsCh) {

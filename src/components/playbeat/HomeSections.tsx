@@ -92,11 +92,11 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
                 <span>Live TV Lineup</span>
                 <span className="text-slate-500 font-normal">·</span>
                 <span className="text-xs font-mono font-bold text-rose-400 bg-rose-950/70 border border-rose-500/30 px-2 py-0.5 rounded">
-                  {channels.length > 0 ? 'PROVIDER FEEDS' : 'SETUP REQUIRED'}
+                  {channels.length > 0 ? 'CACHED LISTINGS' : 'SETUP REQUIRED'}
                 </span>
               </h2>
               <p className="text-xs text-slate-400">
-                Channels supplied by the configured provider. Playback is checked when you start a stream.
+                Cached channel listings; playback still requires an active authorized provider.
               </p>
             </div>
           </div>
