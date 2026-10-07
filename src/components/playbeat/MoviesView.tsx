@@ -19,6 +19,18 @@ export const MoviesView: React.FC<MoviesViewProps> = ({
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedMovieForDetails, setSelectedMovieForDetails] = useState<Movie | null>(null);
 
+  if (movies.length === 0) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 lg:px-8 py-16 text-center space-y-3">
+        <Film className="w-10 h-10 text-slate-600 mx-auto" />
+        <h1 className="text-xl font-bold text-white">Movie catalog unavailable</h1>
+        <p className="max-w-lg mx-auto text-sm text-slate-400">
+          Movies will appear here when an authorized provider catalog is connected. No sample titles, artwork, or streams are shown.
+        </p>
+      </div>
+    );
+  }
+
   const genres = ['All', 'Action', 'Sci-Fi', 'Drama', 'Adventure', 'Crime', 'Biography', 'Animation', 'Comedy'];
 
   const filteredMovies = movies.filter((m) => {
@@ -44,7 +56,7 @@ export const MoviesView: React.FC<MoviesViewProps> = ({
             <span>PlayBeat Blockbuster Cinema</span>
           </h1>
           <p className="text-xs text-slate-400 mt-0.5">
-            Real theatrical cinema releases in 4K Ultra HD, HDR, and Dolby Atmos audio
+            Movies and playback supplied by the configured provider
           </p>
         </div>
 
@@ -53,7 +65,7 @@ export const MoviesView: React.FC<MoviesViewProps> = ({
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Search real movies, cast, director..."
+            placeholder="Search titles, cast, director..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-9 pr-3 py-2 bg-[#0c1326] border border-white/10 rounded-xl text-xs text-white placeholder-slate-400 focus:outline-none focus:border-cyan-400"
@@ -147,7 +159,7 @@ export const MoviesView: React.FC<MoviesViewProps> = ({
                 </p>
                 <div className="pt-2 flex items-center justify-between text-[10px] text-slate-500 border-t border-white/[0.06]">
                   <span className="truncate max-w-[120px]">{movie.director}</span>
-                  <span className="text-cyan-400 font-mono">4K Atmos</span>
+                  <span className="text-cyan-400 font-mono">Provider stream</span>
                 </div>
               </div>
             </div>

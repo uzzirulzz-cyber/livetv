@@ -1015,7 +1015,7 @@ export const CloudflareStreamHub: React.FC<CloudflareStreamHubProps> = ({
                           id: `geo_${ch.streamId || idx}`,
                           name: ch.name,
                           number: idx + 1,
-                          logo: ch.logo || 'https://images.unsplash.com/photo-1594909122845-11baa439b7bf?auto=format&fit=crop&w=120&h=120&q=80',
+                          logo: ch.logo || '',
                           category: ch.category || 'All',
                           country: ch.country || 'Unknown',
                           language: ch.language || 'Unknown',

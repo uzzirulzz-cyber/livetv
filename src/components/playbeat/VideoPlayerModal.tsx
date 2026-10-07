@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Hls from 'hls.js';
 import { Channel } from '../../types/playbeat';
-import { RELIABLE_STREAMS } from '../../services/catalogData';
 import { 
   X, 
   Play, 
@@ -38,7 +37,7 @@ interface VideoPlayerModalProps {
   onToggleFavorite: (channelId: string) => void;
 }
 
-type StreamMode = 'cloudflare-hls' | 'direct-video' | 'backup-relay';
+type StreamMode = 'cloudflare-hls' | 'direct-video';
 
 function formatTime(seconds: number): string {
   if (isNaN(seconds) || seconds < 0) return '00:00';
@@ -94,6 +93,7 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
   const [bufferSeconds, setBufferSeconds] = useState(0);
   const [bandwidthKbps, setBandwidthKbps] = useState(0);
   const [currentStreamSource, setCurrentStreamSource] = useState('');
+  const [playbackError, setPlaybackError] = useState<string | null>(null);
 
   const isVodMedia = channel ? (
     (channel.isLive === false || 
@@ -127,6 +127,7 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
     destroyHls();
     setIsBuffering(true);
     setNeedsUserGesture(false);
+    setPlaybackError(null);
     setBandwidthKbps(0);
     retryCountRef.current = 0;
 
@@ -137,7 +138,12 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
     if (isVod) {
       // VOD MOVIE OR SERIES EPISODE: Direct high-speed HTML5 video playback
       setStreamMode('direct-video');
-      const directUrl = channel.streamUrl || RELIABLE_STREAMS.MP4_CINEMA_1;
+      const directUrl = channel.streamUrl;
+      if (!directUrl) {
+        setPlaybackError('No authorized stream is available for this title.');
+        setIsBuffering(false);
+        return;
+      }
       setCurrentStreamSource(directUrl);
       videoEl.src = directUrl;
       videoEl.load();
@@ -210,26 +216,9 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
                 hls.recoverMediaError();
               }
             } else {
-              // Seamlessly failover to authorized resilient CDN relay
-              console.log('[PlayBeat] HLS unrecoverable, failing over to authorized CDN relay...');
               destroyHls();
-              setStreamMode('backup-relay');
-              const fallback = RELIABLE_STREAMS.HLS_ADAPTIVE;
-              setCurrentStreamSource(fallback);
-              
-              if (Hls.isSupported()) {
-                const fallbackHls = new Hls();
-                hlsRef.current = fallbackHls;
-                fallbackHls.loadSource(fallback);
-                fallbackHls.attachMedia(videoEl);
-                fallbackHls.on(Hls.Events.MANIFEST_PARSED, () => {
-                  setIsBuffering(false);
-                  videoEl.play().catch(() => {});
-                });
-              } else {
-                videoEl.src = fallback;
-                videoEl.play().catch(() => {});
-              }
+              setPlaybackError('This provider stream is unavailable. Try again later.');
+              setIsBuffering(false);
             }
           }
         });
@@ -280,18 +269,9 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
     };
 
     const handleError = () => {
-      console.warn('[Video Element Error] Source failed, activating auto-failover...');
+      console.warn('[Video Element Error] Source failed.');
       setIsBuffering(false);
-      // Auto failover to verified 200 OK CDN stream
-      const emergency = isVodMedia ? RELIABLE_STREAMS.MP4_CINEMA_1 : RELIABLE_STREAMS.HLS_ADAPTIVE;
-      if (videoEl.src !== emergency) {
-        destroyHls();
-        setStreamMode('backup-relay');
-        setCurrentStreamSource(emergency);
-        videoEl.src = emergency;
-        videoEl.load();
-        videoEl.play().catch(() => {});
-      }
+      setPlaybackError('This provider stream is unavailable. Try again later.');
     };
 
     videoEl.addEventListener('timeupdate', handleTimeUpdate);
@@ -303,7 +283,7 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
       videoEl.removeEventListener('loadedmetadata', handleLoadedMetadata);
       videoEl.removeEventListener('error', handleError);
     };
-  }, [isSeeking, isVodMedia]);
+  }, [isSeeking]);
 
   // Auto-hide controls timer
   useEffect(() => {
@@ -509,6 +489,12 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
             </div>
           )}
 
+          {playbackError && (
+            <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/80 p-6 text-center">
+              <p className="max-w-md text-sm text-slate-200">{playbackError}</p>
+            </div>
+          )}
+
           {/* Top Bar Header Overlay */}
           <div
             className={`absolute top-0 left-0 right-0 p-4 sm:p-5 bg-gradient-to-b from-black/95 via-black/60 to-transparent flex items-center justify-between z-20 transition-opacity duration-300 ${
@@ -535,16 +521,16 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
                     </span>
                   ) : (
                     <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
-                      CINEMA 4K
+                      ON DEMAND
                     </span>
                   )}
                   <span className="font-mono text-[10px] text-cyan-400 font-bold bg-cyan-950/60 px-1.5 py-0.5 rounded border border-cyan-800/40">
-                    {channel.resolution || '4K UHD'}
+                    {channel.resolution || 'Unknown'}
                   </span>
                   
                   {/* Stream Engine Tag */}
                   <span className="hidden sm:inline-block px-1.5 py-0.5 rounded text-[10px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                    {streamMode === 'cloudflare-hls' ? 'HLS Adaptive' : streamMode === 'direct-video' ? 'Direct Cinema' : 'Edge Relay'}
+                    {streamMode === 'cloudflare-hls' ? 'HLS' : 'Direct Video'}
                   </span>
                 </div>
                 <div className="text-xs text-slate-300 mt-0.5 truncate max-w-xs sm:max-w-md">

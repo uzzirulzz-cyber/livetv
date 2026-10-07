@@ -869,37 +869,6 @@ export default function App() {
                     }
                   }}
                   onOpenPlans={() => setIsPlansModalOpen(true)}
-                  onWatchItem={(streamUrl, title, logo) => {
-                    const tempCh: Channel = {
-                      id: `temp_${Date.now()}`,
-                      name: title,
-                      number: 1,
-                      logo: logo || activeChannelsList[0]?.logo || '',
-                      category: 'Entertainment',
-                      country: 'Global',
-                      language: 'English',
-                      streamUrl: streamUrl,
-                      epgId: 'EPG_HERO',
-                      isPremium: true,
-                      isLive: false,
-                      resolution: '4K',
-                      currentProgram: {
-                        title: title,
-                        startTime: '00:00',
-                        endTime: '02:00',
-                        progressPercentage: 5,
-                        synopsis: 'PlayBeat Original Presentation.'
-                      },
-                      nextProgram: {
-                        title: 'Live Post-Show',
-                        startTime: '02:00',
-                        endTime: '03:00'
-                      }
-                    };
-                    setActivePlayingChannel(tempCh);
-                  }}
-                  onToggleMyList={handleToggleMyList}
-                  isItemInMyList={(title) => myList.includes(title)}
                 />
 
                 <HomeSections

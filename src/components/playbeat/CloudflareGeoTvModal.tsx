@@ -83,7 +83,7 @@ export const CloudflareGeoTvModal: React.FC<CloudflareGeoTvModalProps> = ({
             const tsUrl = c.tsUrl || `/api/proxy/stream?url=${encodeURIComponent(c.streamUrl || '')}`;
             const logoUrl = c.logo && c.logo.startsWith('http://')
               ? `/api/proxy/image?url=${encodeURIComponent(c.logo)}`
-              : (c.logo || 'https://images.unsplash.com/photo-1594909122845-11baa439b7bf?auto=format&fit=crop&w=120&h=120&q=80');
+              : (c.logo || '');
 
             return {
               id: `geo_ch_${idx + 1}`,
@@ -91,28 +91,31 @@ export const CloudflareGeoTvModal: React.FC<CloudflareGeoTvModalProps> = ({
               number: 200 + idx,
               logo: logoUrl,
               category: (c.category || (c.group.includes('Movie') || c.group.includes('Bollywood') ? 'Movies' : 'Entertainment')) as any,
-              country: c.group.includes('PK') ? 'Pakistan' : c.group.includes('IN') ? 'India' : 'Global',
-              language: c.group.includes('PK') ? 'Urdu' : c.group.includes('IN') ? 'Hindi' : 'English',
+              country: c.country || 'Unknown',
+              language: c.language || 'Unknown',
               streamUrl: hlsUrl,
               hlsUrl: hlsUrl,
               tsUrl: tsUrl,
               streamId: streamId,
               groupTitle: c.group,
-              epgId: `EPG_GEO_${idx + 1}`,
+              epgId: c.epgId || '',
               isPremium: true,
               isLive: true,
-              resolution: c.name.includes('4K') ? '4K' : '1080p',
+              resolution:
+                c.resolution === '4K' || c.resolution === '1080p' || c.resolution === '720p'
+                  ? c.resolution
+                  : 'Unknown',
               currentProgram: {
-                title: `${c.name} — Live Stream Broadcast`,
-                startTime: '00:00',
-                endTime: '23:59',
-                progressPercentage: 50,
-                synopsis: `Broadcasted via GeoTV Space World Package (${c.group}). Cloudflare DoH Edge relay.`
+                title: 'Program guide unavailable',
+                startTime: '',
+                endTime: '',
+                progressPercentage: 0,
+                synopsis: 'No programme guide data is available for this channel.'
               },
               nextProgram: {
-                title: 'Continuous 24/7 Feed',
-                startTime: '00:00',
-                endTime: '00:00'
+                title: 'Program guide unavailable',
+                startTime: '',
+                endTime: ''
               }
             };
           });
@@ -302,7 +305,7 @@ export const CloudflareGeoTvModal: React.FC<CloudflareGeoTvModalProps> = ({
                               id: `geo_${idx}`,
                               name: ch.name,
                               number: 100 + idx,
-                              logo: ch.logo || 'https://images.unsplash.com/photo-1594909122845-11baa439b7bf?auto=format&fit=crop&w=120&h=120&q=80',
+                              logo: ch.logo || '',
                               category: 'Entertainment',
                               country: 'Global',
                               language: 'Hindi/English',

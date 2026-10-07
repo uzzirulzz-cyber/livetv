@@ -1045,29 +1045,28 @@ app.all(['/api/cloudflare/dns/setup-zone', '/api/cloudflare/dns/records'], (_req
   res.status(503).json({ success: false, error: 'DNS management is not configured.' })
 );
 
-// WORKER JOB 1: FETCHING & PRODUCING CONTENT// WORKER JOB 1: FETCHING & PRODUCING CONTENT (MOVIES, SONGS, SERIES, LIVE TV)
+// Provider-backed content endpoints.
 // -----------------------------------------------------------------------
 app.get('/api/content/all', async (_req: Request, res: Response) => {
   const channels = await fetchAndParseAllChannels(false);
-  const { MOVIES, SERIES, SONGS } = await import('./src/services/catalogData');
+  const { MOVIES, SERIES } = await import('./src/services/catalogData');
   res.json({
     success: true,
     counts: {
       liveChannels: channels.length,
       movies: MOVIES.length,
       series: SERIES.length,
-      songs: SONGS.length
+      songs: 0
     },
     liveChannels: channels.slice(0, 100),
     movies: MOVIES,
     series: SERIES,
-    songs: SONGS
+    songs: []
   });
 });
 
 app.get('/api/content/songs', async (_req: Request, res: Response) => {
-  const { SONGS } = await import('./src/services/catalogData');
-  res.json({ success: true, count: SONGS.length, songs: SONGS });
+  res.json({ success: true, count: 0, songs: [] });
 });
 
 app.get('/api/content/movies', async (_req: Request, res: Response) => {
@@ -1105,7 +1104,7 @@ app.get(['/api/proxy/image', '/api/iptv/image', '/api/geotv/image'], async (req:
     });
 
     if (!upstreamRes.ok) {
-      return res.redirect('https://images.unsplash.com/photo-1594909122845-11baa439b7bf?auto=format&fit=crop&w=120&h=120&q=80');
+      return res.status(upstreamRes.status).send('Provider image unavailable');
     }
 
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -1119,8 +1118,9 @@ app.get(['/api/proxy/image', '/api/iptv/image', '/api/geotv/image'], async (req:
     } else {
       res.status(404).send('No image body');
     }
-  } catch {
-    res.redirect('https://images.unsplash.com/photo-1594909122845-11baa439b7bf?auto=format&fit=crop&w=120&h=120&q=80');
+  } catch (error) {
+    console.error('[Image Proxy Error]:', error);
+    res.status(502).send('Provider image request failed');
   }
 });
 
