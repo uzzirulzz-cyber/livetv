@@ -17,6 +17,8 @@ ALLOWED_ORIGIN = "*"
 CLOUDFLARE_DOH_URL = "https://cloudflare-dns.com/dns-query"
 ENVIRONMENT = "production"
 PLAYBACK_BASE_URL = "https://playbeat-broadcast.playbeatdigital.workers.dev"
+GEOTV_ALLOWED_ORIGIN = "http://advance.playbeat.live:8880"
+ALLOW_INSECURE_GEOTV = "true"
 
 [[d1_databases]]
 binding = "CATALOG_DB"

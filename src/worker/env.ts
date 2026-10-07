@@ -10,6 +10,8 @@ export interface Env {
   ALLOWED_ORIGIN?: string;
   PLAYBACK_BASE_URL: string;
   GEOTV_HOST?: string;
+  GEOTV_ALLOWED_ORIGIN?: string;
+  ALLOW_INSECURE_GEOTV?: string;
   GEOTV_USER?: string;
   GEOTV_PASS?: string;
   M3U_PLAYLIST_URL?: string;

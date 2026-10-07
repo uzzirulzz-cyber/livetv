@@ -180,8 +180,19 @@ export default {
     // 4. Cloudflare-accelerated Video TS Segment Proxy
     if (url.pathname === "/api/iptv/segment" || url.pathname === "/api/proxy/segment") {
       const segmentUrl = url.searchParams.get("url") || "";
-      const segRes = await fetchGeoTvSegment(env, segmentUrl);
-      return withCors(segRes, env);
+      try {
+        const providerEnv = withGeoTvProvider(env);
+        const segRes = await fetchGeoTvSegment(providerEnv, segmentUrl);
+        return withCors(segRes, env);
+      } catch (err) {
+        const providerError = err instanceof Error
+          && (err.message === "GeoTV provider is not configured"
+            || err.message === "GeoTV provider must be configured with HTTPS.");
+        if (providerError) {
+          return json({ success: false, error: "Provider configuration is required." }, 503, env);
+        }
+        throw err;
+      }
     }
 
     // 5. Cloudflare 1.1.1.1 DoH External DNS Resolver

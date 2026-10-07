@@ -56,7 +56,7 @@ The `playbeat.live` zone routes web traffic to the `playbeat-live` Worker throug
 
 ## ⚡ Architecture & Features
 
-- **Provider-fed Live TV**: No demonstration/test channels are advertised as live. Channels load only when an authorized HTTPS provider is configured.
+- **Provider-fed Live TV**: No demonstration/test channels are advertised as live. Provider playback is proxied through Cloudflare Workers.
 - **D1 Catalog Storage**: `CATALOG_DB` stores channel metadata without upstream stream URLs or provider credentials. The `epg_programs` schema is installed, but XMLTV ingestion is not implemented.
 - **Stream Proxy**: `playbeat-broadcast` reads each requested channel's stream ID from D1, then proxies HLS playlists and segments. The main Worker refreshes the live catalog every six hours and also supports an explicit refresh when the catalog is empty or requested.
 - **Admin Suite**: `/admin` validates the `ADMIN_TOKEN` Worker secret on the server. Set a strong random value as a Cloudflare Worker secret before signing in; the browser keeps it in memory only and clears it on sign-out or reload. Never commit or share the token.
@@ -65,9 +65,11 @@ The `playbeat.live` zone routes web traffic to the `playbeat-live` Worker throug
 
 The catalog Worker is bound to the `playbeat-catalog` D1 database in [`wrangler.toml`](./wrangler.toml), and the schema is in [`migrations/`](./migrations). The playback Worker uses the same database through [`wrangler.broadcast.toml`](./wrangler.broadcast.toml). Deployments apply pending migrations before publishing either Worker. A Cron Trigger refreshes the live channel catalog every six hours; unchanged channel rows are not rewritten. `/api/catalog/sync-status` reports the latest result, stored as one object in the configured R2 bucket, without exposing provider details.
 
-Set `M3U_PLAYLIST_URL` on the `playbeat-live` Worker to a rotated, authorized HTTPS Xtream playlist URL with `username` and `password` query parameters. The catalog Worker rejects HTTP URLs and does not expose the secret to clients. The `playbeat-broadcast` Worker accesses catalog-worker playback over a private service binding and does not need a duplicate provider secret. Do not put provider credentials in browser code, public URLs, or D1. The current playlist URL is HTTP, so catalog refresh and live playback remain disabled until it is replaced with a secure HTTPS URL.
+Set `M3U_PLAYLIST_URL` on the `playbeat-live` Worker as a secret with the authorized playlist URL, including its `username` and `password` query parameters. Provider credentials are kept in the Worker secret and are not stored in D1 or returned in channel metadata. The `playbeat-broadcast` Worker forwards HLS segment requests over its private service binding so credentials remain on the catalog Worker.
 
-Movies and series are not currently imported into D1. The provider must supply an authorized HTTPS Xtream API endpoint before VOD catalog ingestion can be implemented and verified; demo movie and series entries in the frontend are not provider catalog data.
+The configured `advance.playbeat.live:8880` provider only supports HTTP. `ALLOW_INSECURE_GEOTV` therefore enables plaintext origin requests to that exact configured origin only; HTTP is not encrypted between Cloudflare and the provider, so credentials and streams may be observed or modified on that network leg. Browser-to-Cloudflare traffic remains HTTPS. Do not reuse this setting for arbitrary origins. Rotate provider credentials if they are exposed.
+
+Movies and series are not currently imported into D1. VOD ingestion requires an authorized Xtream API endpoint; demo movie and series entries in the frontend are not provider catalog data.
 
 ### Admin sign-in
 

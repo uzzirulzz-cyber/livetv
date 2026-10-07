@@ -76,6 +76,66 @@ export function isAllowedHost(urlStr: string): boolean {
   }
 }
 
+function isAllowedProviderUrl(urlStr: string, env: Env, providerOrigin?: string): boolean {
+  try {
+    const parsed = new URL(urlStr);
+    const expectedOrigin = providerOrigin
+      ?? env.GEOTV_ALLOWED_ORIGIN
+      ?? (env.GEOTV_HOST ? new URL(env.GEOTV_HOST).origin : undefined);
+    if (!isAllowedHost(urlStr) || !expectedOrigin || parsed.origin !== new URL(expectedOrigin).origin) {
+      return false;
+    }
+    return parsed.protocol === 'https:'
+      || (parsed.protocol === 'http:'
+        && env.ALLOW_INSECURE_GEOTV === 'true'
+        && parsed.origin === env.GEOTV_ALLOWED_ORIGIN);
+  } catch {
+    return false;
+  }
+}
+
+function redactProviderCredentials(url: string, user: string, pass: string): string {
+  const parsed = new URL(url);
+  if (decodeURIComponent(parsed.username) === user) parsed.username = '__PB_PROVIDER_USERNAME__';
+  if (decodeURIComponent(parsed.password) === pass) parsed.password = '__PB_PROVIDER_PASSWORD__';
+  parsed.pathname = parsed.pathname.split('/').map((segment) => {
+    let decodedSegment = segment;
+    try {
+      decodedSegment = decodeURIComponent(segment);
+    } catch {
+      return segment;
+    }
+    if (decodedSegment === user) return '__PB_PROVIDER_USERNAME__';
+    if (decodedSegment === pass) return '__PB_PROVIDER_PASSWORD__';
+    return segment;
+  }).join('/');
+  for (const key of [...parsed.searchParams.keys()]) {
+    const value = parsed.searchParams.get(key);
+    if (value === user) parsed.searchParams.set(key, '__PB_PROVIDER_USERNAME__');
+    if (value === pass) parsed.searchParams.set(key, '__PB_PROVIDER_PASSWORD__');
+  }
+  return parsed.href;
+}
+
+function restoreProviderCredentials(url: string, user?: string, pass?: string): string | null {
+  if (!url.includes('__PB_PROVIDER_USERNAME__') && !url.includes('__PB_PROVIDER_PASSWORD__')) return url;
+  if (!user || !pass) return null;
+  const parsed = new URL(url);
+  if (parsed.username === '__PB_PROVIDER_USERNAME__') parsed.username = encodeURIComponent(user);
+  if (parsed.password === '__PB_PROVIDER_PASSWORD__') parsed.password = encodeURIComponent(pass);
+  parsed.pathname = parsed.pathname.split('/').map((segment) => {
+    if (segment === '__PB_PROVIDER_USERNAME__') return encodeURIComponent(user);
+    if (segment === '__PB_PROVIDER_PASSWORD__') return encodeURIComponent(pass);
+    return segment;
+  }).join('/');
+  for (const key of [...parsed.searchParams.keys()]) {
+    const value = parsed.searchParams.get(key);
+    if (value === '__PB_PROVIDER_USERNAME__') parsed.searchParams.set(key, user);
+    if (value === '__PB_PROVIDER_PASSWORD__') parsed.searchParams.set(key, pass);
+  }
+  return parsed.href;
+}
+
 /**
  * Cleans raw broadcast channel names from technical prefixes without altering their authentic name
  */
@@ -142,15 +202,13 @@ export async function fetchGeoTvChannels(
   }
 
   const configuredPlaylist = env.M3U_PLAYLIST_URL ? new URL(env.M3U_PLAYLIST_URL) : null;
-  if (configuredPlaylist && configuredPlaylist.protocol !== 'https:') {
-    throw new Error('GeoTV provider must be configured with HTTPS.');
-  }
   const host = configuredPlaylist?.origin ?? env.GEOTV_HOST;
   const user = configuredPlaylist?.searchParams.get('username') ?? env.GEOTV_USER;
   const pass = configuredPlaylist?.searchParams.get('password') ?? env.GEOTV_PASS;
 
   if (!host || !user || !pass) throw new Error('GeoTV provider configuration is incomplete.');
-  if (new URL(host).protocol !== 'https:') {
+  const providerOrigin = env.GEOTV_ALLOWED_ORIGIN ?? host;
+  if (!isAllowedProviderUrl(host, env, providerOrigin)) {
     throw new Error('GeoTV provider must be configured with HTTPS.');
   }
 
@@ -160,17 +218,36 @@ export async function fetchGeoTvChannels(
   await resolveCloudflareDoh(hostUrl.hostname);
 
   const upstreamRes = await fetch(playlistUrl, {
+    redirect: 'manual',
     headers: {
       'User-Agent': 'PlayBeat-Worker/3.0 (Cloudflare-Edge-Sync)',
       Accept: '*/*',
     },
   });
-
-  if (!upstreamRes.ok) {
-    throw new Error(`Upstream GeoTV returned HTTP ${upstreamRes.status}: ${upstreamRes.statusText}`);
+  const playlistRedirect = upstreamRes.headers.get('location');
+  let playlistResponse = upstreamRes;
+  if (playlistRedirect && upstreamRes.status >= 300 && upstreamRes.status < 400) {
+    const redirectedUrl = new URL(playlistRedirect, playlistUrl);
+    if (!isAllowedProviderUrl(redirectedUrl.href, env, providerOrigin)) {
+      throw new Error('Provider playlist redirect is outside the configured origin.');
+    }
+    playlistResponse = await fetch(redirectedUrl, {
+      redirect: 'manual',
+      headers: {
+        'User-Agent': 'PlayBeat-Worker/3.0 (Cloudflare-Edge-Sync)',
+        Accept: '*/*',
+      },
+    });
+  }
+  if (playlistResponse.status >= 300 && playlistResponse.status < 400) {
+    throw new Error('Provider returned an unsupported playlist redirect.');
   }
 
-  const text = await upstreamRes.text();
+  if (!playlistResponse.ok) {
+    throw new Error(`Upstream GeoTV returned HTTP ${playlistResponse.status}: ${playlistResponse.statusText}`);
+  }
+
+  const text = await playlistResponse.text();
   const lines = text.split('\n');
 
   const parsedChannels: any[] = [];
@@ -346,9 +423,6 @@ export async function fetchGeoTvHlsStream(
   const pass = env.GEOTV_PASS;
 
   if (!rawUrl && (!host || !user || !pass)) return new Response('GeoTV provider is not configured', { status: 503 });
-  if (!rawUrl && new URL(host!).protocol !== 'https:') {
-    return new Response('GeoTV HTTPS provider configuration is required', { status: 503 });
-  }
 
   let targetUrl = rawUrl;
   if (!targetUrl && channelId) {
@@ -359,50 +433,94 @@ export async function fetchGeoTvHlsStream(
   }
 
   const parsed = new URL(targetUrl);
-  if (parsed.protocol !== 'https:') {
-    return new Response('GeoTV stream must use HTTPS', { status: 502 });
+  const providerOrigin = env.GEOTV_ALLOWED_ORIGIN ?? (host ? new URL(host).origin : parsed.origin);
+  if (!isAllowedProviderUrl(targetUrl, env, providerOrigin)) {
+    return new Response('GeoTV stream URL is outside the configured provider origin', { status: 502 });
   }
   const doh = await resolveCloudflareDoh(parsed.hostname);
 
   let upstreamRes = await fetch(targetUrl, {
+    redirect: 'manual',
     headers: {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
       Accept: '*/*',
     },
   });
-
-  let playlistBody = await upstreamRes.text();
-  let finalOrigin = upstreamRes.url;
-
-  // Handle HTML redirect tag <a href="...">Found</a>
-  const htmlRedirectMatch = playlistBody.match(/href="([^"]+)"/);
-  if (htmlRedirectMatch && htmlRedirectMatch[1]) {
-    const redirectUrl = htmlRedirectMatch[1];
-    const redirectParsed = new URL(redirectUrl);
-    await resolveCloudflareDoh(redirectParsed.hostname);
-
-    const redirectRes = await fetch(redirectUrl, {
+  const location = upstreamRes.headers.get('location');
+  let finalUrl = targetUrl;
+  if (location && upstreamRes.status >= 300 && upstreamRes.status < 400) {
+    const redirectedUrl = new URL(location, targetUrl);
+    if (!isAllowedProviderUrl(redirectedUrl.href, env, providerOrigin)) {
+      return new Response('GeoTV redirect is outside the configured provider origin', { status: 502 });
+    }
+    upstreamRes = await fetch(redirectedUrl, {
+      redirect: 'manual',
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
         Accept: '*/*',
       },
     });
+    finalUrl = redirectedUrl.href;
+  }
+  if (upstreamRes.status >= 300 && upstreamRes.status < 400) {
+    return new Response('GeoTV returned an unsupported redirect', { status: 502 });
+  }
+
+  let playlistBody = await upstreamRes.text();
+  let finalOrigin = finalUrl;
+
+  // Handle HTML redirect tag <a href="...">Found</a>
+  const htmlRedirectMatch = playlistBody.match(/href="([^"]+)"/);
+  if (htmlRedirectMatch && htmlRedirectMatch[1]) {
+    const redirectUrl = new URL(htmlRedirectMatch[1], finalOrigin).href;
+    if (!isAllowedProviderUrl(redirectUrl, env, providerOrigin)) {
+      return new Response('GeoTV playlist redirect is outside the configured provider origin', { status: 502 });
+    }
+    const redirectParsed = new URL(redirectUrl);
+    await resolveCloudflareDoh(redirectParsed.hostname);
+
+    const redirectRes = await fetch(redirectUrl, {
+      redirect: 'manual',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        Accept: '*/*',
+      },
+    });
+    if (redirectRes.status >= 300 && redirectRes.status < 400) {
+      return new Response('GeoTV returned an unsupported playlist redirect', { status: 502 });
+    }
     playlistBody = await redirectRes.text();
-    finalOrigin = redirectRes.url;
+    finalOrigin = redirectUrl;
   }
 
   const originUrl = new URL(finalOrigin);
   const baseUrl = `${originUrl.protocol}//${originUrl.host}`;
 
   // Rewrite TS segments to our Cloudflare edge segment proxy
+  let disallowedSegmentOrigin = false;
+  const proxySegment = (segmentUrl: string): string | null => {
+    const fullSegmentUrl = new URL(segmentUrl, `${baseUrl}/`).href;
+    if (!isAllowedProviderUrl(fullSegmentUrl, env, providerOrigin)) {
+      disallowedSegmentOrigin = true;
+      return null;
+    }
+    const redactedUrl = user && pass ? redactProviderCredentials(fullSegmentUrl, user, pass) : fullSegmentUrl;
+    return `${segmentPath}?url=${encodeURIComponent(redactedUrl)}`;
+  };
   const rewrittenLines = playlistBody.split('\n').map((line) => {
     const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('#')) return line;
-    const fullSegmentUrl = trimmed.startsWith('http')
-      ? trimmed
-      : `${baseUrl}${trimmed.startsWith('/') ? '' : '/'}${trimmed}`;
-    return `${segmentPath}?url=${encodeURIComponent(fullSegmentUrl)}`;
+    if (!trimmed) return line;
+    if (trimmed.startsWith('#')) {
+      return line.replace(/URI="([^"]+)"/g, (match, uri: string) => {
+        const proxiedUri = proxySegment(uri);
+        return proxiedUri ? `URI="${proxiedUri}"` : match;
+      });
+    }
+    return proxySegment(trimmed) ?? '';
   });
+  if (disallowedSegmentOrigin) {
+    return new Response('GeoTV playlist contains a segment outside the configured provider origin', { status: 502 });
+  }
 
   const rewrittenPlaylist = rewrittenLines.join('\n');
 
@@ -425,19 +543,38 @@ export async function fetchGeoTvHlsStream(
  * High-throughput streaming with edge caching and CORS
  */
 export async function fetchGeoTvSegment(env: Env, segmentUrl: string): Promise<Response> {
-  if (!segmentUrl || !isAllowedHost(segmentUrl)) {
+  const restoredUrl = restoreProviderCredentials(segmentUrl, env.GEOTV_USER, env.GEOTV_PASS);
+  if (!restoredUrl || !isAllowedProviderUrl(restoredUrl, env)) {
     return new Response('Invalid or disallowed segment url', { status: 400 });
   }
 
-  const parsed = new URL(segmentUrl);
+  const parsed = new URL(restoredUrl);
   const doh = await resolveCloudflareDoh(parsed.hostname);
 
-  const upstreamRes = await fetch(segmentUrl, {
+  let upstreamRes = await fetch(restoredUrl, {
+    redirect: 'manual',
     headers: {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
       Accept: '*/*',
     },
   });
+  const location = upstreamRes.headers.get('location');
+  if (location && upstreamRes.status >= 300 && upstreamRes.status < 400) {
+    const redirectedUrl = new URL(location, restoredUrl);
+    if (!isAllowedProviderUrl(redirectedUrl.href, env)) {
+      return new Response('Segment redirect is outside the configured provider origin', { status: 502 });
+    }
+    upstreamRes = await fetch(redirectedUrl, {
+      redirect: 'manual',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        Accept: '*/*',
+      },
+    });
+  }
+  if (upstreamRes.status >= 300 && upstreamRes.status < 400) {
+    return new Response('Segment returned an unsupported redirect', { status: 502 });
+  }
 
   if (!upstreamRes.ok) {
     return new Response(`Segment upstream error: ${upstreamRes.statusText}`, {
