@@ -14,6 +14,7 @@ import {
 import type { Channel } from "../../types/playbeat";
 import { ChannelLogo } from "../common/ChannelLogo";
 import { ChannelCard } from "./ChannelCard";
+import lifestyleArtwork from "../../assets/playbeat-lifestyle-v1.webp";
 interface Props {
   channels: Channel[];
   favorites: string[];
@@ -95,6 +96,40 @@ export function PremiumIptvHome({
   return (
     <div className="iptv-home">
       <div className="iptv-main-content">
+        <section
+          className="iptv-life-banner"
+          aria-label="The PlayBeat lifestyle"
+        >
+          <img
+            src={lifestyleArtwork}
+            alt="Adult friends celebrating at a sunset beach party beside a sports car"
+            fetchPriority="high"
+            width={1916}
+            height={821}
+          />
+          <div className="iptv-life-copy">
+            <span className="iptv-life-eyebrow">
+              <span className="iptv-life-beats" aria-hidden="true">
+                <i />
+                <i />
+                <i />
+                <i />
+              </span>
+              TURN UP THE MOMENT
+            </span>
+            <h2>
+              Live a little.
+              <br />
+              <span>Watch a lot.</span>
+            </h2>
+            <p>Big nights. Good company. Endless entertainment.</p>
+            <button onClick={() => onNavigate("live")}>
+              Discover your lineup
+              <ArrowUpRight size={15} />
+            </button>
+          </div>
+          <span className="iptv-life-signature">THE PLAYBEAT LIFE</span>
+        </section>
         <div className="iptv-page-heading">
           <div>
             <span className="iptv-eyebrow">PREMIUM IPTV / LIVE & 24/7</span>

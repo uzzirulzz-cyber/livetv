@@ -1343,5 +1343,204 @@ button:disabled {
     grid-template-columns: repeat(2, 1fr);
   }
 }
-.channel-art>.channel-logo-tile { width:80px; height:80px; }
-@media(min-width:640px) { .channel-art>.channel-logo-tile { width:96px; height:96px; } }
+.channel-art > .channel-logo-tile {
+  width: 80px;
+  height: 80px;
+}
+@media (min-width: 640px) {
+  .channel-art > .channel-logo-tile {
+    width: 96px;
+    height: 96px;
+  }
+}
+
+/* Coastal nights, colour, and subtle motion for the PlayBeat lifestyle. */
+.iptv-life-banner {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  min-height: 285px;
+  border: 1px solid #f5b21a60;
+  border-radius: 16px;
+  margin-bottom: 26px;
+  background: #101a2a;
+  box-shadow:
+    0 12px 50px #bb486013,
+    0 0 40px #e8ad4810;
+}
+.iptv-life-banner > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 43%;
+  z-index: -2;
+  animation: iptv-life-pan 24s ease-in-out infinite alternate;
+}
+.iptv-life-banner::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(90deg, #041021b8 0, #07102044 45%, transparent 75%),
+    linear-gradient(0deg, #040b1bcb 0, transparent 75%);
+}
+.iptv-life-copy {
+  padding: 53px 27px 23px;
+  position: relative;
+  max-width: 380px;
+}
+.iptv-life-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 8px;
+  letter-spacing: 2px;
+  font-weight: 700;
+  color: #f9d386;
+}
+.iptv-life-copy h2 {
+  margin: 15px 0 9px;
+  font-size: 40px;
+  font-weight: 600;
+  letter-spacing: -1.5px;
+  line-height: 1.07;
+  text-shadow: 0 3px 20px #0005;
+}
+.iptv-life-copy h2 span {
+  color: #ffe087;
+}
+.iptv-life-copy p {
+  margin: 12px 0 17px;
+  font-size: 10px;
+  color: #d3d3df;
+  line-height: 1.7;
+}
+.iptv-life-copy button {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 14px;
+  border-radius: 22px;
+  background: linear-gradient(110deg, #ffe584, #f5b21a);
+  color: #1a1420;
+  font-size: 10px;
+  font-weight: 700;
+  box-shadow: 0 5px 20px #ffbf2630;
+}
+.iptv-life-signature {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  padding: 6px 10px;
+  border: 1px solid #ffffff30;
+  border-radius: 20px;
+  color: #ffffffb0;
+  background: #02061e30;
+  font-size: 7px;
+  letter-spacing: 2px;
+  backdrop-filter: blur(8px);
+}
+.iptv-life-beats {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 14px;
+}
+.iptv-life-beats i {
+  display: block;
+  width: 2px;
+  height: 10px;
+  background: #ffc65f;
+  transform-origin: center;
+  animation: iptv-life-beat 1s ease-in-out infinite alternate;
+}
+.iptv-life-beats i:nth-child(2) {
+  animation-delay: -0.2s;
+  height: 14px;
+}
+.iptv-life-beats i:nth-child(3) {
+  animation-delay: -0.6s;
+  height: 7px;
+}
+.iptv-life-beats i:nth-child(4) {
+  animation-delay: -0.4s;
+  height: 11px;
+}
+.iptv-popular-grid .channel-card[data-category="Sports"] .channel-art {
+  background:
+    radial-gradient(ellipse at 50% 0, #eab34633, transparent 85%),
+    linear-gradient(130deg, #1b2745, #101c2b);
+}
+.iptv-popular-grid .channel-card[data-category="News"] .channel-art {
+  background:
+    radial-gradient(ellipse at 50% 0, #c233543f, transparent 85%),
+    linear-gradient(130deg, #18223a, #172240);
+}
+.iptv-popular-grid .channel-card[data-category="Movies"] .channel-art {
+  background:
+    radial-gradient(ellipse at 50% 0, #794cd94f, transparent 85%),
+    linear-gradient(130deg, #172944, #21152f);
+}
+.iptv-popular-grid .channel-card[data-category="Entertainment"] .channel-art {
+  background:
+    radial-gradient(ellipse at 50% 0, #3d88c846, transparent 85%),
+    linear-gradient(130deg, #172c4c, #121a32);
+}
+.iptv-popular-grid .channel-card[data-category="Music"] .channel-art {
+  background:
+    radial-gradient(ellipse at 50% 0, #dc479650, transparent 85%),
+    linear-gradient(130deg, #2e1943, #182440);
+}
+.iptv-popular-grid .channel-card[data-category="Kids"] .channel-art {
+  background:
+    radial-gradient(ellipse at 50% 0, #41bfba44, transparent 85%),
+    linear-gradient(130deg, #123444, #17293e);
+}
+@keyframes iptv-life-pan {
+  from {
+    transform: scale(1.03) translateX(-0.4%);
+  }
+  to {
+    transform: scale(1.1) translateX(0.4%);
+  }
+}
+@keyframes iptv-life-beat {
+  from {
+    transform: scaleY(0.35);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+@media (min-width: 1600px) {
+  .iptv-life-banner {
+    min-height: 340px;
+  }
+  .iptv-life-copy {
+    padding-top: 73px;
+  }
+  .iptv-life-copy h2 {
+    font-size: 48px;
+  }
+}
+@media (max-width: 720px) {
+  .iptv-life-banner {
+    min-height: 290px;
+  }
+  .iptv-life-banner > img {
+    object-position: 56% 40%;
+  }
+  .iptv-life-copy {
+    padding: 60px 19px 22px;
+    max-width: 290px;
+  }
+  .iptv-life-copy h2 {
+    font-size: 38px;
+  }
+  .iptv-life-signature {
+    display: none;
+  }
+}

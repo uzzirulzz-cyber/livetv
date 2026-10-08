@@ -15,7 +15,7 @@ export function ChannelCard({
   onToggleFavorite,
 }: Props) {
   return (
-    <article className="channel-card group">
+    <article className="channel-card group" data-category={channel.category}>
       <button
         className="channel-art"
         onClick={() => onPlay(channel)}
