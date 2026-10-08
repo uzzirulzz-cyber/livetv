@@ -436,7 +436,9 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {series.map((item) => (
+          {(series || []).map((item) => {
+            if (!item) return null;
+            return (
             <div
               key={item.id}
               onClick={() => onSelectSeries(item)}
@@ -444,8 +446,8 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
             >
               <div className="sm:w-48 aspect-[16/9] sm:aspect-auto shrink-0 overflow-hidden relative">
                 <img
-                  src={item.backdrop}
-                  alt={item.title}
+                  src={item?.backdrop}
+                  alt={item?.title || ''}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#0c1326] hidden sm:block" />
@@ -454,23 +456,23 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
               <div className="p-4 flex-1 flex flex-col justify-between">
                 <div>
                   <div className="flex items-center gap-2 text-[11px] text-cyan-400 font-semibold mb-1">
-                    <span>{item.rating}</span>
+                    <span>{item?.rating}</span>
                     <span>·</span>
-                    <span>{item.seasonCount} Season(s)</span>
+                    <span>{item?.seasonCount} Season(s)</span>
                     <span>·</span>
-                    <span>{item.genres.join(', ')}</span>
+                    <span>{item?.genres?.join(', ') || ''}</span>
                   </div>
                   <h3 className="text-sm font-bold text-white group-hover:text-cyan-300 transition-colors">
-                    {item.title}
+                    {item?.title || ''}
                   </h3>
                   <p className="text-[11px] text-slate-300 mt-1 line-clamp-2 leading-relaxed">
-                    {item.description}
+                    {item?.description}
                   </p>
                 </div>
 
                 <div className="mt-3 flex items-center justify-between pt-2 border-t border-white/[0.06] text-xs">
                   <span className="text-[11px] text-slate-400 font-mono">
-                    {item.seasons[0]?.episodes.length || 0} Episodes available
+                    {item?.seasons?.[0]?.episodes?.length || 0} Episodes available
                   </span>
                   <span className="text-xs font-bold text-white group-hover:translate-x-1 transition-transform flex items-center gap-1">
                     <span>Episodes</span>
@@ -479,7 +481,8 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
         {series.length === 0 && (
           <div className="rounded-xl border border-white/[0.08] bg-white/[0.025] px-5 py-5">

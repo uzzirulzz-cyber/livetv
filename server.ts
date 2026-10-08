@@ -210,78 +210,43 @@ app.post('/api/:action(info|credit_logs|add|edit|extend|del|activecode|extendac|
   }
 });
 
+import { StarIptvClient } from './src/worker/provider/star-iptv';
+
+// ... (existing code, insert StarIptvClient instantiation)
+
 // Server-side IPTV Provider Proxy
-// Ensures apikey is never exposed to the browser client or captured in network logs
 app.post('/api/provider/call', async (req: Request, res: Response) => {
   if (!requireAdmin(req, res)) return;
   if (!currentApiKey) return res.status(503).json({ success: false, error: 'Provider API is not configured.' });
+  
   const { type, simulateFallback, ...params } = req.body;
-  const apiKeyToUse = currentApiKey;
+  const client = new StarIptvClient({
+    STAR_IPTV_API_KEY: currentApiKey,
+    STAR_IPTV_API_URL: PROVIDER_BASE_URL,
+    DB: { prepare: () => ({ bind: () => ({ run: async () => {} }) }) } as any
+  } as any);
 
-  // If simulateFallback is requested or if key is placeholder and user wants test run
+  // If simulateFallback is requested, fallback to simulation
   if (simulateFallback) {
     return handleSimulatedResponse(type, params, res);
   }
 
-  try {
-    const formData = new URLSearchParams();
-    formData.append('apikey', apiKeyToUse);
-    formData.append('type', type);
-
-    for (const [key, value] of Object.entries(params)) {
-      if (value !== undefined && value !== null) {
-        formData.append(key, String(value));
-      }
-    }
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000);
-
-    const upstreamResponse = await fetch(PROVIDER_BASE_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'User-Agent': 'StarPanel-IPTV/3.0'
-      },
-      body: formData.toString(),
-      signal: controller.signal
+  // Use the StarIptvClient for the call
+  // Note: Using a dummy requestId for CallMeta
+  const result = await (client as any).raw(type, params, false, { requestId: `req_${Date.now()}` });
+  
+  if (result.ok) {
+    return res.json({
+      success: true,
+      source: 'live_provider',
+      data: result.json
     });
-
-    clearTimeout(timeoutId);
-
-    const contentType = upstreamResponse.headers.get('content-type') || '';
-    if (contentType.includes('application/json')) {
-      const data = await upstreamResponse.json();
-      return res.json({
-        success: true,
-        source: 'live_provider',
-        data
-      });
-    } else {
-      const text = await upstreamResponse.text();
-      // Try parsing text as JSON
-      try {
-        const parsed = JSON.parse(text);
-        return res.json({
-          success: true,
-          source: 'live_provider',
-          data: parsed
-        });
-      } catch {
-        return res.json({
-          success: false,
-          source: 'live_provider',
-          rawResponse: text,
-          message: 'Upstream returned non-JSON response.'
-        });
-      }
-    }
-  } catch (error: any) {
-    return res.status(200).json({
+  } else {
+    return res.json({
       success: false,
-      isNetworkError: true,
-      error: error.message || 'Failed to reach upstream IPTV provider.',
-      hint: 'The upstream server may be offline, firewalled, or requiring valid credentials. You can enable Sandbox Simulation mode.'
+      source: 'live_provider',
+      error: result.reason,
+      message: 'Upstream returned error or unreachable.'
     });
   }
 });
@@ -1034,6 +999,33 @@ app.all('/api/xtream/player-api', async (req: Request, res: Response) => {
       username,
       action: action || 'auth',
       data
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Diagnostic Ping Endpoint
+app.get('/api/diagnostics/ping', async (req: Request, res: Response) => {
+  if (!requireAdmin(req, res)) return;
+  const targetUrl = req.query.url as string;
+  if (!targetUrl) return res.status(400).json({ success: false, error: 'Missing url' });
+
+  const startTime = Date.now();
+  try {
+    const upstreamRes = await fetch(targetUrl, {
+      method: 'GET',
+      headers: { 'User-Agent': 'PlayBeat-Diagnostic/1.0' },
+      signal: AbortSignal.timeout(5000)
+    });
+    const durationMs = Date.now() - startTime;
+    
+    res.json({
+      success: true,
+      status: upstreamRes.status,
+      statusText: upstreamRes.statusText,
+      durationMs,
+      contentType: upstreamRes.headers.get('content-type')
     });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });

@@ -47,7 +47,12 @@ export async function executeProviderCall<T = any>(
     });
 
     const durationMs = Date.now() - startTime;
-    const result = await response.json();
+    let result;
+    try {
+      result = await response.json();
+    } catch (e) {
+      result = { success: false, error: `Server returned non-JSON response (Status: ${response.status})` };
+    }
 
     const success = result.success !== false;
     const source = result.source || (options.simulateFallback ? 'sandbox_simulation' : 'live_provider');
