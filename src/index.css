@@ -1355,6 +1355,169 @@ button:disabled {
 }
 
 /* Coastal nights, colour, and subtle motion for the PlayBeat lifestyle. */
+
+/* Ten cinematic scenes: crossfade, gentle camera motion, and direct controls. */
+.iptv-life-banner.iptv-life-carousel {
+  min-height: 330px;
+  touch-action: pan-y;
+}
+.iptv-life-images,
+.iptv-life-slide {
+  position: absolute;
+  inset: 0;
+}
+.iptv-life-images {
+  z-index: -2;
+}
+.iptv-life-slide {
+  opacity: 0;
+  transition: opacity 1100ms ease;
+}
+.iptv-life-slide.is-active {
+  opacity: 1;
+}
+.iptv-life-slide img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 54% 44%;
+  transform: scale(1.025);
+}
+.iptv-life-slide.is-active img {
+  animation: iptv-carousel-camera 8s ease-out both;
+}
+.iptv-life-carousel[data-playing="false"] .iptv-life-slide img,
+.iptv-life-carousel[data-playing="false"] .iptv-life-beats i {
+  animation-play-state: paused;
+}
+.iptv-life-carousel .iptv-life-copy {
+  padding: 42px 27px 70px;
+  max-width: 380px;
+}
+.iptv-life-carousel .iptv-life-copy h2 {
+  font-size: clamp(32px, 3vw, 40px);
+}
+.iptv-life-carousel .iptv-life-copy p {
+  font-size: 11px;
+  min-height: 19px;
+}
+.iptv-life-message {
+  animation: iptv-carousel-copy 750ms ease both;
+}
+.iptv-life-carousel .iptv-life-signature {
+  top: 18px;
+  right: 18px;
+  bottom: auto;
+}
+.iptv-life-pagination {
+  position: absolute;
+  left: 23px;
+  bottom: 15px;
+  display: flex;
+  align-items: center;
+  z-index: 2;
+}
+.iptv-life-pagination button {
+  width: 22px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+}
+.iptv-life-pagination button span {
+  width: 5px;
+  height: 5px;
+  border-radius: 8px;
+  background: #ffffff60;
+  transition: width 250ms, background 250ms;
+}
+.iptv-life-pagination button[aria-current="true"] span {
+  width: 17px;
+  background: #ffcf64;
+  box-shadow: 0 0 12px #ffca5470;
+}
+.iptv-life-controls {
+  position: absolute;
+  right: 18px;
+  bottom: 17px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  z-index: 2;
+}
+.iptv-life-controls button {
+  height: 30px;
+  width: 30px;
+  border: 1px solid #ffffff35;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: white;
+  background: #07102070;
+  backdrop-filter: blur(8px);
+}
+.iptv-life-controls button:hover {
+  border-color: #ffd476;
+  background: #f5b21a35;
+}
+.iptv-life-controls button:disabled {
+  opacity: 0.5;
+}
+.iptv-life-count {
+  margin-right: 5px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #ffe087;
+  font-variant-numeric: tabular-nums;
+}
+.iptv-life-count span {
+  color: #ffffff80;
+}
+.iptv-life-carousel button:focus-visible {
+  outline: 2px solid #ffe087;
+  outline-offset: 3px;
+}
+.iptv-life-progress {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 2px;
+  width: 100%;
+  transform: scaleX(0);
+  transform-origin: left;
+  background: linear-gradient(90deg, #f5b21a, #ff7abf, #a3c8ff);
+  box-shadow: 0 0 12px #ffbc7680;
+}
+.iptv-life-progress[data-advancing="true"] {
+  animation: iptv-carousel-progress 6500ms linear both;
+}
+@keyframes iptv-carousel-camera {
+  from { transform: scale(1.025) translateX(-0.3%); }
+  to { transform: scale(1.08) translateX(0.3%); }
+}
+@keyframes iptv-carousel-copy {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes iptv-carousel-progress {
+  to { transform: scaleX(1); }
+}
+@media (min-width: 1600px) {
+  .iptv-life-banner.iptv-life-carousel { min-height: 360px; }
+  .iptv-life-carousel .iptv-life-copy { padding-top: 58px; }
+}
+@media (max-width: 720px) {
+  .iptv-life-banner.iptv-life-carousel { min-height: 350px; }
+  .iptv-life-carousel .iptv-life-copy { padding: 45px 19px 95px; max-width: 320px; }
+  .iptv-life-slide img { object-position: 62% 43%; }
+  .iptv-life-pagination { left: 15px; bottom: 46px; }
+  .iptv-life-pagination button { width: 22px; }
+  .iptv-life-controls { right: 16px; bottom: 13px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .iptv-life-slide { transition: none; }
+  .iptv-life-slide img, .iptv-life-message, .iptv-life-progress { animation: none !important; }
+}
+
 .iptv-life-banner {
   position: relative;
   isolation: isolate;
