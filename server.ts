@@ -1,8 +1,10 @@
-import express, { Request, Response } from 'express';
+import express, { type Request, type Response } from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { timingSafeEqual } from 'node:crypto';
 import dotenv from 'dotenv';
+import { Readable } from 'node:stream';
+import { BROADCAST_PREFIX, fetchStorefrontBroadcast } from './src/worker/services/storefront-broadcast';
 import { ACTIONS, PACKAGE } from './src/worker/playbeat-proxy';
 
 dotenv.config();
@@ -17,6 +19,36 @@ const ADMIN_TOKEN = process.env.ADMIN_TOKEN;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// The same bridge powers local development and Google AI Studio previews.
+app.use(BROADCAST_PREFIX, async (req, res) => {
+  const controller = new AbortController();
+  res.on('close', () => controller.abort());
+  try {
+    const headers = new Headers();
+    for (const key of ['range', 'if-none-match', 'if-modified-since']) {
+      const value = req.get(key);
+      if (value) headers.set(key, value);
+    }
+    const response = await fetchStorefrontBroadcast(new Request('https://storefront.local' + req.originalUrl, {
+      method: req.method, headers, signal: controller.signal,
+    }));
+    res.status(response.status);
+    response.headers.forEach((value, key) => res.setHeader(key, value));
+    if (!response.body) { res.end(); return; }
+    const reader = response.body.getReader();
+    const stream = Readable.from((async function* () {
+      try {
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          yield value;
+        }
+      } finally { await reader.cancel().catch(() => {}); reader.releaseLock(); }
+    })());
+    stream.on('error', () => res.destroy()).pipe(res);
+  } catch { if (!res.headersSent) res.status(502).json({ error: 'Broadcast unavailable.' }); }
+});
 
 app.post('/api/admin/verify', (req: Request, res: Response) => {
   if (!requireAdmin(req, res)) return;
