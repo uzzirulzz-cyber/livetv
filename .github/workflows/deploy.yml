@@ -29,5 +29,5 @@ jobs:
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          accountId: 1f230ccf421d89de0f68562da95f005d
           command: deploy --config wrangler.storefront.toml

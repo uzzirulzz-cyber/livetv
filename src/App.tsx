@@ -37,11 +37,9 @@ import { OpsRobotDashboard } from "./components/admin/operations/OpsRobotDashboa
 
 // PlayBeat Entertainment OTT Consumer Components
 import { PlayBeatHeader } from "./components/playbeat/PlayBeatHeader";
-import { HeroBanner } from "./components/playbeat/HeroBanner";
-import { HomeSections } from "./components/playbeat/HomeSections";
+import { PremiumIptvHome } from "./components/playbeat/PremiumIptvHome";
+import { IptvSidebar } from "./components/playbeat/IptvSidebar";
 import { LiveTvView } from "./components/playbeat/LiveTvView";
-import { MoviesView } from "./components/playbeat/MoviesView";
-import { SeriesView } from "./components/playbeat/SeriesView";
 import { CustomerAccountView } from "./components/playbeat/CustomerAccountView";
 import { PlansAndCheckoutModal } from "./components/playbeat/PlansAndCheckoutModal";
 import { loadBroadcastCatalog } from "./services/broadcastCatalog";
@@ -55,7 +53,7 @@ import { DevicesView } from "./components/playbeat/DevicesView";
 import { SupportView } from "./components/playbeat/SupportView";
 import { SearchModal } from "./components/playbeat/SearchModal";
 import { CloudflareGeoTvModal } from "./components/playbeat/CloudflareGeoTvModal";
-import { PlayBeatLogo } from "./components/common/PlayBeatLogo";
+import { PremiumIptvLogo } from "./components/common/PremiumIptvLogo";
 
 // Media Catalog & Types
 import {
@@ -890,181 +888,176 @@ export default function App() {
             onNavigateToAdmin={() => navigateTo("admin")}
           />
 
-          {/* Subheader / Open Storefront Badge */}
-          <div className="bg-gradient-to-r from-amber-950/35 via-[#0b1425] to-slate-950 border-b border-amber-200/15 px-4 py-2 text-xs flex flex-wrap items-center justify-between gap-3 max-w-7xl mx-auto w-full">
-            <div className="flex items-center gap-2 text-slate-300">
-              <span className="w-2 h-2 rounded-full bg-amber-300" />
-              <span className="font-semibold text-white">
-                PLAYBEAT ENTERTAIN:
-              </span>
-              <span className="text-amber-200 font-mono text-[11px] font-bold">
-                {catalogLoading
-                  ? "LOADING YOUR LINEUP"
-                  : catalogError
-                    ? "CONNECTION INTERRUPTED"
-                    : "YOUR LINEUP"}
-              </span>
-              <span className="text-slate-600 hidden sm:inline">|</span>
-              <span className="text-slate-300 hidden sm:inline">
-                {activeChannelsList.length.toLocaleString()} channels ·{" "}
-                {
-                  new Set(
-                    activeChannelsList.map((channel) => channel.groupTitle),
-                  ).size
-                }{" "}
-                collections
-              </span>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => {
-                  setStreamingSection("live");
-                  window.scrollTo({ top: 0, behavior: "smooth" });
-                }}
-                className="text-[11px] font-bold text-amber-100 hover:text-white bg-amber-200/[0.06] border border-amber-200/20 px-2.5 py-1 rounded-md transition-colors flex items-center gap-1"
-              >
-                <Tv className="w-3 h-3 text-amber-300" />
-                <span>Browse Live TV</span>
-              </button>
-            </div>
-          </div>
-
           {/* Content Body Based on Navigation */}
-          <main className="flex-1 pb-16">
-            {streamingSection === "home" && (
-              <>
-                <HeroBanner
-                  channelCount={activeChannelsList.length}
+          <div className="iptv-workspace">
+            <IptvSidebar
+              activeSection={streamingSection}
+              onNavigate={(section) => {
+                setStreamingSection(section);
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              channelCount={activeChannelsList.length}
+              movieCount={
+                activeChannelsList.filter(
+                  (channel) => channel.category === "Movies",
+                ).length
+              }
+              showCount={
+                activeChannelsList.filter(
+                  (channel) => channel.category === "Entertainment",
+                ).length
+              }
+            />
+            <main className="iptv-content">
+              {streamingSection === "home" && (
+                <PremiumIptvHome
                   channels={activeChannelsList}
+                  favorites={favorites}
                   onWatchChannel={handleWatchChannel}
-                  onWatchLive={() => setStreamingSection("live")}
+                  onToggleFavorite={handleToggleFavorite}
                   onNavigate={setStreamingSection}
                 />
-
-                <HomeSections
-                  channels={activeChannelsList}
-                  recentChannelIds={recentChannelIds}
-                  movies={MOVIES}
-                  series={SERIES}
+              )}
+              {["sports", "news", "recent"].includes(streamingSection) && (
+                <ChannelLibrary
+                  key={streamingSection}
+                  title={
+                    streamingSection === "sports"
+                      ? "The world of sport."
+                      : streamingSection === "news"
+                        ? "Stay in the know."
+                        : "Recently watched."
+                  }
+                  subtitle={
+                    streamingSection === "recent"
+                      ? "Your recent live channels, ready to play again."
+                      : "Choose a channel and watch live."
+                  }
+                  channels={
+                    streamingSection === "recent"
+                      ? recentChannelIds
+                          .map((id) =>
+                            activeChannelsList.find(
+                              (channel) => channel.id === id,
+                            ),
+                          )
+                          .filter((channel): channel is Channel => !!channel)
+                      : activeChannelsList.filter(
+                          (channel) =>
+                            channel.category ===
+                            (streamingSection === "sports" ? "Sports" : "News"),
+                        )
+                  }
                   onWatchChannel={handleWatchChannel}
-                  onWatchMovie={handleWatchMovie}
-                  onSelectSeries={handleSelectSeries}
-                  onToggleMyList={handleToggleMyList}
-                  isItemInMyList={(title) => myList.includes(title)}
-                  onNavigateSection={(sec) => {
-                    setStreamingSection(sec);
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  }}
                   favorites={favorites}
                   onToggleFavorite={handleToggleFavorite}
                 />
-              </>
-            )}
+              )}
 
-            {catalogLoading && (
-              <div
-                role="status"
-                className="mx-auto max-w-7xl px-6 py-6 text-sm text-slate-400"
-              >
-                Loading your entertainment library…
-              </div>
-            )}
-            {catalogError && (
-              <div
-                role="alert"
-                className="mx-auto max-w-7xl px-6 py-6 text-sm text-amber-200"
-              >
-                The channel library could not be reached.{" "}
-                <button
-                  className="underline underline-offset-4"
-                  onClick={() => setCatalogRevision((value) => value + 1)}
+              {catalogLoading && (
+                <div
+                  role="status"
+                  className="mx-auto max-w-7xl px-6 py-6 text-sm text-slate-400"
                 >
-                  Try again
-                </button>
-              </div>
-            )}
+                  Loading your entertainment library…
+                </div>
+              )}
+              {catalogError && (
+                <div
+                  role="alert"
+                  className="mx-auto max-w-7xl px-6 py-6 text-sm text-amber-200"
+                >
+                  The channel library could not be reached.{" "}
+                  <button
+                    className="underline underline-offset-4"
+                    onClick={() => setCatalogRevision((value) => value + 1)}
+                  >
+                    Try again
+                  </button>
+                </div>
+              )}
 
-            {streamingSection === "live" && (
-              <LiveTvView
-                channels={activeChannelsList}
-                onWatchChannel={handleWatchChannel}
-                favorites={favorites}
-                onToggleFavorite={handleToggleFavorite}
-              />
-            )}
+              {streamingSection === "live" && (
+                <LiveTvView
+                  channels={activeChannelsList}
+                  onWatchChannel={handleWatchChannel}
+                  favorites={favorites}
+                  onToggleFavorite={handleToggleFavorite}
+                />
+              )}
 
-            {streamingSection === "movies" && (
-              <ChannelLibrary
-                title="Cinema, around the clock."
-                subtitle="Hollywood, Bollywood, and regional cinema. These are live movie channels: join what's playing now."
-                channels={activeChannelsList.filter(
-                  (channel) => channel.category === "Movies",
-                )}
-                onWatchChannel={handleWatchChannel}
-                favorites={favorites}
-                onToggleFavorite={handleToggleFavorite}
-              />
-            )}
-            {streamingSection === "series" && (
-              <ChannelLibrary
-                title="Shows worth staying in for."
-                subtitle="Live entertainment and 24/7 collections. On-demand seasons and episodes will appear when available."
-                channels={activeChannelsList.filter(
-                  (channel) => channel.category === "Entertainment",
-                )}
-                onWatchChannel={handleWatchChannel}
-                favorites={favorites}
-                onToggleFavorite={handleToggleFavorite}
-              />
-            )}
-            {streamingSection === "list" && (
-              <ChannelLibrary
-                title="Your watchlist."
-                subtitle="Your saved channels, ready whenever you are."
-                channels={activeChannelsList.filter((channel) =>
-                  favorites.includes(channel.id),
-                )}
-                onWatchChannel={handleWatchChannel}
-                favorites={favorites}
-                onToggleFavorite={handleToggleFavorite}
-              />
-            )}
+              {streamingSection === "movies" && (
+                <ChannelLibrary
+                  title="Cinema, around the clock."
+                  subtitle="Hollywood, Bollywood, and regional cinema. These are live movie channels: join what's playing now."
+                  channels={activeChannelsList.filter(
+                    (channel) => channel.category === "Movies",
+                  )}
+                  onWatchChannel={handleWatchChannel}
+                  favorites={favorites}
+                  onToggleFavorite={handleToggleFavorite}
+                />
+              )}
+              {streamingSection === "series" && (
+                <ChannelLibrary
+                  title="Shows worth staying in for."
+                  subtitle="Live entertainment and 24/7 collections. On-demand seasons and episodes will appear when available."
+                  channels={activeChannelsList.filter(
+                    (channel) => channel.category === "Entertainment",
+                  )}
+                  onWatchChannel={handleWatchChannel}
+                  favorites={favorites}
+                  onToggleFavorite={handleToggleFavorite}
+                />
+              )}
+              {streamingSection === "list" && (
+                <ChannelLibrary
+                  title="Your watchlist."
+                  subtitle="Your saved channels, ready whenever you are."
+                  channels={activeChannelsList.filter((channel) =>
+                    favorites.includes(channel.id),
+                  )}
+                  onWatchChannel={handleWatchChannel}
+                  favorites={favorites}
+                  onToggleFavorite={handleToggleFavorite}
+                />
+              )}
 
-            {streamingSection === "guide" && (
-              <ChannelLibrary
-                title="TV guide"
-                subtitle="Find a channel and watch live. Programme schedules are not available yet."
-                channels={activeChannelsList}
-                onWatchChannel={handleWatchChannel}
-                favorites={favorites}
-                onToggleFavorite={handleToggleFavorite}
-              />
-            )}
+              {streamingSection === "guide" && (
+                <ChannelLibrary
+                  title="TV guide"
+                  subtitle="Find a channel and watch live. Programme schedules are not available yet."
+                  channels={activeChannelsList}
+                  onWatchChannel={handleWatchChannel}
+                  favorites={favorites}
+                  onToggleFavorite={handleToggleFavorite}
+                />
+              )}
 
-            {streamingSection === "devices" && (
-              <DevicesView onOpenPlans={() => setIsPlansModalOpen(true)} />
-            )}
+              {streamingSection === "devices" && (
+                <DevicesView onOpenPlans={() => setIsPlansModalOpen(true)} />
+              )}
 
-            {streamingSection === "support" && (
-              <SupportView onOpenPlans={() => setIsPlansModalOpen(true)} />
-            )}
+              {streamingSection === "support" && (
+                <SupportView onOpenPlans={() => setIsPlansModalOpen(true)} />
+              )}
 
-            {streamingSection === "account" && (
-              <CustomerAccountView
-                subscription={customerSubscription}
-                onRenew={() => setIsPlansModalOpen(true)}
-                myList={myList}
-              />
-            )}
-          </main>
+              {streamingSection === "account" && (
+                <CustomerAccountView
+                  subscription={customerSubscription}
+                  onRenew={() => setIsPlansModalOpen(true)}
+                  myList={myList}
+                />
+              )}
+            </main>
+          </div>
 
           {/* PlayBeat Entertainment Footer */}
           <footer className="border-t border-white/[0.08] bg-[#03060d] text-slate-400 py-12 px-4 lg:px-8">
             <div className="max-w-7xl mx-auto space-y-8">
               <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 pb-8 border-b border-white/[0.06]">
                 <div>
-                  <PlayBeatLogo size="md" />
+                  <PremiumIptvLogo />
                   <p className="text-xs text-slate-400 mt-2 max-w-md">
                     Live sport, world news, cinema, and entertainment. Find your
                     next favourite channel with PlayBeat.

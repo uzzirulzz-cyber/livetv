@@ -1,5 +1,6 @@
 # The storefront has its own Worker. Existing broadcasting/back-end Workers are retained.
 name = "playbeat-storefront"
+account_id = "1f230ccf421d89de0f68562da95f005d"
 main = "src/worker/storefront.ts"
 compatibility_date = "2026-10-08"
 workers_dev = true

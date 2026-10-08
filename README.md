@@ -2,6 +2,8 @@
 
 PlayBeat is a navy-and-gold entertainment storefront with live television, cinema channels, shows, search, a local watchlist, and recent channels. The HLS player is loaded and opened only after a user chooses Play; closing it stops playback and releases its resources.
 
+The final presentation follows the supplied `PLAYBEAT Premium IPTV.html`: its original logo and wordmark, left navigation, channel spotlight, compact popular grid, regional filters, and a searchable right-hand lineup. All controls use the real library; catalogue counts are computed from the available channels.
+
 The current library comes from the existing `playbeat-player` service at `player.playbeat.live`. Movie and show sections contain live/24-hour channels. On-demand films, episode catalogues, and programme schedules require separate source feeds; the storefront does not invent them.
 
 ## Architecture
@@ -33,6 +35,6 @@ npm run deploy
 
 `npm run deploy` uses **`wrangler.storefront.toml`** and deploys only `playbeat-storefront`. Do not use the legacy `wrangler.toml` or `wrangler.broadcast.toml` to publish this frontend.
 
-The GitHub Actions workflow follows the same checks. It requires existing `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` repository secrets for the account containing `playbeat-player` and `new-ne222`. Provider credentials are never needed in the frontend.
+The GitHub Actions workflow follows the same checks. It requires a `CLOUDFLARE_API_TOKEN` repository secret authorized for the account in `wrangler.storefront.toml`, containing `playbeat-player` and `new-ne222`. The workflow uses that explicit account rather than the legacy account secret. Provider credentials are never needed in the frontend.
 
 For authenticated Cloudflare API environments without a local Wrangler token, `scripts/build-embedded-worker.mjs` creates an equivalent upload module from the built text assets. Normal Wrangler deployments use the native `ASSETS` binding.

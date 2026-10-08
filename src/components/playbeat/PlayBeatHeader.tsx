@@ -1,28 +1,7 @@
-import React, { useState } from "react";
-import {
-  Film,
-  Radio,
-  Calendar,
-  Layers,
-  Smartphone,
-  Search,
-  User,
-  Bookmark,
-  Menu,
-  X,
-  CreditCard,
-  ShieldAlert,
-  Users,
-  Sparkles,
-  HelpCircle,
-  Play,
-  Lock,
-  ShieldCheck,
-} from "lucide-react";
-
-import { PlayBeatLogo } from "../common/PlayBeatLogo";
-
-interface PlayBeatHeaderProps {
+import { useState } from "react";
+import { Search, Bookmark, Menu, X, Lock } from "lucide-react";
+import { PremiumIptvLogo } from "../common/PremiumIptvLogo";
+interface Props {
   activeSection: string;
   onNavigate: (section: string) => void;
   myListCount: number;
@@ -31,8 +10,15 @@ interface PlayBeatHeaderProps {
   onOpenSearch: () => void;
   onNavigateToAdmin: () => void;
 }
-
-export const PlayBeatHeader: React.FC<PlayBeatHeaderProps> = ({
+const navigation = [
+  ["home", "Home"],
+  ["live", "Live TV"],
+  ["movies", "Movies"],
+  ["series", "Series"],
+  ["sports", "Sports"],
+  ["news", "News"],
+];
+export function PlayBeatHeader({
   activeSection,
   onNavigate,
   myListCount,
@@ -40,177 +26,94 @@ export const PlayBeatHeader: React.FC<PlayBeatHeaderProps> = ({
   catalogLoading,
   onOpenSearch,
   onNavigateToAdmin,
-}) => {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  // Clean Storefront navigation - completely open, no packages/paywalls
-  const mainNav = [
-    { id: "home", label: "Home" },
-    { id: "live", label: "Live TV" },
-    { id: "movies", label: "Movies" },
-    { id: "series", label: "Shows" },
-    { id: "guide", label: "TV Guide" },
-    { id: "devices", label: "Devices" },
-    { id: "support", label: "Support" },
-  ];
-
-  const handleNav = (id: string) => {
-    onNavigate(id);
-    setMobileMenuOpen(false);
+}: Props) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const navigate = (section: string) => {
+    onNavigate(section);
+    setMenuOpen(false);
   };
-
   return (
-    <header className="sticky top-0 z-50 bg-[#050811]/90 backdrop-blur-xl border-b border-white/[0.07] px-4 lg:px-8 py-3.5 transition-all">
-      <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-        {/* Brand Logo & Wordmark */}
-        <div className="flex items-center gap-3 shrink-0">
-          <button
-            onClick={() => handleNav("home")}
-            className="flex items-center text-left group hover:opacity-90 transition-opacity"
-            title="PlayBeat Entertainment Home"
-          >
-            <PlayBeatLogo size="sm" />
-          </button>
-        </div>
-
-        {/* Desktop Navigation Links */}
-        <nav className="hidden xl:flex items-center gap-1 2xl:gap-2">
-          {mainNav.map((item) => {
-            const isActive = activeSection === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => handleNav(item.id)}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all whitespace-nowrap ${
-                  isActive
-                    ? "text-amber-200 bg-amber-200/[0.08] shadow-xs border border-amber-200/15"
-                    : "text-slate-400 hover:text-white hover:bg-white/[0.04]"
-                }`}
-              >
-                {item.label}
-              </button>
-            );
-          })}
+    <header className="iptv-header">
+      <div className="iptv-topbar">
+        <button
+          className="shrink-0"
+          onClick={() => navigate("home")}
+          aria-label="PlayBeat home"
+        >
+          <PremiumIptvLogo />
+        </button>
+        <button
+          className="iptv-global-search"
+          onClick={onOpenSearch}
+          aria-label="Search entertainment library"
+        >
+          <Search size={16} />
+          <span>Search channels, movies, series…</span>
+        </button>
+        <nav aria-label="Main navigation" className="iptv-topnav">
+          {navigation.map(([id, label]) => (
+            <button
+              key={id}
+              className={activeSection === id ? "is-active" : ""}
+              aria-current={activeSection === id ? "page" : undefined}
+              onClick={() => navigate(id)}
+            >
+              {label}
+            </button>
+          ))}
         </nav>
-
-        {/* Action Controls */}
-        <div className="flex items-center gap-2.5 shrink-0">
-          {/* Provider setup status */}
-          <div className="hidden md:flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-300/[0.06] border border-amber-200/20 text-amber-100 font-mono text-[11px] font-bold">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-300" />
-            <span>
-              {catalogLoading
-                ? "Loading library…"
-                : `${channelCount.toLocaleString()} channels`}
-            </span>
-          </div>
-
-          {/* Global Search Button */}
+        <div className="iptv-header-actions">
           <button
-            onClick={onOpenSearch}
-            className="p-2 rounded-lg bg-white/[0.04] border border-white/[0.06] hover:bg-white/[0.08] hover:border-white/[0.12] text-slate-300 transition-colors"
-            aria-label="Search entertainment library"
-            title="Search entertainment library"
+            className="iptv-watchlist"
+            onClick={() => navigate("list")}
+            aria-label={`My List${myListCount ? ` ${myListCount}` : ""}`}
           >
-            <Search className="w-4 h-4" />
+            <Bookmark size={17} />
+            <span>My List</span>
+            {myListCount > 0 && <b>{myListCount}</b>}
           </button>
-
-          {/* My List */}
           <button
-            onClick={() => handleNav("list")}
-            className="relative hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.06] hover:bg-white/[0.08] text-xs font-semibold text-slate-300 transition-colors"
-            title="My Saved List"
-          >
-            <Bookmark className="w-3.5 h-3.5 text-amber-300" />
-            <span className="hidden md:inline">My List</span>
-            {myListCount > 0 && (
-              <span className="w-4 h-4 rounded-full bg-amber-300 text-[#050811] text-[10px] font-bold flex items-center justify-center font-mono">
-                {myListCount}
-              </span>
-            )}
-          </button>
-
-          {/* Direct Admin Access Icon */}
-          <button
+            className="iptv-admin"
             onClick={onNavigateToAdmin}
-            className="p-2 rounded-lg bg-white/[0.04] border border-white/[0.06] hover:bg-white/[0.08] hover:border-amber-300/40 text-slate-400 hover:text-amber-200 transition-colors flex items-center gap-1"
-            title="Admin Portal (/admin)"
+            aria-label="Admin"
           >
-            <Lock className="w-3.5 h-3.5" />
-            <span className="hidden lg:inline text-[11px] font-mono">
-              Admin
-            </span>
+            <Lock size={16} />
           </button>
-
-          {/* Mobile Menu Hamburger */}
           <button
+            className="iptv-mobile-toggle"
+            onClick={() => setMenuOpen(!menuOpen)}
             aria-label="Toggle navigation"
-            aria-expanded={mobileMenuOpen}
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="xl:hidden p-2 rounded-lg bg-white/[0.04] text-slate-300"
+            aria-expanded={menuOpen}
           >
-            {mobileMenuOpen ? (
-              <X className="w-5 h-5" />
-            ) : (
-              <Menu className="w-5 h-5" />
-            )}
+            {menuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
         </div>
       </div>
-
-      {/* Mobile Navigation Drawer */}
-      {mobileMenuOpen && (
-        <div className="xl:hidden pt-4 pb-2 border-t border-white/[0.08] mt-3 space-y-2 animate-in slide-in-from-top-2 duration-150">
-          <div className="px-3 py-1 text-[10px] font-mono text-amber-200 bg-amber-300/[0.06] border border-amber-200/20 rounded mb-2 flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-300" />
-            <span>
-              {catalogLoading
-                ? "Loading library…"
-                : `${channelCount.toLocaleString()} channels`}
-            </span>
-          </div>
-
-          <div className="grid grid-cols-2 gap-1">
-            {mainNav.map((item) => {
-              const isActive = activeSection === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => handleNav(item.id)}
-                  className={`text-left px-3 py-2 rounded-lg text-xs font-semibold ${
-                    isActive
-                      ? "bg-amber-200/10 text-amber-100"
-                      : "text-slate-300 hover:bg-white/[0.05]"
-                  }`}
-                >
-                  {item.label}
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="pt-2 border-t border-white/[0.08] flex items-center justify-between">
+      {menuOpen && (
+        <nav aria-label="Mobile navigation" className="iptv-mobile-nav">
+          {[
+            ...navigation,
+            ["list", "Favorites"],
+            ["recent", "Recently watched"],
+            ["guide", "TV Guide"],
+            ["devices", "Devices"],
+            ["support", "Support"],
+          ].map(([id, label]) => (
             <button
-              onClick={() => handleNav("list")}
-              className="text-xs text-slate-300 hover:text-white flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.04]"
+              key={id}
+              onClick={() => navigate(id)}
+              className={activeSection === id ? "is-active" : ""}
             >
-              <User className="w-3.5 h-3.5" />
-              <span>My Account</span>
+              {label}
             </button>
-
-            <button
-              onClick={() => {
-                setMobileMenuOpen(false);
-                onNavigateToAdmin();
-              }}
-              className="text-xs text-amber-200 hover:text-amber-100 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-300/[0.06] border border-amber-200/20 font-mono"
-            >
-              <Lock className="w-3.5 h-3.5" />
-              <span>Admin (/admin)</span>
-            </button>
-          </div>
-        </div>
+          ))}
+          <span>
+            {catalogLoading
+              ? "Loading library…"
+              : `${channelCount.toLocaleString()} live channels`}
+          </span>
+        </nav>
       )}
     </header>
   );
-};
+}
