@@ -507,6 +507,9 @@ export async function fetchGeoTvHlsStream(
     return new Response('GeoTV returned an unsupported redirect', { status: 502 });
   }
 
+  if (!upstreamRes.ok) {
+    return new Response('Provider playlist is unavailable', { status: 502 });
+  }
   let playlistBody = await upstreamRes.text();
   let finalOrigin = finalUrl;
 
@@ -530,17 +533,22 @@ export async function fetchGeoTvHlsStream(
     if (redirectRes.status >= 300 && redirectRes.status < 400) {
       return new Response('GeoTV returned an unsupported playlist redirect', { status: 502 });
     }
+    if (!redirectRes.ok) {
+      return new Response('Provider playlist is unavailable', { status: 502 });
+    }
     playlistBody = await redirectRes.text();
     finalOrigin = redirectUrl;
   }
 
-  const originUrl = new URL(finalOrigin);
-  const baseUrl = `${originUrl.protocol}//${originUrl.host}`;
 
-  // Rewrite TS segments to our Cloudflare edge segment proxy
+  if (!playlistBody.trimStart().startsWith('#EXTM3U')) {
+    return new Response('Invalid provider playlist', { status: 502 });
+  }
+
+  // Rewrite media playlists, segments, and key resources through the proxy
   let disallowedSegmentOrigin = false;
   const proxySegment = (segmentUrl: string): string | null => {
-    const fullSegmentUrl = new URL(segmentUrl, `${baseUrl}/`).href;
+    const fullSegmentUrl = new URL(segmentUrl, finalOrigin).href;
     if (!isAllowedProviderUrl(fullSegmentUrl, env, providerOrigin)) {
       disallowedSegmentOrigin = true;
       return null;
@@ -624,8 +632,12 @@ export async function fetchGeoTvSegment(env: Env, segmentUrl: string): Promise<R
   }
 
   const headers = new Headers();
-  headers.set('Content-Type', 'video/mp2t');
-  headers.set('Cache-Control', 'public, max-age=180, s-maxage=300');
+  const contentType = upstreamRes.headers.get('Content-Type') || 'video/mp2t';
+  if (/mpegurl/i.test(contentType) || /\.m3u8(?:\?|$)/i.test(restoredUrl)) {
+    return fetchGeoTvHlsStream(env, '', restoredUrl, `${env.PLAYBACK_BASE_URL}/broadcast/api/iptv/segment`);
+  }
+  headers.set('Content-Type', contentType);
+  headers.set('Cache-Control', 'no-store');
   headers.set('Access-Control-Allow-Origin', '*');
   headers.set('Access-Control-Allow-Headers', '*');
   headers.set('X-Cloudflare-DNS-IP', doh.ip);

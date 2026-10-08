@@ -117,6 +117,9 @@ export default {
           return json({ success: false, error: "Channel catalog storage is not configured." }, 503, env);
         }
         const force = url.searchParams.get("refresh") === "1" || url.searchParams.get("force") === "1";
+        if (force && !(await authorized(request, env))) {
+          return json({ success: false, error: "Admin authentication is required to refresh the catalog." }, 401, env);
+        }
         let channels = force ? [] : await readChannelCatalog(env.CATALOG_DB, env.PLAYBACK_BASE_URL);
         let refreshed = false;
         if (force || channels.length === 0) {
@@ -191,7 +194,8 @@ export default {
         if (providerError) {
           return json({ success: false, error: "Provider configuration is required." }, 503, env);
         }
-        throw err;
+        console.error("[GeoTV segment] request failed:", err instanceof Error ? err.name : "Unknown error");
+        return json({ success: false, error: "Stream segment is temporarily unavailable." }, 502, env);
       }
     }
 
