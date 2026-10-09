@@ -115,7 +115,7 @@ export async function fetchStorefrontBroadcast(
         method: request.method,
         headers,
         redirect: "manual",
-        signal: AbortSignal.any([request.signal, AbortSignal.timeout(20000)]),
+        signal: AbortSignal.any([request.signal, AbortSignal.timeout(300000)]),
       }),
     );
     if (!upstream.ok && upstream.status !== 304) {
