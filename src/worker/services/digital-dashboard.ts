@@ -38,7 +38,7 @@ export async function digitalDashboard(request: Request, env: DashboardEnv): Pro
     return json({ schemaVersion: 1, fetchedAt: new Date().toISOString(), release: release.connected ? release.data : null,
       backend: { connected: backend.connected, status: backend.status, configured: Boolean(health?.configured), lastSync, health: health?.health || {} },
       mediaLibrary: { connected: Boolean(health?.configured), movies: sync?.totalMovies ?? sync?.movies ?? null, series: sync?.totalSeries ?? sync?.series ?? null, episodeAccess: 'requires provider episode API' },
-      library: { connected: library.connected && rows !== null, channels: rows?.length ?? null, categories } });
+      library: { connected: library.connected && rows !== null, source: typeof data?.source === 'string' ? data.source : null, channels: rows?.length ?? null, categories } });
   }
   if (path === '/api/digital-events' && request.method === 'POST') {
     if (!env.DASHBOARD_BRIDGE_TOKEN) return json({ error: 'reporting_not_configured' }, 503);

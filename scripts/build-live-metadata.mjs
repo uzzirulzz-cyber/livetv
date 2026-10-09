@@ -8,6 +8,7 @@ writeFileSync('public/live-build.json', JSON.stringify({
   domain: 'playbeat.live', dashboard: 'playbeat.digital/admin#playbeat-live',
   rule: 'PlayBeat Digital is the main admin; refresh live sources automatically and show disconnected reports explicitly.',
   settings: { storefrontWorker: 'playbeat-storefront', playerWorker: 'playbeat-player', backendWorker: 'new-ne222',
+    catalogueSource: 'fsdf-2026-10-09', importedChannels: 10000, sourceType: 'Live and 24/7 feeds; no on-demand catalogue',
     playback: 'HLS, loaded after Play', playerBridge: '/broadcast-player', watchlist: 'local browser storage',
     frontend: liveOnly ? 'Vercel live television and media library' : 'Cloudflare entertainment storefront',
     liveOnly, channelImages: 'Provider logos; CM cinema feeds use individual catalogue-name artwork; named fallback for missing logos',
