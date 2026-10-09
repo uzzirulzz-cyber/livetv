@@ -1,0 +1,12 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "vite",
+  "installCommand": "npm ci",
+  "buildCommand": "VITE_LIVE_ONLY=true npm run build",
+  "outputDirectory": "dist",
+  "rewrites": [
+    { "source": "/broadcast-player/:path*", "destination": "https://playbeat-storefront.crdbixx.workers.dev/broadcast-player/:path*" },
+    { "source": "/api/:path*", "destination": "https://playbeat-storefront.crdbixx.workers.dev/api/:path*" },
+    { "source": "/:path*", "destination": "/index.html" }
+  ]
+}

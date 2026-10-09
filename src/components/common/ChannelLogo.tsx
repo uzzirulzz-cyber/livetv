@@ -18,7 +18,7 @@ export const ChannelLogo: React.FC<ChannelLogoProps> = ({
 }) => {
   const [hasError, setHasError] = useState(false);
 
-  useEffect(() => setHasError(false), [src]);
+  useEffect(() => setHasError(false), [src, name]);
 
   // Normalize image URL to go through proxy if it's external HTTP
   const getProcessedSrc = (url?: string) => {
@@ -38,6 +38,7 @@ export const ChannelLogo: React.FC<ChannelLogoProps> = ({
       .replace(/[^a-zA-Z0-9\s]/g, "")
       .trim()
       .split(/\s+/);
+    if (!words[0]) return "TV";
     if (words.length === 1) return words[0].slice(0, 3).toUpperCase();
     if (words.length >= 2) return (words[0][0] + words[1][0]).toUpperCase();
     return chName.slice(0, 2).toUpperCase();
@@ -111,6 +112,7 @@ export const ChannelLogo: React.FC<ChannelLogoProps> = ({
         alt={name}
         onError={() => setHasError(true)}
         loading="lazy"
+        decoding="async"
         className="w-full h-full object-contain object-center group-hover:scale-105 transition-transform duration-300"
       />
     </div>

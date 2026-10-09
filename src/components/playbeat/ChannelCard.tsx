@@ -27,7 +27,7 @@ export function ChannelCard({
           name={channel.name}
           category={channel.category}
           size="xl"
-          className="channel-logo-tile !rounded-2xl !bg-white/90 !border-white/20 shadow-2xl"
+          className="channel-logo-tile !rounded-2xl !bg-white !border-white/20 p-3 shadow-2xl"
         />
         <span className="channel-live">
           <Radio size={10} />

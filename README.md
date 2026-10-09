@@ -15,6 +15,14 @@ The current library comes from the existing `playbeat-player` service at `player
 
 `playbeat.live/*` and `www.playbeat.live/*` use Cloudflare dashboard routes. Keep those existing route records when deploying updates. Pointing them back to `new-ne222` restores the previous frontend.
 
+## Vercel live television project
+
+The existing Vercel `livetv` project builds with `VITE_LIVE_ONLY=true` through `vercel.json`. This publishes the live channel library and lazy-loaded media player, including search, category filters, provider logos and local favourites. The Cloudflare storefront build remains unchanged.
+
+Same-origin `/broadcast-player/*` requests are rewritten to the existing `playbeat-storefront.crdbixx.workers.dev` bridge, which already adapts catalogue, logos, HLS manifests and segments. This fixed upstream avoids a routing loop if `playbeat.live` later moves to Vercel. `/api/*` continues through the existing backend and reporting contract. No provider credentials are required in Vercel or the browser.
+
+Verify the Vercel deployment and real playback before assigning the production domain. Logo availability depends on the provider; missing or failed images display the channel's name initials.
+
 ## Development
 
 ```sh
