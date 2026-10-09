@@ -10,7 +10,7 @@ writeFileSync('public/live-build.json', JSON.stringify({
   settings: { storefrontWorker: 'playbeat-storefront', playerWorker: 'playbeat-player', backendWorker: 'new-ne222',
     playback: 'HLS, loaded after Play', playerBridge: '/broadcast-player', watchlist: 'local browser storage',
     frontend: liveOnly ? 'Vercel live television' : 'Cloudflare entertainment storefront',
-    liveOnly, channelImages: 'Original provider logos with a named fallback',
+    liveOnly, channelImages: 'Provider logos; CM cinema feeds use individual catalogue-name artwork; named fallback for missing logos',
     movieSections: liveOnly ? 'Live cinema channels only' : 'Live / 24-hour channels', programmeGuide: 'Separate feed required', lifestyleSlides: liveOnly ? 0 : 10,
     reporting: 'First-party page views and play requests; not proof of successful playback' },
   updates: liveOnly

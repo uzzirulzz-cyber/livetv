@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { Tv, Radio, Play, Film, Flame, Trophy, Newspaper } from "lucide-react";
 
 interface ChannelLogoProps {
   src?: string;
@@ -90,6 +89,30 @@ export const ChannelLogo: React.FC<ChannelLogoProps> = ({
     lg: "w-12 h-12 text-sm",
     xl: "w-16 h-16 text-base",
   }[size];
+
+  // Provider cinema feeds share one generic CM image. Identify each feed by
+  // its actual catalogue name instead of presenting that image as its logo.
+  if (/^CM(?:\s|:)/i.test(name)) {
+    const label = name.replace(/^CM\s*:?\s*/i, "").trim();
+    const words = label.split(/\s+/);
+    const lines: string[] = [];
+    for (const word of words) {
+      const last = lines.length - 1;
+      if (last >= 0 && `${lines[last]} ${word}`.length <= 17) lines[last] += ` ${word}`;
+      else lines.push(word);
+    }
+    const hue = [...label].reduce((hash, char) => (hash * 31 + char.charCodeAt(0)) >>> 0, 0) % 360;
+    return <div className={`relative ${sizeClasses} rounded-xl overflow-hidden shrink-0 border border-white/10 ${className}`} title={name}>
+      <svg viewBox="0 0 240 180" role="img" aria-label={name} className="h-full w-full" preserveAspectRatio="xMidYMid meet">
+        <rect width="240" height="180" rx="16" fill={`hsl(${hue} 42% 13%)`} />
+        <path d="M0 155L240 35V0H0Z" fill={`hsl(${hue} 55% 24%)`} />
+        <path d="M18 20H222M18 160H222" stroke={`hsl(${hue} 75% 70%)`} strokeOpacity=".45" />
+        <text x="120" y="43" textAnchor="middle" fill="#d6b76d" fontSize="11" fontFamily="sans-serif" letterSpacing="4">PLAYBEAT CINEMA</text>
+        {lines.slice(0, 4).map((line, index) => <text key={index} x="120" y={80 + index * 22 - (lines.length > 2 ? 10 : 0)} textAnchor="middle" fill="#fff" fontSize="20" fontWeight="800" fontFamily="sans-serif">{line.toUpperCase()}</text>)}
+        <text x="120" y="148" textAnchor="middle" fill="#c5cfdf" fontSize="10" fontFamily="sans-serif" letterSpacing="3">LIVE · 24/7</text>
+      </svg>
+    </div>;
+  }
 
   if (!finalSrc || hasError) {
     return (
