@@ -5,7 +5,7 @@ test('public frontend routing keeps private headers out of the Vercel request', 
   const original = globalThis.fetch;
   try {
     globalThis.fetch = async (url, init) => {
-      assert.equal(String(url),'https://repository-virid-kappa.vercel.app/assets/site.js');
+      assert.equal(String(url),'https://repository-esw9mqljl-playbeatdigital-techs-projects.vercel.app/assets/site.js');
       const headers = new Headers(init?.headers);
       assert.equal(headers.get('authorization'),null); assert.equal(headers.get('cookie'),null);
       assert.equal(headers.get('range'),'bytes=0-20');

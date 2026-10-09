@@ -10,7 +10,7 @@ writeFileSync('public/live-build.json', JSON.stringify({
   settings: { storefrontWorker: 'playbeat-storefront', playerWorker: 'playbeat-player', backendWorker: 'new-ne222',
     catalogueSource: 'fsdf-2026-10-09', importedChannels: 10000, sourceType: 'Live and 24/7 feeds; no on-demand catalogue',
     playback: 'HLS and MPEG-TS, loaded after Play', playerBridge: '/broadcast-player', watchlist: 'local browser storage',
-    frontendIntegration: { repository:'uzzirulzz-cyber/repository', release:'8d37467ba4109a13e097dce031ab5b478444f374', status:'production', backgrounds:10 },
+    frontendIntegration: { repository:'uzzirulzz-cyber/repository', release:'10d3c92b449e26e461c696e6972b110a3f67fa5f', status:'production', backgrounds:10 },
     customerAuthentication: { projectId:'gen-lang-client-0800809003', google:true, email:true, facebook:false },
     streamBridgeRequestLimitSeconds:300,
     frontend: liveOnly ? 'Vercel live television and media library' : 'Cloudflare entertainment storefront',
