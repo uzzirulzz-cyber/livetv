@@ -1,4 +1,5 @@
 import React, { useState, useEffect, lazy, Suspense } from "react";
+import { reportLiveEvent } from './services/digitalReporting';
 import {
   ApiCallLog,
   AuditLog,
@@ -734,6 +735,7 @@ export default function App() {
 
   // PlayBeat Consumer Handlers
   const handleWatchChannel = (channel: Channel) => {
+    reportLiveEvent('play_request', channel.id);
     setActivePlayingChannel(channel);
     setRecentChannelIds((previous) => {
       const next = [
