@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import Hls from "hls.js";
+import type mpegtsApi from "mpegts.js";
 import {
   X,
   Heart,
@@ -13,6 +14,7 @@ import {
 } from "lucide-react";
 import type { Channel } from "../../types/playbeat";
 import { ChannelLogo } from "../common/ChannelLogo";
+type MpegTsPlayer = ReturnType<typeof mpegtsApi.createPlayer>;
 interface Props {
   channel: Channel | null;
   allChannels: Channel[];
@@ -39,6 +41,7 @@ export function VideoPlayerModal({
   const videoRef = useRef<HTMLVideoElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
   const hlsRef = useRef<Hls | null>(null);
+  const mpegTsRef = useRef<MpegTsPlayer | null>(null);
   const [buffering, setBuffering] = useState(true);
   const [error, setError] = useState("");
   const [needsPlay, setNeedsPlay] = useState(false);
@@ -67,6 +70,7 @@ export function VideoPlayerModal({
     let retries = 0;
     let timer: ReturnType<typeof setTimeout> | undefined;
     let hls: Hls | null = null;
+    let mpegTs: MpegTsPlayer | null = null;
     setBuffering(true);
     setError("");
     setNeedsPlay(false);
@@ -75,6 +79,8 @@ export function VideoPlayerModal({
     const source = channel.hlsUrl || channel.streamUrl;
     const isHls =
       !!channel.hlsUrl || /\.m3u8(?:\?|$)|[?&]hls=1(?:&|$)/i.test(source);
+    const isRawTransportStream =
+      channel.isLive && !isHls && /(?:\.ts(?:[?#]|$)|\/broadcast-player\/stream\/\d+$)/i.test(source);
     const fail = () => {
       if (disposed) return;
       setError(
@@ -82,6 +88,7 @@ export function VideoPlayerModal({
       );
       setBuffering(false);
       hls?.stopLoad();
+      mpegTs?.unload();
       video.pause();
     };
     const play = async () => {
@@ -100,8 +107,8 @@ export function VideoPlayerModal({
     else if (isHls && Hls.isSupported()) {
       hls = new Hls({
         enableWorker: true,
-        lowLatencyMode: true,
-        maxBufferLength: 20,
+        lowLatencyMode: false,
+        maxBufferLength: 45,
         backBufferLength: 30,
       });
       hlsRef.current = hls;
@@ -138,6 +145,59 @@ export function VideoPlayerModal({
       });
       hls.loadSource(source);
       hls.attachMedia(video);
+    } else if (isRawTransportStream) {
+      void import("mpegts.js").then(async ({ default: mpegts }) => {
+        if (disposed) return;
+        if (!mpegts.isSupported() || !mpegts.getFeatureList().mseLivePlayback) {
+          setBuffering(false);
+          setError(
+            "This browser cannot play MPEG-TS live streams. Update your browser or try Safari 17.1+ on iPhone.",
+          );
+          return;
+        }
+        mpegTs = mpegts.createPlayer(
+          { type: "mpegts", isLive: true, url: source, cors: true },
+          {
+            enableWorker: true,
+            enableWorkerForMSE: true,
+            enableStashBuffer: true,
+            stashInitialSize: 512 * 1024,
+            liveBufferLatencyChasing: true,
+            liveBufferLatencyMaxLatency: 5,
+            liveBufferLatencyMinRemain: 1,
+          },
+        );
+        mpegTsRef.current = mpegTs;
+        mpegTs.on(mpegts.Events.ERROR, (type: string) => {
+          if (disposed) return;
+          if (type === mpegts.ErrorTypes.NETWORK_ERROR && retries < 2) {
+            retries++;
+            setBuffering(true);
+            clearTimeout(timer);
+            timer = setTimeout(() => {
+              if (disposed || !mpegTs) return;
+              mpegTs.unload();
+              mpegTs.load();
+              void Promise.resolve(mpegTs.play()).catch(() => {});
+            }, retries * 1500);
+            return;
+          }
+          fail();
+        });
+        mpegTs.attachMediaElement(video);
+        mpegTs.load();
+        try {
+          await mpegTs.play();
+        } catch (reason) {
+          if (disposed) return;
+          if (reason instanceof Error && reason.name === "NotAllowedError") {
+            setNeedsPlay(true);
+            setBuffering(false);
+          } else if (!(reason instanceof Error && reason.name === "AbortError")) {
+            fail();
+          }
+        }
+      }).catch(() => fail());
     } else if (!isHls || video.canPlayType("application/vnd.apple.mpegurl")) {
       video.src = source;
       video.load();
@@ -153,6 +213,8 @@ export function VideoPlayerModal({
       clearTimeout(timer);
       hls?.destroy();
       if (hlsRef.current === hls) hlsRef.current = null;
+      mpegTs?.destroy();
+      if (mpegTsRef.current === mpegTs) mpegTsRef.current = null;
       if (document.pictureInPictureElement === video)
         void document.exitPictureInPicture().catch(() => {});
       if (document.fullscreenElement === viewportRef.current)
