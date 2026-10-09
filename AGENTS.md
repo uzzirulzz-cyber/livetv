@@ -1,0 +1,3 @@
+# Shared administration default
+
+PlayBeat Digital is the main admin for PlayBeat.live. Every Live settings or feature change must remain visible through the authenticated `/api/digital-dashboard` contract and `playbeat.digital/admin#playbeat-live`. Keep `scripts/build-live-metadata.mjs` accurate when features/settings change; every build regenerates deployed release metadata. Keep live activity reporting separate from Digital store activity. Expose no provider credentials, private stream URLs, bridge token or personal customer data through the summary. Missing integrations must show as disconnected. Preserve the existing player/backend Workers and their bindings. Deploy storefront updates only with `wrangler.storefront.toml`.
