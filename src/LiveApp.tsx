@@ -1,13 +1,16 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
-import { Radio } from 'lucide-react';
+import { MediaLibraryView } from './components/playbeat/MediaLibraryView';
 import { LiveTvView } from './components/playbeat/LiveTvView';
 import { loadBroadcastCatalog } from './services/broadcastCatalog';
 import { reportLiveEvent } from './services/digitalReporting';
 import type { Channel } from './types/playbeat';
 
+const OnDemandPlayer = lazy(() => import('./components/playbeat/OnDemandPlayer').then(m => ({ default: m.OnDemandPlayer })));
 const Player = lazy(() => import('./components/playbeat/VideoPlayerModal').then(m => ({ default: m.VideoPlayerModal })));
 
 export default function LiveApp() {
+  const [tab, setTab] = useState<'live' | 'movies' | 'series'>('live');
+  const [media, setMedia] = useState<{ title: string; source: string } | null>(null);
   const [channels, setChannels] = useState<Channel[]>([]);
   const [selected, setSelected] = useState<Channel | null>(null);
   const [loading, setLoading] = useState(true);
@@ -45,17 +48,19 @@ export default function LiveApp() {
     <header className="border-b border-white/10 bg-[#091122]/95 px-4 py-5 sm:px-8">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
         <a href="/" aria-label="PlayBeat Live home" className="flex items-center gap-3">
-          <img src="/logo.svg" alt="PlayBeat Live" className="h-10 w-auto max-w-48" />
+          <img src="/logo.svg" alt="PlayBeat Live" className="h-8 w-auto max-w-28 sm:h-10 sm:max-w-48" />
         </a>
-        <span className="flex items-center gap-2 text-xs font-semibold text-amber-200"><Radio size={15} /> LIVE TV</span>
+        <nav aria-label="Media sections" className="flex gap-1 sm:gap-3">{(['live', 'movies', 'series'] as const).map(section => <button key={section} aria-current={tab === section ? 'page' : undefined} onClick={() => setTab(section)} className={`rounded-lg px-2 py-2 text-xs font-semibold sm:px-4 sm:text-sm ${tab === section ? 'bg-amber-300 text-slate-950' : 'text-slate-300 hover:bg-white/10'}`}>{section === 'live' ? 'Live TV' : section === 'movies' ? 'Movies' : 'Web Series'}</button>)}</nav>
       </div>
     </header>
-    {loading && <p role="status" className="mx-auto max-w-7xl px-6 py-8 text-slate-400">Loading live channels…</p>}
-    {error && <div role="alert" className="mx-auto max-w-7xl px-6 py-8 text-amber-200">The channel library could not be reached. <button className="underline" onClick={() => setRevision(value => value + 1)}>Try again</button></div>}
-    {!loading && !error && <LiveTvView channels={channels} onWatchChannel={watch} favorites={favorites} onToggleFavorite={toggleFavorite} />}
+    {tab === 'live' && loading && <p role="status" className="mx-auto max-w-7xl px-6 py-8 text-slate-400">Loading live channels…</p>}
+    {tab === 'live' && error && <div role="alert" className="mx-auto max-w-7xl px-6 py-8 text-amber-200">The channel library could not be reached. <button className="underline" onClick={() => setRevision(value => value + 1)}>Try again</button></div>}
+    {tab === 'live' && !loading && !error && <LiveTvView channels={channels} onWatchChannel={watch} favorites={favorites} onToggleFavorite={toggleFavorite} />}
+    {tab !== 'live' && <MediaLibraryView key={tab} kind={tab} onWatch={(title, source) => setMedia({ title, source })} />}
+    {media && <Suspense fallback={<p role="status">Opening media player…</p>}><OnDemandPlayer {...media} onClose={() => setMedia(null)} /></Suspense>}
     {selected && <Suspense fallback={<p role="status" className="fixed bottom-6 left-6 rounded-xl bg-slate-900 p-4">Opening player…</p>}>
       <Player channel={selected} allChannels={channels} isOpen onClose={() => setSelected(null)} onSelectChannel={watch} isFavorite={favorites.includes(selected.id)} onToggleFavorite={toggleFavorite} />
     </Suspense>}
-    <footer className="mx-auto max-w-7xl border-t border-white/10 px-6 py-6 text-xs text-slate-500">PlayBeat.live · Live channels & media player</footer>
+    <footer className="mx-auto max-w-7xl border-t border-white/10 px-6 py-6 text-xs text-slate-500">PlayBeat.live · Live TV · Movies · Web Series</footer>
   </div>;
 }

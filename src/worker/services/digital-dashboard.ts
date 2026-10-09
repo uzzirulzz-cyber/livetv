@@ -34,9 +34,10 @@ export async function digitalDashboard(request: Request, env: DashboardEnv): Pro
     for (const row of rows || []) { const category = String(row.category || row.group || 'Other'); categories[category] = (categories[category] || 0)+1; }
     const health = backend.data;
     const sync = health?.lastSync;
-    const lastSync = sync ? Object.fromEntries(['generation','syncedAt','live','movies','series','healthChecked','healthCheckedAt'].filter(key => Object.hasOwn(sync,key)).map(key => [key,sync[key]])) : null;
+    const lastSync = sync ? Object.fromEntries(['generation','syncedAt','live','movies','series','healthChecked','healthCheckedAt','totalChannels','totalMovies','totalSeries','source'].filter(key => Object.hasOwn(sync,key)).map(key => [key,sync[key]])) : null;
     return json({ schemaVersion: 1, fetchedAt: new Date().toISOString(), release: release.connected ? release.data : null,
       backend: { connected: backend.connected, status: backend.status, configured: Boolean(health?.configured), lastSync, health: health?.health || {} },
+      mediaLibrary: { connected: Boolean(health?.configured), movies: sync?.totalMovies ?? sync?.movies ?? null, series: sync?.totalSeries ?? sync?.series ?? null, episodeAccess: 'requires provider episode API' },
       library: { connected: library.connected && rows !== null, channels: rows?.length ?? null, categories } });
   }
   if (path === '/api/digital-events' && request.method === 'POST') {

@@ -46,3 +46,14 @@ npm run deploy
 The GitHub Actions workflow follows the same checks. It requires a `CLOUDFLARE_API_TOKEN` repository secret authorized for the account in `wrangler.storefront.toml`, containing `playbeat-player` and `new-ne222`. The workflow uses that explicit account rather than the legacy account secret. Provider credentials are never needed in the frontend.
 
 For authenticated Cloudflare API environments without a local Wrangler token, `scripts/build-embedded-worker.mjs` creates an equivalent upload module from the built text assets. Normal Wrangler deployments use the native `ASSETS` binding.
+
+The Vercel template now includes Live TV, Movies and Web Series tabs. On-demand
+catalogues use the existing `/api/movies`, `/api/series` and `/api/health` backend
+through Vercel's same-origin rewrite, with 60 titles per page and native video
+controls for seeking. Only provider-supplied titles are shown. A disconnected
+provider is reported explicitly. Series details require `/api/series/:id` returning
+`{ seasons: [{ seasonNumber, episodes: [{ id, title, episodeNumber, streamUrl }] }] }`;
+the current legacy backend has no episode route, so episode playback remains
+blocked until that integration exists. No provider credentials belong in frontend
+code. Current backend health reports zero movies/series and no configured VOD
+provider; UI availability does not mean the media catalogue has been imported.
