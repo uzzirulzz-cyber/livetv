@@ -1,14 +1,16 @@
-name: Deploy PlayBeat Storefront
+name: Verify PlayBeat Storefront
 
 on:
   push:
     branches: [main, master]
   workflow_dispatch:
 
+# Cloudflare Workers Builds owns production deployment from main.
+# It uses the existing token in the account that owns playbeat-storefront.
 jobs:
-  deploy:
+  verify:
     runs-on: ubuntu-latest
-    name: Verify and deploy storefront only
+    name: Verify live storefront
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -27,9 +29,3 @@ jobs:
         env:
           VITE_LIVE_ONLY: "true"
         run: npm run build
-      - name: Deploy storefront Worker
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: 1f230ccf421d89de0f68562da95f005d
-          command: deploy --config wrangler.storefront.toml
