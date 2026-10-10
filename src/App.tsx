@@ -1,5 +1,6 @@
 import React, { useState, useEffect, lazy, Suspense } from "react";
 import { reportLiveEvent } from './services/digitalReporting';
+import { storefrontPathForSection, storefrontSectionFromPath } from './services/storefrontNavigation';
 import {
   ApiCallLog,
   AuditLog,
@@ -42,6 +43,7 @@ import { PremiumIptvHome } from "./components/playbeat/PremiumIptvHome";
 import { IptvSidebar } from "./components/playbeat/IptvSidebar";
 import { LiveTvView } from "./components/playbeat/LiveTvView";
 import { CustomerAccountView } from "./components/playbeat/CustomerAccountView";
+import { ProfileUnavailableView } from "./components/playbeat/ProfileUnavailableView";
 import { PlansAndCheckoutModal } from "./components/playbeat/PlansAndCheckoutModal";
 import { loadBroadcastCatalog } from "./services/broadcastCatalog";
 const VideoPlayerModal = lazy(() =>
@@ -124,6 +126,9 @@ export default function App() {
     const handleUrlChange = () => {
       const path = window.location.pathname.toLowerCase();
       setCurrentRoute(getInitialRoute());
+      const section = storefrontSectionFromPath(path);
+      setStreamingSection(section === "search" ? "home" : section);
+      setIsSearchModalOpen(section === "search");
       if (
         path.includes("operations") ||
         path.includes("incidents") ||
@@ -142,7 +147,10 @@ export default function App() {
   }, []);
 
   // PlayBeat Consumer Navigation Section: 'home' | 'live' | 'movies' | 'series' | 'guide' | 'devices' | 'support' | 'account'
-  const [streamingSection, setStreamingSection] = useState<string>("home");
+  const [streamingSection, setStreamingSection] = useState<string>(() => {
+    const section = storefrontSectionFromPath(window.location.pathname);
+    return section === "search" ? "home" : section;
+  });
 
   // Reseller Management Active Tab: 'dashboard' | 'operations' | 'cloudflare' | 'lines' | 'playlists' | 'ledger' | 'api-console' | 'webhook' | 'rbac'
   const [resellerActiveTab, setResellerActiveTab] = useState<string>(() => {
@@ -187,8 +195,20 @@ export default function App() {
   const [activePlayingChannel, setActivePlayingChannel] =
     useState<Channel | null>(null);
   const [isPlansModalOpen, setIsPlansModalOpen] = useState(false);
-  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
+  const [isSearchModalOpen, setIsSearchModalOpen] = useState(
+    () => storefrontSectionFromPath(window.location.pathname) === "search",
+  );
   const [isCloudflareModalOpen, setIsCloudflareModalOpen] = useState(false);
+  const navigateSection = (section: string, replace = false) => {
+    const path = storefrontPathForSection(section);
+    if (window.location.pathname !== path) {
+      const method = replace ? "replaceState" : "pushState";
+      window.history[method](null, "", path);
+    }
+    setStreamingSection(section === "search" ? "home" : section);
+    setIsSearchModalOpen(section === "search");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
   const [activeChannelsList, setActiveChannelsList] =
     useState<Channel[]>(CHANNELS);
   const [catalogLoading, setCatalogLoading] = useState(true);
@@ -785,7 +805,7 @@ export default function App() {
     if (firstEpisode) {
       handlePlayEpisode(firstEpisode, series.title);
     } else {
-      setStreamingSection("series");
+      navigateSection("series");
     }
   };
 
@@ -879,12 +899,9 @@ export default function App() {
           {/* Header */}
           <PlayBeatHeader
             activeSection={streamingSection}
-            onNavigate={(sec) => {
-              setStreamingSection(sec);
-              window.scrollTo({ top: 0, behavior: "smooth" });
-            }}
+            onNavigate={navigateSection}
             myListCount={favorites.length + myList.length}
-            onOpenSearch={() => setIsSearchModalOpen(true)}
+            onOpenSearch={() => navigateSection("search")}
             catalogLoading={catalogLoading}
             channelCount={activeChannelsList.length}
             onNavigateToAdmin={() => navigateTo("admin")}
@@ -894,10 +911,7 @@ export default function App() {
           <div className="iptv-workspace">
             <IptvSidebar
               activeSection={streamingSection}
-              onNavigate={(section) => {
-                setStreamingSection(section);
-                window.scrollTo({ top: 0, behavior: "smooth" });
-              }}
+              onNavigate={navigateSection}
               channelCount={activeChannelsList.length}
               movieCount={
                 activeChannelsList.filter(
@@ -917,7 +931,7 @@ export default function App() {
                   favorites={favorites}
                   onWatchChannel={handleWatchChannel}
                   onToggleFavorite={handleToggleFavorite}
-                  onNavigate={setStreamingSection}
+                  onNavigate={navigateSection}
                 />
               )}
               {["sports", "news", "recent"].includes(streamingSection) && (
@@ -988,6 +1002,19 @@ export default function App() {
                 />
               )}
 
+              {streamingSection === "music" && (
+                <ChannelLibrary
+                  title="Music, live."
+                  subtitle="Play music channels from your connected live lineup. On-demand tracks and playlists are not connected."
+                  channels={activeChannelsList.filter(
+                    (channel) => channel.category === "Music",
+                  )}
+                  onWatchChannel={handleWatchChannel}
+                  favorites={favorites}
+                  onToggleFavorite={handleToggleFavorite}
+                />
+              )}
+
               {streamingSection === "movies" && (
                 <ChannelLibrary
                   title="Cinema, around the clock."
@@ -1044,6 +1071,8 @@ export default function App() {
                 <SupportView onOpenPlans={() => setIsPlansModalOpen(true)} />
               )}
 
+              {streamingSection === "profile" && <ProfileUnavailableView />}
+
               {streamingSection === "account" && (
                 <CustomerAccountView
                   subscription={customerSubscription}
@@ -1068,37 +1097,37 @@ export default function App() {
 
                 <div className="flex flex-wrap gap-4 text-xs font-semibold">
                   <button
-                    onClick={() => setStreamingSection("live")}
+                    onClick={() => navigateSection("live")
                     className="hover:text-cyan-400 transition-colors"
                   >
                     Live Channels
                   </button>
                   <button
-                    onClick={() => setStreamingSection("movies")}
+                    onClick={() => navigateSection("movies")
                     className="hover:text-cyan-400 transition-colors"
                   >
                     Movies
                   </button>
                   <button
-                    onClick={() => setStreamingSection("series")}
+                    onClick={() => navigateSection("series")
                     className="hover:text-cyan-400 transition-colors"
                   >
                     Series
                   </button>
                   <button
-                    onClick={() => setStreamingSection("guide")}
+                    onClick={() => navigateSection("guide")
                     className="hover:text-cyan-400 transition-colors"
                   >
                     TV Guide
                   </button>
                   <button
-                    onClick={() => setStreamingSection("devices")}
+                    onClick={() => navigateSection("devices")
                     className="hover:text-cyan-400 transition-colors"
                   >
                     Device Setup
                   </button>
                   <button
-                    onClick={() => setStreamingSection("support")}
+                    onClick={() => navigateSection("support")
                     className="hover:text-cyan-400 transition-colors"
                   >
                     Help Center
@@ -1385,7 +1414,7 @@ export default function App() {
       {/* 3. Global Search Modal */}
       <SearchModal
         isOpen={isSearchModalOpen}
-        onClose={() => setIsSearchModalOpen(false)}
+        onClose={() => navigateSection("home")}
         channels={activeChannelsList}
         movies={MOVIES}
         series={SERIES}
