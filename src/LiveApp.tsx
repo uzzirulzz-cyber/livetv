@@ -51,7 +51,7 @@ export default function LiveApp() {
         <a href="/" aria-label="PlayBeat Live home" className="flex items-center gap-3">
           <img src="/logo.svg" alt="PlayBeat Live" className="h-8 w-auto max-w-28 sm:h-10 sm:max-w-48" />
         </a>
-        <nav aria-label="Media sections" className="flex gap-1 sm:gap-3">{(['live', 'movies', 'series'] as const).map(section => <a key={section} href={section === 'live' ? '/live-tv' : '/' + section} aria-current={tab === section ? 'page' : undefined} className={`rounded-lg px-2 py-2 text-xs font-semibold sm:px-4 sm:text-sm ${tab === section ? 'bg-amber-300 text-slate-950' : 'text-slate-300 hover:bg-white/10'}`}>{section === 'live' ? 'Live TV' : section === 'movies' ? 'Movies' : 'Web Series'}</a>)}</nav>
+        <nav aria-label="Media sections" className="flex gap-1 sm:gap-3"><a href="/" className="rounded-lg px-2 py-2 text-xs font-semibold text-slate-300 hover:bg-white/10 sm:px-4 sm:text-sm">Home</a>{(['live', 'movies', 'series'] as const).map(section => <a key={section} href={section === 'live' ? '/live-tv' : '/' + section} aria-current={tab === section ? 'page' : undefined} className={`rounded-lg px-2 py-2 text-xs font-semibold sm:px-4 sm:text-sm ${tab === section ? 'bg-amber-300 text-slate-950' : 'text-slate-300 hover:bg-white/10'}`}>{section === 'live' ? 'Live TV' : section === 'movies' ? 'Movies' : 'Web Series'}</a>)}</nav>
       </div>
     </header>
     {tab === 'live' && loading && <p role="status" className="mx-auto max-w-7xl px-6 py-8 text-slate-400">Loading live channels…</p>}
