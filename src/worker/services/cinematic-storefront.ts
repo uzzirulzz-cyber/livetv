@@ -6,7 +6,7 @@ export function storefrontMetadata() {
       frontendIntegration:{repository:'uzzirulzz-cyber/repository', release:FRONTEND_RELEASE, status:'production', backgrounds:10, playback:'HLS and MPEG-TS'},
       streamBridgeRequestLimitSeconds:300}}, {headers:{'Cache-Control':'no-store'}});
 }
-export async function fetchCinematicStorefront(request: Request, env: Pick<Env, 'ASSETS'>) {
+export async function fetchCinematicStorefront(request: Request, env: { ASSETS: { fetch(request: Request): Promise<Response> } }) {
  const upstream = await env.ASSETS.fetch(request);
  const response = new Response(upstream.body, upstream);
  if ((response.headers.get('content-type') || '').includes('text/html')) response.headers.set('Cache-Control','no-cache');
