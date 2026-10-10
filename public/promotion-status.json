@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-10-10T05:25:09.907311+00:00",
+  "updatedAt": "2026-10-10T22:20:57.655Z",
   "campaign": "free_launch_oct10",
   "timezone": "Asia/Karachi",
   "dailyTargetPerSite": 1000,
@@ -22,7 +22,7 @@
     {
       "site": "playbeat.digital",
       "channel": "Zearches worldwide directory",
-      "status": "Prepared \u2014 awaiting terms acceptance",
+      "status": "Prepared — awaiting terms acceptance",
       "detail": "Official URL, business category and factual description filled. Not submitted or published.",
       "url": "https://zearches.com/submit-website-free.php"
     },
@@ -38,6 +38,20 @@
       "channel": "Share Your Startup",
       "status": "Blocked by verification",
       "detail": "Submission could not be completed in this browser; Post it remained disabled. No published listing."
+    },
+    {
+      "site": "playbeat.digital",
+      "channel": "Google Search Console sitemap — Digital",
+      "status": "Submitted — waiting for crawl",
+      "detail": "Google accepted the sitemap on 2026-10-10 22:20 UTC. Last sitemap report (2026-10-08) showed 117 submitted URLs and 0 indexed; acceptance does not confirm indexing.",
+      "url": "https://playbeat.digital/sitemap.xml"
+    },
+    {
+      "site": "playbeat.live",
+      "channel": "Google Search Console sitemap — Live",
+      "status": "Not submitted — property not connected",
+      "detail": "The connected Search Console account currently has only the verified playbeat.digital property. A verified playbeat.live property is required for direct sitemap submission.",
+      "url": "https://playbeat.live/sitemap.xml"
     }
   ],
   "social": {
