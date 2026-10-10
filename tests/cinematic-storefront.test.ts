@@ -18,9 +18,14 @@ test('public frontend uses Cloudflare assets without contacting a Vercel origin'
    assert.equal(response.headers.get('X-PlayBeat-Hosting'),'cloudflare-workers');
  } finally {globalThis.fetch=original;}
 });
-test('release metadata explicitly reports unconfigured Facebook and absent on-demand source', async () => {
- const data=await storefrontMetadata().json();
- assert.equal(data.settings.customerAuthentication.facebook,false);
- assert.match(data.settings.sourceType,/no on-demand/);
- assert.equal(data.settings.streamBridgeRequestLimitSeconds,300);
+test('public release metadata comes from the current build assets', async () => {
+ const request = new Request('https://playbeat.live/live-build.json');
+ const current = {release:'current-build',settings:{deploymentPipeline:'Cloudflare Workers Builds'}};
+ const env = {ASSETS:{fetch:async (input:Request) => {
+   assert.equal(new URL(input.url).pathname,'/live-build.json');
+   return Response.json(current);
+ }}};
+ const response = await storefrontMetadata(request,env);
+ assert.deepEqual(await response.json(),current);
+ assert.equal(response.headers.get('cache-control'),'no-store');
 });
