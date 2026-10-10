@@ -81,7 +81,7 @@ export function VideoPlayerModal({
     const isHls =
       !!channel.hlsUrl || /\.m3u8(?:\?|$)|[?&]hls=1(?:&|$)/i.test(source);
     const isRawTransportStream =
-      channel.isLive && !isHls && /(?:\.ts(?:[?#]|$)|\/broadcast-player\/stream\/\d+$)/i.test(source);
+      channel.isLive && !isHls && /(?:\.ts(?:[?#]|$)|\/broadcast-player\/stream\/\d+(?:[?#]|$))/i.test(source);
     const hlsFallback = isRawTransportStream
       ? hlsFallbackForLiveStream(source, window.location.origin)
       : null;
