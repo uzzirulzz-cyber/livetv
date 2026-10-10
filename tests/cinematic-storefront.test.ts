@@ -7,7 +7,7 @@ test('public frontend uses Cloudflare assets without contacting a Vercel origin'
  const env = {ASSETS: {fetch: async (input: Request) => {
    seen=input;
    return new Response('content',{headers:{'Content-Type':'text/html'}});
- }}} as unknown as Pick<Env, 'ASSETS'>;
+ }}} as unknown as { ASSETS: { fetch(request: Request): Promise<Response> } };
  const original = globalThis.fetch;
  try {
    globalThis.fetch = async () => {throw new Error('External origin must not be contacted');};
