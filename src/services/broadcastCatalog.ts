@@ -43,7 +43,9 @@ export function normalizeBroadcastChannel(
         ? "Hindi"
         : "English",
     streamUrl: String(channel.url || ""),
-    hlsUrl: String(channel.url || ""),
+    hlsUrl: /\.m3u8(?:[?#]|$)|[?&]hls=1(?:&|$)/i.test(String(channel.url || ""))
+      ? String(channel.url || "")
+      : undefined,
     epgId: String(channel.epgId || ""),
     isPremium: false,
     isLive: true,
