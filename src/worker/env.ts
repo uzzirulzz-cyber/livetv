@@ -21,6 +21,9 @@ export interface Env {
   CATALOG?: {
     fetch(request: Request): Promise<Response>;
   };
+  LIVE_PROVIDER?: {
+    fetch(request: Request): Promise<Response>;
+  };
   CATALOG_DB?: {
     prepare(query: string): {
       all<T>(): Promise<{ results: T[] }>;
@@ -44,3 +47,4 @@ export interface Env {
   CACHE?: any;
   ACTIVATIONS?: any;
 }
+

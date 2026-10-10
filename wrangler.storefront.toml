@@ -16,5 +16,10 @@ binding = "BROADCAST_PLAYER"
 service = "playbeat-player"
 
 [[services]]
+binding = "LIVE_PROVIDER"
+service = "playbeat-live"
+
+[[services]]
 binding = "LEGACY_APP"
 service = "new-ne222"
+

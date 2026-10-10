@@ -5,6 +5,7 @@ import {
 import { digitalDashboard } from './services/digital-dashboard';
 import { fetchCinematicStorefront, storefrontMetadata } from './services/cinematic-storefront';
 import { googleTrackingRoute } from './services/google-tracking';
+import { dispatchProviderBroadcast, fetchStorefrontProviderBroadcast } from './services/storefront-provider-broadcast';
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
@@ -15,9 +16,10 @@ export default {
     const dashboard = await digitalDashboard(request, env);
     if (dashboard) return dashboard;
     if (path.startsWith(BROADCAST_PREFIX + "/")) {
-      return fetchStorefrontBroadcast(request, (upstream) =>
-        env.BROADCAST_PLAYER.fetch(upstream),
-      );
+      if (env.LIVE_PROVIDER) {
+        return fetchStorefrontProviderBroadcast(request, dispatchProviderBroadcast(env));
+      }
+      return fetchStorefrontBroadcast(request, (upstream) => env.BROADCAST_PLAYER.fetch(upstream));
     }
     // Keep the existing production back-end, auth, storage, and admin APIs intact.
     if (path.startsWith("/api/") || path.startsWith("/callback/")) {
@@ -30,3 +32,4 @@ export default {
     return response;
   },
 };
+

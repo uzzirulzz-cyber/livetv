@@ -23,7 +23,8 @@ interface CatalogChannel {
   hlsUrl?: string;
 }
 
-export const MAX_CATALOG_CHANNELS = 15_000;
+// Keep the live catalogue at half of the former 10,000-channel storefront feed.
+export const MAX_CATALOG_CHANNELS = 5_000;
 
 interface CatalogRow {
   channel_id: string;
@@ -146,3 +147,4 @@ export async function persistChannelCatalog(
     await database.batch(deletes.slice(index, index + 100));
   }
 }
+

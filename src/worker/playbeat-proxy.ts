@@ -127,6 +127,7 @@ export default {
         return withCors(
           new Response(JSON.stringify({
             success: true,
+          source: "configured-provider",
             cached: !refreshed,
             count: channels.length,
             channels,
@@ -298,14 +299,16 @@ async function runCatalogSync(env: any, source: "scheduled" | "request"): Promis
     stage = "catalog";
     await persistChannelCatalog(env.CATALOG_DB, result.channels);
     stage = "status";
-    await recordCatalogSync(env.BUCKET, {
-      source,
-      status: "success",
-      channelCount: result.channels.length,
-      startedAt,
-      finishedAt: new Date().toISOString(),
-      errorSummary: null,
-    });
+    if (env.BUCKET) {
+      await recordCatalogSync(env.BUCKET, {
+        source,
+        status: "success",
+        channelCount: result.channels.length,
+        startedAt,
+        finishedAt: new Date().toISOString(),
+        errorSummary: null,
+      });
+    }
   } catch (error) {
     const message = error instanceof Error ? error.message : "";
     const errorType = error instanceof Error ? error.name : "Unknown";
@@ -468,3 +471,4 @@ function json(data: any, status: number, env: any): Response {
     env
   );
 }
+

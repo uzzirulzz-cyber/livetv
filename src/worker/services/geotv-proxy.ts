@@ -268,7 +268,9 @@ export async function fetchGeoTvChannels(
 
   const parsedChannels: any[] = [];
   let currentItem: any = null;
+  let catalogLimitReached = false;
   const processPlaylistLine = (rawLine: string): void => {
+    if (catalogLimitReached) return;
     const line = rawLine.trim();
     if (line.startsWith('#EXTINF:')) {
       const logoMatch = line.match(/tvg-logo="([^"]*)"/);
@@ -299,10 +301,8 @@ export async function fetchGeoTvChannels(
         currentItem.hlsUrl = `/api/iptv/hls/stream.m3u8?channelId=${streamId}`;
         currentItem.tsUrl = `/api/iptv/stream?channelId=${streamId}`;
         parsedChannels.push(currentItem);
-        if (parsedChannels.length > MAX_CATALOG_CHANNELS) {
-          throw new Error(`Provider playlist exceeds the ${MAX_CATALOG_CHANNELS}-channel limit.`);
-        }
         currentItem = null;
+        catalogLimitReached = parsedChannels.length >= MAX_CATALOG_CHANNELS;
       }
     }
   };
@@ -318,10 +318,14 @@ export async function fetchGeoTvChannels(
       const { value, done } = await reader.read();
       bufferedLine += decoder.decode(value, { stream: !done });
       let newlineIndex = bufferedLine.indexOf('\n');
-      while (newlineIndex >= 0) {
+      while (newlineIndex >= 0 && !catalogLimitReached) {
         processPlaylistLine(bufferedLine.slice(0, newlineIndex).replace(/\r$/, ''));
         bufferedLine = bufferedLine.slice(newlineIndex + 1);
         newlineIndex = bufferedLine.indexOf('\n');
+      }
+      if (catalogLimitReached) {
+        await reader.cancel();
+        break;
       }
       if (done) {
         if (bufferedLine) processPlaylistLine(bufferedLine);
@@ -639,3 +643,4 @@ export async function fetchGeoTvSegment(env: Env, segmentUrl: string): Promise<R
     headers,
   });
 }
+

@@ -96,5 +96,6 @@ export async function loadBroadcastCatalog(
   if (!response.ok) throw new Error("Catalogue unavailable");
   const data = await response.json();
   if (!Array.isArray(data.channels)) throw new Error("Invalid catalogue");
-  return data.channels.map(normalizeBroadcastChannel);
+  return data.channels.slice(0, 5_000).map(normalizeBroadcastChannel);
 }
+

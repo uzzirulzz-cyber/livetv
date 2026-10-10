@@ -3,6 +3,7 @@ interface DashboardEnv {
   ASSETS: { fetch(request: Request): Promise<Response> };
   BROADCAST_PLAYER: { fetch(request: Request): Promise<Response> };
   LEGACY_APP: { fetch(request: Request): Promise<Response> };
+  LIVE_PROVIDER?: { fetch(request: Request): Promise<Response> };
   DASHBOARD_BRIDGE_TOKEN?: string;
 }
 function json(data: unknown, status = 200) { return Response.json(data, { status, headers: { 'Cache-Control': 'no-store' } }); }
@@ -27,7 +28,9 @@ export async function digitalDashboard(request: Request, env: DashboardEnv): Pro
     const [release,backend,library,tracking,promotion] = await Promise.all([
       source(() => env.ASSETS.fetch(new Request('https://playbeat.live/live-build.json'))),
       source(() => env.LEGACY_APP.fetch(new Request('https://playbeat.live/api/health'))),
-      source(() => env.BROADCAST_PLAYER.fetch(new Request('https://player.playbeat.live/api/channels'))),
+      source(() => env.LIVE_PROVIDER
+        ? env.LIVE_PROVIDER.fetch(new Request('https://live-provider.internal/api/iptv/channels'))
+        : env.BROADCAST_PLAYER.fetch(new Request('https://player.playbeat.live/api/channels'))),
       centralGoogleConfig(),
       source(() => env.ASSETS.fetch(new Request('https://playbeat.live/promotion-status.json'))),
     ]);
@@ -59,3 +62,4 @@ export async function digitalDashboard(request: Request, env: DashboardEnv): Pro
   }
   return null;
 }
+
