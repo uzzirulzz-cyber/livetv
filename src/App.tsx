@@ -1097,37 +1097,37 @@ export default function App() {
 
                 <div className="flex flex-wrap gap-4 text-xs font-semibold">
                   <button
-                    onClick={() => navigateSection("live")
+                    onClick={() => navigateSection("live")}
                     className="hover:text-cyan-400 transition-colors"
                   >
                     Live Channels
                   </button>
                   <button
-                    onClick={() => navigateSection("movies")
+                    onClick={() => navigateSection("movies")}
                     className="hover:text-cyan-400 transition-colors"
                   >
                     Movies
                   </button>
                   <button
-                    onClick={() => navigateSection("series")
+                    onClick={() => navigateSection("series")}
                     className="hover:text-cyan-400 transition-colors"
                   >
                     Series
                   </button>
                   <button
-                    onClick={() => navigateSection("guide")
+                    onClick={() => navigateSection("guide")}
                     className="hover:text-cyan-400 transition-colors"
                   >
                     TV Guide
                   </button>
                   <button
-                    onClick={() => navigateSection("devices")
+                    onClick={() => navigateSection("devices")}
                     className="hover:text-cyan-400 transition-colors"
                   >
                     Device Setup
                   </button>
                   <button
-                    onClick={() => navigateSection("support")
+                    onClick={() => navigateSection("support")}
                     className="hover:text-cyan-400 transition-colors"
                   >
                     Help Center

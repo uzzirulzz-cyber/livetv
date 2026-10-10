@@ -12,7 +12,7 @@ writeFileSync('public/live-build.json', JSON.stringify({
   rule: 'PlayBeat Digital is the main admin; refresh live sources automatically and show disconnected reports explicitly.',
   settings: { seo: { canonicalHost: 'https://playbeat.live', sitemap: '/sitemap.xml', publicPages: storefrontRoutes, serverRenderedMetadata: true, structuredData: ['Organization','WebSite','WebPage','BreadcrumbList'], socialImage: '/social-cover.png', unknownPages: 404 }, storefrontWorker: 'playbeat-storefront', playerWorker: 'playbeat-player', backendWorker: 'new-ne222',
     catalogueSource: 'fsdf-2026-10-09', importedChannels: 10000, sourceType: 'Live and 24/7 feeds; no on-demand catalogue',
-    playback: 'HLS and MPEG-TS, loaded after Play; transport detected from source; MPEG-TS worker receives absolute URLs', staleChunkRecovery: 'Reload once when a previous release references a replaced Vite chunk', playerBridge: '/broadcast-player', watchlist: 'local browser storage',
+    playback: 'HLS and MPEG-TS, loaded after Play; raw bridged channel may fall back to its same-channel HLS endpoint', staleChunkRecovery: 'Reload once when a previous release references a replaced Vite chunk', playerBridge: '/broadcast-player', watchlist: 'local browser storage',
     frontendIntegration: { repository:'uzzirulzz-cyber/repository', release:'2d45564baaa2f4814f508d572a59b38b20cd0f9c', status:'adapted homepage deployed with local player and catalogue', backgrounds:10 },
     customerAuthentication: { projectId:'gen-lang-client-0800809003', google:true, email:true, facebook:false },
     streamBridgeRequestLimitSeconds:300,

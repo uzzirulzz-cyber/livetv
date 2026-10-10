@@ -68,6 +68,27 @@ export function normalizeBroadcastChannel(
   };
 }
 
+/**
+ * A raw broadcast stream can be served as an HLS playlist by the existing
+ * player Worker. Keep this fallback limited to same-origin bridged channel IDs.
+ */
+export function hlsFallbackForLiveStream(
+  source: string,
+  origin: string,
+): string | null {
+  try {
+    const url = new URL(source, origin);
+    if (
+      url.origin !== new URL(origin).origin ||
+      !/^\/broadcast-player\/stream\/\d+$/.test(url.pathname)
+    ) return null;
+    url.searchParams.set("hls", "1");
+    return url.pathname + url.search;
+  } catch {
+    return null;
+  }
+}
+
 export async function loadBroadcastCatalog(
   signal: AbortSignal,
 ): Promise<Channel[]> {

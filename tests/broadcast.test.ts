@@ -5,7 +5,7 @@ import {
   fetchStorefrontBroadcast,
   rewriteBroadcastManifest,
 } from "../src/worker/services/storefront-broadcast";
-import { normalizeBroadcastChannel } from "../src/services/broadcastCatalog";
+import { hlsFallbackForLiveStream, normalizeBroadcastChannel } from "../src/services/broadcastCatalog";
 
 test("HLS segments, nested playlists, and key URIs stay on the storefront bridge", () => {
   const result = rewriteBroadcastManifest(
@@ -22,6 +22,21 @@ test("HLS segments, nested playlists, and key URIs stay on the storefront bridge
       "<html>error</html>",
       "https://player.playbeat.live/stream/3",
     ),
+  );
+});
+
+test("raw bridged MPEG-TS channels can safely fall back to the same channel's HLS endpoint", () => {
+  assert.equal(
+    hlsFallbackForLiveStream("/broadcast-player/stream/732?token=abc", "https://playbeat.live"),
+    "/broadcast-player/stream/732?token=abc&hls=1",
+  );
+  assert.equal(
+    hlsFallbackForLiveStream("https://provider.example/private.ts", "https://playbeat.live"),
+    null,
+  );
+  assert.equal(
+    hlsFallbackForLiveStream("/api/proxy/other", "https://playbeat.live"),
+    null,
   );
 });
 

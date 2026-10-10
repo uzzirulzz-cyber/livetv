@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import type { Channel } from "../../types/playbeat";
 import { ChannelLogo } from "../common/ChannelLogo";
+import { hlsFallbackForLiveStream } from "../../services/broadcastCatalog";
 type MpegTsPlayer = ReturnType<typeof mpegtsApi.createPlayer>;
 interface Props {
   channel: Channel | null;
@@ -81,8 +82,24 @@ export function VideoPlayerModal({
       !!channel.hlsUrl || /\.m3u8(?:\?|$)|[?&]hls=1(?:&|$)/i.test(source);
     const isRawTransportStream =
       channel.isLive && !isHls && /(?:\.ts(?:[?#]|$)|\/broadcast-player\/stream\/\d+$)/i.test(source);
+    const hlsFallback = isRawTransportStream
+      ? hlsFallbackForLiveStream(source, window.location.origin)
+      : null;
+    let usedHlsFallback = false;
+    let startHls: (url: string) => void = () => {};
     const fail = () => {
       if (disposed) return;
+      if (!usedHlsFallback && hlsFallback) {
+        usedHlsFallback = true;
+        retries = 0;
+        setError("");
+        setBuffering(true);
+        mpegTs?.destroy();
+        mpegTs = null;
+        if (mpegTsRef.current) mpegTsRef.current = null;
+        startHls(hlsFallback);
+        return;
+      }
       setError(
         "This channel is temporarily unavailable. Try again or choose another channel.",
       );
@@ -104,55 +121,65 @@ export function VideoPlayerModal({
       }
     };
     if (!source) fail();
-    else if (isHls && Hls.isSupported()) {
-      hls = new Hls({
-        enableWorker: true,
-        lowLatencyMode: false,
-        maxBufferLength: 45,
-        backBufferLength: 30,
-      });
-      hlsRef.current = hls;
-      hls.on(Hls.Events.MANIFEST_PARSED, (_event, data) => {
-        if (disposed) return;
-        setQualities(
-          data.levels.map((level, index) => ({
-            index,
-            label: level.height
-              ? `${level.height}p`
-              : level.bitrate
-                ? `${Math.round(level.bitrate / 1000)} kbps`
-                : "Source quality",
-          })),
-        );
+    startHls = (hlsSource: string) => {
+      if (Hls.isSupported()) {
+        hls = new Hls({
+          enableWorker: true,
+          lowLatencyMode: false,
+          maxBufferLength: 45,
+          backBufferLength: 30,
+        });
+        hlsRef.current = hls;
+        hls.on(Hls.Events.MANIFEST_PARSED, (_event, data) => {
+          if (disposed) return;
+          setQualities(
+            data.levels.map((level, index) => ({
+              index,
+              label: level.height
+                ? `${level.height}p`
+                : level.bitrate
+                  ? `${Math.round(level.bitrate / 1000)} kbps`
+                  : "Source quality",
+            })),
+          );
+          void play();
+        });
+        hls.on(Hls.Events.ERROR, (_event, data) => {
+          if (disposed || !data.fatal) return;
+          console.warn("[PlayBeat playback]", data.type, data.details);
+          if (retries++ < 2 && data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+            hls?.recoverMediaError();
+            return;
+          }
+          if (retries <= 2 && data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+            setBuffering(true);
+            clearTimeout(timer);
+            timer = setTimeout(() => {
+              if (!disposed) hls?.startLoad();
+            }, retries * 1500);
+            return;
+          }
+          fail();
+        });
+        hls.loadSource(hlsSource);
+        hls.attachMedia(video);
+      } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+        video.src = hlsSource;
+        video.load();
         void play();
-      });
-      hls.on(Hls.Events.ERROR, (_event, data) => {
-        if (disposed || !data.fatal) return;
-        console.warn("[PlayBeat playback]", data.type, data.details);
-        if (retries++ < 2 && data.type === Hls.ErrorTypes.MEDIA_ERROR) {
-          hls?.recoverMediaError();
-          return;
-        }
-        if (retries <= 2 && data.type === Hls.ErrorTypes.NETWORK_ERROR) {
-          setBuffering(true);
-          clearTimeout(timer);
-          timer = setTimeout(() => {
-            if (!disposed) hls?.startLoad();
-          }, retries * 1500);
-          return;
-        }
-        fail();
-      });
-      hls.loadSource(source);
-      hls.attachMedia(video);
-    } else if (isRawTransportStream) {
+      } else {
+        setBuffering(false);
+        setError(
+          "HLS playback is not supported by this browser. Try a current version of Chrome or Safari.",
+        );
+      }
+    };
+    if (isHls) startHls(source);
+    else if (isRawTransportStream) {
       void import("mpegts.js").then(async ({ default: mpegts }) => {
         if (disposed) return;
         if (!mpegts.isSupported() || !mpegts.getFeatureList().mseLivePlayback) {
-          setBuffering(false);
-          setError(
-            "This browser cannot play MPEG-TS live streams. Update your browser or try Safari 17.1+ on iPhone.",
-          );
+          fail();
           return;
         }
         mpegTs = mpegts.createPlayer(
