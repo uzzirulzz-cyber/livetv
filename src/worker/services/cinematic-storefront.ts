@@ -6,16 +6,10 @@ export function storefrontMetadata() {
       frontendIntegration:{repository:'uzzirulzz-cyber/repository', release:FRONTEND_RELEASE, status:'production', backgrounds:10, playback:'HLS and MPEG-TS'},
       streamBridgeRequestLimitSeconds:300}}, {headers:{'Cache-Control':'no-store'}});
 }
-export async function fetchCinematicStorefront(request: Request) {
-  const target = new URL(request.url);
-  target.hostname = 'repository-esw9mqljl-playbeatdigital-techs-projects.vercel.app'; target.port = ''; target.protocol = 'https:';
-  const headers = new Headers();
-  for (const key of ['accept','range','if-none-match','if-modified-since']) {
-    const value = request.headers.get(key); if (value) headers.set(key,value);
-  }
-  const upstream = await fetch(target.toString(), {method:request.method, headers, redirect:'manual'});
-  const response = new Response(upstream.body, upstream);
-  if ((response.headers.get('content-type') || '').includes('text/html') || target.pathname === '/sw.js' || target.pathname === '/registerSW.js') response.headers.set('Cache-Control','no-cache');
-  response.headers.set('X-PlayBeat-Release',FRONTEND_RELEASE);
-  return response;
+export async function fetchCinematicStorefront(request: Request, env: Pick<Env, 'ASSETS'>) {
+ const upstream = await env.ASSETS.fetch(request);
+ const response = new Response(upstream.body, upstream);
+ if ((response.headers.get('content-type') || '').includes('text/html')) response.headers.set('Cache-Control','no-cache');
+ response.headers.set('X-PlayBeat-Hosting','cloudflare-workers');
+ return response;
 }
