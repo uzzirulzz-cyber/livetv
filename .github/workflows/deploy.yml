@@ -3,6 +3,8 @@ name: Verify PlayBeat Storefront
 on:
   push:
     branches: [main, master]
+  pull_request:
+    branches: [main, master]
   workflow_dispatch:
 
 # Cloudflare Workers Builds owns production deployment from main.

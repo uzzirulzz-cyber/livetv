@@ -15,6 +15,7 @@ const navigation = [
   ["live", "Live TV"],
   ["movies", "Movies"],
   ["series", "Series"],
+  ["music", "Music"],
   ["sports", "Sports"],
   ["news", "News"],
 ];
