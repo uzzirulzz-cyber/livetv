@@ -1,7 +1,10 @@
-import { test } from 'node:test';
+import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { digitalDashboard } from '../src/worker/services/digital-dashboard';
 const secret = 'local-test-bridge-key-not-a-production-secret';
+const originalFetch = globalThis.fetch;
+before(() => { globalThis.fetch = async () => Response.json({success:true,config:{ga4:'G-5TYLQD0J2N',gtm:'',adsense:'',adsEnabled:false}}); });
+after(() => { globalThis.fetch = originalFetch; });
 const env = {
   DASHBOARD_BRIDGE_TOKEN: secret,
   ASSETS: { fetch: async () => Response.json({ schemaVersion: 1, release: 'abc', settings: { playback: 'HLS' } }) },

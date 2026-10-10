@@ -4,10 +4,13 @@ import {
 } from "./services/storefront-broadcast";
 import { digitalDashboard } from './services/digital-dashboard';
 import { fetchCinematicStorefront, storefrontMetadata } from './services/cinematic-storefront';
+import { googleTrackingRoute } from './services/google-tracking';
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const path = new URL(request.url).pathname;
+    const tracking = await googleTrackingRoute(request);
+    if (tracking) return tracking;
     if (path === '/live-build.json') return storefrontMetadata(request, env);
     const dashboard = await digitalDashboard(request, env);
     if (dashboard) return dashboard;

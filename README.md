@@ -1,5 +1,15 @@
 # PlayBeat Live
 
+**Explore [PlayBeat Live](https://playbeat.live/?utm_source=github&utm_medium=organic&utm_campaign=free_launch_oct10) — live television in your browser.** Search news, sports and entertainment channels, browse categories and save a personal watchlist. Stream availability depends on the provider and region.
+
+**Discover [PlayBeat Digital](https://playbeat.digital/?utm_source=github&utm_medium=organic&utm_campaign=free_launch_oct10)** for digital subscriptions, gaming gift cards, software and website services from Pakistan.
+
+### Google tracking and promotion status
+
+The Live storefront reads public Google IDs from Digital's central settings through `/api/google-tracking`. Direct GA4 loads after analytics consent; AdSense loads after advertising consent. GTM is not injected alongside direct GA4. `/ads.txt` uses the configured central publisher. Visitor choices can be changed using Privacy settings.
+
+Digital's authenticated dashboard shows both websites' daily unique-session target and actual first-party activity. Tag-loader observations, GA4 report access and AdSense approval/revenue are separate states; a loaded script does not prove collection or approval. `/promotion-status.json` records public promotion placements and pending submissions. Public listings do not guarantee traffic.
+
 PlayBeat is a navy-and-gold entertainment storefront with live television, cinema channels, shows, search, a local watchlist, and recent channels. The HLS player is loaded and opened only after a user chooses Play; closing it stops playback and releases its resources.
 
 The final presentation follows the supplied `PLAYBEAT Premium IPTV.html`: its original logo and wordmark, left navigation, channel spotlight, compact popular grid, regional filters, and a searchable right-hand lineup. All controls use the real library; catalogue counts are computed from the available channels.

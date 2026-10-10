@@ -18,8 +18,10 @@ writeFileSync('public/live-build.json', JSON.stringify({
     frontend: liveOnly ? 'Cloudflare cinematic homepage, live television and media library' : 'Cloudflare entertainment storefront',
     liveOnly, channelImages: 'Provider logos; CM cinema feeds use individual catalogue-name artwork; named fallback for missing logos',
     movieSections: liveOnly ? 'Movies and Web Series from backend provider; disconnected state explicit; episode API required' : 'Live / 24-hour channels', programmeGuide: 'Separate feed required', lifestyleSlides: 10,
-    reporting: 'First-party page views and play requests; not proof of successful playback' },
+    googleTracking: {source:'PlayBeat Digital /api/analytics/public-config', configuration:'/api/google-tracking',ga4:'Consent-aware direct GA4; GTM not duplicated',adsense:'Central publisher code after visitor consent', adsTxt:'/ads.txt',reportAccess:'Disconnected',adsenseApproval:'Not verified'},
+    promotionStatus:'/promotion-status.json',
+    reporting: 'First-party page views, play requests and tag-loader observations; not proof of successful playback or Google reporting' },
   updates: liveOnly
-    ? ['Reference cinematic homepage connected to live channels and player', 'Live TV, Movies and Web Series tabs with on-demand player', 'Same-origin Cloudflare broadcast bridge', 'Absolute stream URLs for MPEG-TS worker playback', 'Cloudflare native deployment with checks', 'Provider channel logos on premium cards', 'Search, category filters and local favourites']
+    ? ['Central Google Analytics and AdSense integration with visitor privacy choices', 'Free promotion status and campaign attribution', 'Reference cinematic homepage connected to live channels and player', 'Live TV, Movies and Web Series tabs with on-demand player', 'Same-origin Cloudflare broadcast bridge', 'Absolute stream URLs for MPEG-TS worker playback', 'Cloudflare native deployment with checks', 'Provider channel logos on premium cards', 'Search, category filters and local favourites']
     : ['Premium three-column storefront', 'Real channel library and on-demand HLS player', 'Stable segment paths on playlist refresh', 'Ten animated lifestyle scenes', 'Cloudflare live-only deployment available'],
 }, null, 2));

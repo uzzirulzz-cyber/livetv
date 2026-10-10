@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-10-10T05:25:09.907311+00:00",
+  "campaign": "free_launch_oct10",
+  "timezone": "Asia/Karachi",
+  "dailyTargetPerSite": 1000,
+  "placements": [
+    {
+      "site": "Both websites",
+      "channel": "GitHub Live project profile",
+      "status": "Published",
+      "detail": "Public README introduces both brands with campaign-tagged official website links. This is an organic project mention, not a social-media ad.",
+      "url": "https://github.com/uzzirulzz-cyber/livetv"
+    },
+    {
+      "site": "Both websites",
+      "channel": "GitHub Digital project profile",
+      "status": "Published",
+      "detail": "Public README introduces both brands with campaign-tagged official website links. This is an organic project mention, not a social-media ad.",
+      "url": "https://github.com/uzzirulzz-cyber/izoko"
+    },
+    {
+      "site": "playbeat.digital",
+      "channel": "Zearches worldwide directory",
+      "status": "Prepared \u2014 awaiting terms acceptance",
+      "detail": "Official URL, business category and factual description filled. Not submitted or published.",
+      "url": "https://zearches.com/submit-website-free.php"
+    },
+    {
+      "site": "Both websites",
+      "channel": "Nishan.pk directory",
+      "status": "Awaiting submission terms acceptance",
+      "detail": "Free listing form available; final submission explicitly accepts terms. Not submitted or published.",
+      "url": "https://nishan.pk/submit/"
+    },
+    {
+      "site": "Both websites",
+      "channel": "Share Your Startup",
+      "status": "Blocked by verification",
+      "detail": "Submission could not be completed in this browser; Post it remained disabled. No published listing."
+    }
+  ],
+  "social": {
+    "provider": "Metricool",
+    "status": "Awaiting social network connection",
+    "detail": "Metricool is installed. Brand settings returned no connected social network. No social posts published or scheduled."
+  },
+  "google": {
+    "ga4Reports": "No Analytics reporting scope in connected GSC Wizard account",
+    "adsenseApproval": "Not verified",
+    "revenue": "Disconnected"
+  },
+  "trafficGuarantee": false
+}

@@ -1,3 +1,4 @@
+import { centralGoogleConfig } from './google-tracking';
 interface DashboardEnv {
   ASSETS: { fetch(request: Request): Promise<Response> };
   BROADCAST_PLAYER: { fetch(request: Request): Promise<Response> };
@@ -23,10 +24,12 @@ export async function digitalDashboard(request: Request, env: DashboardEnv): Pro
   if (path === '/api/digital-dashboard' && request.method === 'GET') {
     if (!env.DASHBOARD_BRIDGE_TOKEN) return json({ error: 'dashboard_not_configured' }, 503);
     if (!await authorized(request, env.DASHBOARD_BRIDGE_TOKEN)) return json({ error: 'unauthorized' }, 401);
-    const [release,backend,library] = await Promise.all([
+    const [release,backend,library,tracking,promotion] = await Promise.all([
       source(() => env.ASSETS.fetch(new Request('https://playbeat.live/live-build.json'))),
       source(() => env.LEGACY_APP.fetch(new Request('https://playbeat.live/api/health'))),
       source(() => env.BROADCAST_PLAYER.fetch(new Request('https://player.playbeat.live/api/channels'))),
+      centralGoogleConfig(),
+      source(() => env.ASSETS.fetch(new Request('https://playbeat.live/promotion-status.json'))),
     ]);
     const data = library.data;
     const rows = Array.isArray(data) ? data : Array.isArray(data?.channels) ? data.channels : null;
@@ -38,6 +41,8 @@ export async function digitalDashboard(request: Request, env: DashboardEnv): Pro
     return json({ schemaVersion: 1, fetchedAt: new Date().toISOString(), release: release.connected ? release.data : null,
       backend: { connected: backend.connected, status: backend.status, configured: Boolean(health?.configured), lastSync, health: health?.health || {} },
       mediaLibrary: { connected: Boolean(health?.configured), movies: sync?.totalMovies ?? sync?.movies ?? null, series: sync?.totalSeries ?? sync?.series ?? null, episodeAccess: 'requires provider episode API' },
+      google: { connected:tracking.connected, ...tracking.config, installation:'Consent-aware direct GA4; central GTM is not also injected', reportsConnected:false, adsenseApproval:'Not verified', revenueConnected:false, adsTxt:'/ads.txt' },
+      promotion: promotion.connected && promotion.data?.schemaVersion === 1 ? promotion.data : null,
       library: { connected: library.connected && rows !== null, source: typeof data?.source === 'string' ? data.source : null, channels: rows?.length ?? null, categories } });
   }
   if (path === '/api/digital-events' && request.method === 'POST') {
