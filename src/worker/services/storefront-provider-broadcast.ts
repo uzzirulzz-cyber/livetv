@@ -133,9 +133,16 @@ export async function fetchStorefrontProviderBroadcast(
     // HLS manifests already contain same-origin segment bridge URLs; stream bodies
     // stay streamed so large media is never buffered in Worker memory.
     if (path.startsWith("/stream/") && url.searchParams.get("hls") === "1") {
+      const manifest = await limitedText(upstream, 1024 * 1024);
+      if (!manifest.trimStart().startsWith("#EXTM3U")) {
+        return Response.json(
+          { error: "This broadcast is temporarily unavailable." },
+          { status: 502 },
+        );
+      }
       responseHeaders.set("Content-Type", "application/vnd.apple.mpegurl");
       responseHeaders.set("Cache-Control", "no-store");
-      return new Response(await limitedText(upstream, 1024 * 1024), {
+      return new Response(manifest, {
         status: upstream.status,
         headers: responseHeaders,
       });
