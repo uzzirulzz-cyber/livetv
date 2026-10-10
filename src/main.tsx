@@ -4,6 +4,21 @@ import './index.css';
 import { reportLiveEvent } from './services/digitalReporting';
 import GoogleConsent from './components/GoogleConsent';
 
+// Cloudflare replaces hashed Vite chunks on each release. If a browser still
+// has the previous HTML entrypoint, recover once instead of leaving Play stuck.
+window.addEventListener('vite:preloadError', (event) => {
+  event.preventDefault();
+  const key = 'playbeat_preload_reload_at';
+  try {
+    const lastReload = Number(window.sessionStorage.getItem(key) || 0);
+    if (Date.now() - lastReload < 60_000) return;
+    window.sessionStorage.setItem(key, String(Date.now()));
+  } catch {
+    // Storage can be disabled; reloading is still the safest recovery.
+  }
+  window.location.reload();
+});
+
 reportLiveEvent('page_view');
 
 // Reference homepage at the root; catalogue routes share the tested player.
