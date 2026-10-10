@@ -43,7 +43,7 @@ export const TopNav: React.FC<TopNavProps> = ({
   ];
 
   return (
-    <header className="sticky top-0 z-40 bg-slate-950/90 backdrop-blur-md border-b border-slate-800/80 px-4 lg:px-8 py-3">
+    <header className="sticky top-0 z-40 border-b border-white/[0.07] bg-[#070b13]/90 px-4 py-3 shadow-[0_12px_40px_-28px_rgba(245,158,11,0.35)] backdrop-blur-2xl lg:px-8">
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
         {/* Zone 1: Brand Wordmark */}
         <div className="flex items-center gap-2.5 shrink-0">
@@ -66,8 +66,8 @@ export const TopNav: React.FC<TopNavProps> = ({
                 onClick={() => onTabChange(item.id)}
                 className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all whitespace-nowrap ${
                   isActive
-                    ? 'text-white bg-slate-800/90 shadow-sm border border-slate-700/60'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                    ? 'border border-amber-200/15 bg-amber-100/[0.08] text-amber-100 shadow-sm shadow-amber-950/20'
+                    : 'text-slate-400 hover:bg-white/[0.04] hover:text-slate-100'
                 }`}
               >
                 {item.label}
@@ -120,7 +120,7 @@ export const TopNav: React.FC<TopNavProps> = ({
             title={canCreateLine ? 'Create new line' : `Role ${currentRole} cannot create lines`}
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-xs font-semibold shadow-sm transition-all whitespace-nowrap ${
               canCreateLine
-                ? 'bg-indigo-600 hover:bg-indigo-500 text-white active:scale-[0.98]'
+                ? 'bg-gradient-to-r from-amber-300 to-yellow-500 text-slate-950 shadow-md shadow-amber-950/30 hover:brightness-110 active:scale-[0.98]'
                 : 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
             }`}
           >
@@ -138,8 +138,8 @@ export const TopNav: React.FC<TopNavProps> = ({
             onClick={() => onTabChange(item.id)}
             className={`px-2.5 py-1 text-[11px] font-medium rounded transition-colors whitespace-nowrap ${
               activeTab === item.id
-                ? 'bg-slate-800 text-white'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-amber-100/[0.08] text-amber-100'
+                : 'text-slate-400 hover:text-slate-100'
             }`}
           >
             {item.label}

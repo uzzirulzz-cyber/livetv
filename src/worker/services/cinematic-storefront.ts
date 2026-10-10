@@ -2,6 +2,45 @@ type RewriteElement = { setInnerContent(value: string): void; setAttribute(name:
 declare const HTMLRewriter: { new(): { on(selector: string, handlers: { element(element: RewriteElement): void }): InstanceType<typeof HTMLRewriter>; transform(response: Response): Response } };
 import { LIVE_SITE, LIVE_PAGES, escapeHtml, liveSitemap } from '../../seo';
 type AssetEnv = { ASSETS: { fetch(request: Request): Promise<Response> } };
+
+const robotsTxt = `User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /api/
+Disallow: /callback/
+Disallow: /broadcast-player/
+
+User-agent: OAI-SearchBot
+Allow: /
+Disallow: /admin
+Disallow: /api/
+Disallow: /callback/
+Disallow: /broadcast-player/
+
+User-agent: OAI-AdsBot
+Allow: /
+Disallow: /admin
+Disallow: /api/
+Disallow: /callback/
+Disallow: /broadcast-player/
+
+User-agent: ChatGPT-User
+Allow: /
+Disallow: /admin
+Disallow: /api/
+Disallow: /callback/
+Disallow: /broadcast-player/
+
+User-agent: GPTBot
+Allow: /
+Disallow: /admin
+Disallow: /api/
+Disallow: /callback/
+Disallow: /broadcast-player/
+
+Sitemap: ${LIVE_SITE}/sitemap.xml
+`;
+
 export async function storefrontMetadata(request: Request, env: AssetEnv) {
  const asset = await env.ASSETS.fetch(request);
  const response = new Response(asset.body, asset);
@@ -16,7 +55,7 @@ export async function fetchCinematicStorefront(request: Request, env: AssetEnv) 
    destination.search = url.search;
    return Response.redirect(destination.href, 308);
  }
- if (path === '/robots.txt') return new Response(request.method === 'HEAD' ? null : `User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /api/\nDisallow: /callback/\nDisallow: /broadcast-player/\nSitemap: ${LIVE_SITE}/sitemap.xml\n`, {headers:{'Content-Type':'text/plain; charset=utf-8','Cache-Control':'public, max-age=3600'}});
+ if (path === '/robots.txt') return new Response(request.method === 'HEAD' ? null : robotsTxt, {headers:{'Content-Type':'text/plain; charset=utf-8','Cache-Control':'public, max-age=3600'}});
  if (path === '/sitemap.xml') return new Response(request.method === 'HEAD' ? null : liveSitemap(), {headers:{'Content-Type':'application/xml; charset=utf-8','Cache-Control':'public, max-age=3600'}});
  const page = LIVE_PAGES[path];
  const upstream = await env.ASSETS.fetch(page ? new Request(new URL('/', request.url), request) : request);
@@ -32,7 +71,7 @@ export async function fetchCinematicStorefront(request: Request, env: AssetEnv) 
      {'@type':'WebPage','@id':canonical+'#webpage',name:page.title,description:page.description,url:canonical,isPartOf:{'@id':LIVE_SITE+'/#website'}},
      ...(path==='/'?[]:[{'@type':'BreadcrumbList',itemListElement:[{'@type':'ListItem',position:1,name:'PlayBeat Live',item:LIVE_SITE+'/'},{'@type':'ListItem',position:2,name:page.heading,item:canonical}]}]),
    ]};
-   const tags = `<link rel="canonical" href="${canonical}"><meta name="robots" content="index, follow, max-image-preview:large"><meta property="og:url" content="${canonical}"><meta property="og:site_name" content="PlayBeat Live"><meta property="og:image" content="${LIVE_SITE}/social-cover.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="PlayBeat Live — Live TV, Movies and Web Series"><meta name="twitter:title" content="${escapeHtml(page.title)}"><meta name="twitter:description" content="${escapeHtml(page.description)}"><meta name="twitter:image" content="${LIVE_SITE}/social-cover.png"><script type="application/ld+json">${JSON.stringify(schema).replace(/</g,'\\u003c')}</script>`;
+   const tags = `<link rel="canonical" href="${canonical}"><meta name="robots" content="index, follow, max-image-preview:large"><meta property="og:type" content="website"><meta property="og:locale" content="en_US"><meta property="og:url" content="${canonical}"><meta property="og:site_name" content="PlayBeat Live"><meta property="og:image" content="${LIVE_SITE}/social-cover.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="PlayBeat Live — Live TV, Movies and Web Series"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${escapeHtml(page.title)}"><meta name="twitter:description" content="${escapeHtml(page.description)}"><meta name="twitter:image" content="${LIVE_SITE}/social-cover.png"><script type="application/ld+json">${JSON.stringify(schema).replace(/</g,'\\u003c')}</script>`;
    const section = `<section aria-label="About this section" style="max-width:1152px;margin:24px auto;padding:24px;color:#cbd5e1;font-family:system-ui;line-height:1.7"><h2>${escapeHtml(page.heading)}</h2><p>${escapeHtml(page.text)}</p><nav aria-label="Explore PlayBeat">${Object.entries(LIVE_PAGES).map(([p,v])=>`<a style="color:#fcd34d;margin-right:20px" href="${p}">${p==='/'?'Home':escapeHtml(v.heading)}</a>`).join('')}<a style="color:#fcd34d" href="https://playbeat.digital/?utm_source=playbeat_live&amp;utm_medium=referral&amp;utm_campaign=brand_discovery">Explore PlayBeat Digital</a></nav><h3>Watching on your device</h3><p>Use an up-to-date browser and a stable internet connection. Playback may require pressing Play to enable sound. Channel availability can change; a listing does not guarantee that a feed is online.</p></section>`;
    return new HTMLRewriter()
      .on('title',{element(e){e.setInnerContent(page.title);}})
