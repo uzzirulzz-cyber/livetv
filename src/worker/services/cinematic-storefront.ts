@@ -19,7 +19,7 @@ export async function fetchCinematicStorefront(request: Request, env: AssetEnv) 
  if (path === '/robots.txt') return new Response(request.method === 'HEAD' ? null : `User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /api/\nDisallow: /callback/\nDisallow: /broadcast-player/\nSitemap: ${LIVE_SITE}/sitemap.xml\n`, {headers:{'Content-Type':'text/plain; charset=utf-8','Cache-Control':'public, max-age=3600'}});
  if (path === '/sitemap.xml') return new Response(request.method === 'HEAD' ? null : liveSitemap(), {headers:{'Content-Type':'application/xml; charset=utf-8','Cache-Control':'public, max-age=3600'}});
  const page = LIVE_PAGES[path];
- const upstream = await env.ASSETS.fetch(page ? new Request(new URL('/index.html', request.url), request) : request);
+ const upstream = await env.ASSETS.fetch(page ? new Request(new URL('/', request.url), request) : request);
  const response = new Response(upstream.body, upstream);
  response.headers.set('X-PlayBeat-Hosting','cloudflare-workers');
  if ((response.headers.get('content-type') || '').includes('text/html')) {
