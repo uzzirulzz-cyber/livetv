@@ -15,7 +15,7 @@ function providerPath(path: string, search: string): string {
     if (!url || url.length > 4096) throw new Error("Unsupported segment");
     const segment = new URL(url);
     if (
-      segment.hostname !== "stream.playbeat.live" ||
+      !["stream.playbeat.live", "87.120.127.18", "81.31.194.197", "edge1.playbeat.live", "edge2.playbeat.live"].includes(segment.hostname.toLowerCase()) ||
       !["http:", "https:"].includes(segment.protocol) ||
       segment.username ||
       segment.password

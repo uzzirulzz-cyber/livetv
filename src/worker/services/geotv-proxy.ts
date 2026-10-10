@@ -19,6 +19,22 @@ interface MemoryCacheItem {
 const memoryImageCache = new Map<string, MemoryCacheItem>();
 let cachedChannelList: { channels: any[]; count: number; expires: number } | null = null;
 
+// The provider redirects HTTP streams to these fixed edges. Workers reject raw
+// IP destinations, so route them through DNS-only aliases that resolve to them.
+const PROVIDER_EDGE_HOSTS: Record<string, string> = {
+  '87.120.127.18': 'edge1.playbeat.live',
+  '81.31.194.197': 'edge2.playbeat.live',
+};
+
+function providerEdgeUrl(urlStr: string): string {
+  const parsed = new URL(urlStr);
+  const edgeHost = PROVIDER_EDGE_HOSTS[parsed.hostname.toLowerCase()];
+  if (edgeHost && parsed.protocol === 'http:' && (!parsed.port || parsed.port === '80')) {
+    parsed.hostname = edgeHost;
+  }
+  return parsed.href;
+}
+
 /**
  * Resolves a hostname using Cloudflare 1.1.1.1 DNS over HTTPS (DoH)
  * Guarantees ultra-low latency edge resolution and DNS route acceleration.
@@ -82,13 +98,27 @@ function isAllowedProviderUrl(urlStr: string, env: Env, providerOrigin?: string)
     const expectedOrigin = providerOrigin
       ?? env.GEOTV_ALLOWED_ORIGIN
       ?? (env.GEOTV_HOST ? new URL(env.GEOTV_HOST).origin : undefined);
-    if (!isAllowedHost(urlStr) || !expectedOrigin || parsed.origin !== new URL(expectedOrigin).origin) {
-      return false;
+    if (!isAllowedHost(urlStr) || !expectedOrigin) return false;
+    const allowedRedirectHosts = new Set(
+      (env.GEOTV_REDIRECT_HOSTS || '87.120.127.18,81.31.194.197')
+        .split(',').map((host) => host.trim().toLowerCase()).filter(Boolean),
+    );
+    const hostname = parsed.hostname.toLowerCase();
+    if (allowedRedirectHosts.has(hostname)) {
+      return env.ALLOW_INSECURE_GEOTV === 'true'
+        && parsed.protocol === 'http:'
+        && (!parsed.port || parsed.port === '80');
     }
+    if (Object.values(PROVIDER_EDGE_HOSTS).includes(hostname)) {
+      return env.ALLOW_INSECURE_GEOTV === 'true'
+        && parsed.protocol === 'http:'
+        && (!parsed.port || parsed.port === '80');
+    }
+    if (parsed.origin !== new URL(expectedOrigin).origin) return false;
     return parsed.protocol === 'https:'
       || (parsed.protocol === 'http:'
         && env.ALLOW_INSECURE_GEOTV === 'true'
-        && parsed.origin === env.GEOTV_ALLOWED_ORIGIN);
+        && parsed.origin === new URL(expectedOrigin).origin);
   } catch {
     return false;
   }
@@ -478,7 +508,7 @@ export async function fetchGeoTvHlsStream(
   }
 
   const parsed = new URL(targetUrl);
-  const providerOrigin = env.GEOTV_ALLOWED_ORIGIN ?? (host ? new URL(host).origin : parsed.origin);
+  const providerOrigin = host ? new URL(host).origin : env.GEOTV_ALLOWED_ORIGIN ?? parsed.origin;
   if (!isAllowedProviderUrl(targetUrl, env, providerOrigin)) {
     return new Response('GeoTV stream URL is outside the configured provider origin', { status: 502 });
   }
@@ -498,7 +528,7 @@ export async function fetchGeoTvHlsStream(
     if (!isAllowedProviderUrl(redirectedUrl.href, env, providerOrigin)) {
       return new Response('GeoTV redirect is outside the configured provider origin', { status: 502 });
     }
-    upstreamRes = await fetch(redirectedUrl, {
+    upstreamRes = await fetch(providerEdgeUrl(redirectedUrl.href), {
       redirect: 'manual',
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
@@ -524,7 +554,7 @@ export async function fetchGeoTvHlsStream(
     const redirectParsed = new URL(redirectUrl);
     await resolveCloudflareDoh(redirectParsed.hostname);
 
-    const redirectRes = await fetch(redirectUrl, {
+    const redirectRes = await fetch(providerEdgeUrl(redirectUrl), {
       redirect: 'manual',
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
@@ -596,7 +626,7 @@ export async function fetchGeoTvSegment(env: Env, segmentUrl: string): Promise<R
   const parsed = new URL(restoredUrl);
   const doh = await resolveCloudflareDoh(parsed.hostname);
 
-  let upstreamRes = await fetch(restoredUrl, {
+  let upstreamRes = await fetch(providerEdgeUrl(restoredUrl), {
     redirect: 'manual',
     headers: {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
@@ -609,7 +639,7 @@ export async function fetchGeoTvSegment(env: Env, segmentUrl: string): Promise<R
     if (!isAllowedProviderUrl(redirectedUrl.href, env)) {
       return new Response('Segment redirect is outside the configured provider origin', { status: 502 });
     }
-    upstreamRes = await fetch(redirectedUrl, {
+    upstreamRes = await fetch(providerEdgeUrl(redirectedUrl.href), {
       redirect: 'manual',
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',

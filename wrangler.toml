@@ -16,6 +16,7 @@ CLOUDFLARE_DOH_URL = "https://cloudflare-dns.com/dns-query"
 ENVIRONMENT = "production"
 PLAYBACK_BASE_URL = "https://playbeat.live/broadcast-player"
 GEOTV_ALLOWED_ORIGIN = "http://stream.playbeat.live"
+GEOTV_REDIRECT_HOSTS = "87.120.127.18,81.31.194.197"
 ALLOW_INSECURE_GEOTV = "true"
 
 [[d1_databases]]

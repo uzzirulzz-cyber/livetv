@@ -23,8 +23,8 @@ interface CatalogChannel {
   hlsUrl?: string;
 }
 
-// Keep the live catalogue at half of the former 10,000-channel storefront feed.
-export const MAX_CATALOG_CHANNELS = 5_000;
+// Leave room for the complete supplied 5,039-channel backup and future updates.
+export const MAX_CATALOG_CHANNELS = 6_000;
 
 interface CatalogRow {
   channel_id: string;

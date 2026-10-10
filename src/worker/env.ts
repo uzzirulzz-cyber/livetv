@@ -14,6 +14,7 @@ export interface Env {
   ALLOW_INSECURE_GEOTV?: string;
   GEOTV_USER?: string;
   GEOTV_PASS?: string;
+  GEOTV_REDIRECT_HOSTS?: string;
   M3U_PLAYLIST_URL?: string;
   CLOUDFLARE_ACCOUNT_ID?: string;
   CLOUDFLARE_API_TOKEN?: string;

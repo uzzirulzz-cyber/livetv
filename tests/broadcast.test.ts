@@ -5,7 +5,53 @@ import {
   fetchStorefrontBroadcast,
   rewriteBroadcastManifest,
 } from "../src/worker/services/storefront-broadcast";
-import { hlsFallbackForLiveStream, normalizeBroadcastChannel } from "../src/services/broadcastCatalog";
+import { hlsFallbackForLiveStream, isSupportedBroadcastChannel, normalizeBroadcastChannel } from "../src/services/broadcastCatalog";
+import { languageForBroadcast } from "../src/services/broadcastLanguage";
+import { fetchGeoTvHlsStream, fetchGeoTvSegment } from "../src/worker/services/geotv-proxy";
+
+test("broadcast catalogue keeps Hindi and English channels from India and Pakistan", () => {
+  assert.equal(languageForBroadcast("Colors HD", "IN - ENTERTAINMENT - LIVE"), "Hindi");
+  assert.equal(languageForBroadcast("English News", "PK - NEWS - LIVE"), "English");
+  assert.equal(languageForBroadcast("Sun TV", "IN - Tamil - Live"), null);
+  assert.equal(languageForBroadcast("Geo News", "PK - NEWS - LIVE"), null);
+  assert.equal(isSupportedBroadcastChannel({ name: "Colors HD", group: "IN - ENTERTAINMENT - LIVE" }), true);
+  assert.equal(isSupportedBroadcastChannel({ name: "Sky News", group: "UK - NEWS - LIVE" }), false);
+});
+
+test("provider IP redirects are fetched through the configured edge alias", async (context) => {
+  const requests: string[] = [];
+  context.mock.method(globalThis, "fetch", async (input: RequestInfo | URL) => {
+    const url = String(input);
+    requests.push(url);
+    if (url.startsWith("https://cloudflare-dns.com/")) {
+      return Response.json({ Answer: [{ data: "45.155.90.82", TTL: 300 }] });
+    }
+    if (url === "http://geotv.space/live/demo/pass/42.m3u8") {
+      return new Response(null, { status: 302, headers: { Location: "http://87.120.127.18/live/demo/pass/42.m3u8" } });
+    }
+    if (url === "http://edge1.playbeat.live/live/demo/pass/42.m3u8") {
+      return new Response("#EXTM3U\n#EXTINF:6,\nhttp://87.120.127.18/segment.ts\n");
+    }
+    if (url === "http://edge1.playbeat.live/segment.ts") {
+      return new Response(new Uint8Array([0x47, 0, 0, 0]));
+    }
+    assert.fail(`Unexpected upstream request: ${new URL(url).host}`);
+  });
+  const env = {
+    GEOTV_HOST: "http://geotv.space",
+    GEOTV_USER: "demo",
+    GEOTV_PASS: "pass",
+    GEOTV_ALLOWED_ORIGIN: "http://geotv.space",
+    ALLOW_INSECURE_GEOTV: "true",
+  } as Parameters<typeof fetchGeoTvHlsStream>[0];
+  const playlist = await fetchGeoTvHlsStream(env, "42", undefined, "/api/iptv/segment");
+  assert.equal(playlist.status, 200);
+  assert.match(await playlist.text(), /\/api\/iptv\/segment\?url=/);
+  const segment = await fetchGeoTvSegment(env, "http://87.120.127.18/segment.ts");
+  assert.equal(segment.status, 200);
+  assert.equal(requests.at(-1), "http://edge1.playbeat.live/segment.ts");
+  assert.deepEqual([...new Uint8Array(await segment.arrayBuffer())], [0x47, 0, 0, 0]);
+});
 
 test("HLS segments, nested playlists, and key URIs stay on the storefront bridge", () => {
   const result = rewriteBroadcastManifest(

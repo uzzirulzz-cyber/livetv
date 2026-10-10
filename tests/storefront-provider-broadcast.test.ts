@@ -47,3 +47,18 @@ test("segment bridge rejects unconfigured hosts before dispatch", async () => {
   assert.equal(dispatched, false);
 });
 
+test("segment bridge forwards only the provider's fixed redirect edges", async () => {
+  let dispatched = "";
+  const edgeUrl = "http://87.120.127.18/live/hidden-user/hidden-pass/123.ts";
+  const response = await fetchStorefrontProviderBroadcast(
+    new Request("https://playbeat.live/broadcast-player/broadcast/api/iptv/segment?url=" + encodeURIComponent(edgeUrl)),
+    async (request) => {
+      dispatched = new URL(request.url).searchParams.get("url") || "";
+      return new Response(new Uint8Array([0x47, 0, 0, 0]), { headers: { "Content-Type": "video/mp2t" } });
+    },
+  );
+  assert.equal(response.status, 200);
+  assert.equal(new URL(dispatched).hostname, "87.120.127.18");
+  assert.match(dispatched, /hidden-user/);
+});
+
