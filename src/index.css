@@ -1707,3 +1707,5 @@ button:disabled {
     display: none;
   }
 }
+
+.channel-grid > div { width: 100% !important; }
