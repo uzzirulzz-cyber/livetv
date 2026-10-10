@@ -156,7 +156,7 @@ export function VideoPlayerModal({
           return;
         }
         mpegTs = mpegts.createPlayer(
-          { type: "mpegts", isLive: true, url: source, cors: true },
+          { type: "mpegts", isLive: true, url: new URL(source, window.location.href).href, cors: true },
           {
             enableWorker: true,
             enableWorkerForMSE: true,
