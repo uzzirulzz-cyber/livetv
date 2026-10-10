@@ -7,7 +7,7 @@ writeFileSync('public/live-build.json', JSON.stringify({
   schemaVersion: 1, release, builtAt: new Date().toISOString(),
   domain: 'playbeat.live', dashboard: 'playbeat.digital/admin#playbeat-live',
   rule: 'PlayBeat Digital is the main admin; refresh live sources automatically and show disconnected reports explicitly.',
-  settings: { storefrontWorker: 'playbeat-storefront', playerWorker: 'playbeat-player', backendWorker: 'new-ne222',
+  settings: { seo: { canonicalHost: 'https://playbeat.live', sitemap: '/sitemap.xml', publicPages: ['/', '/live-tv', '/movies', '/series'], serverRenderedMetadata: true, structuredData: ['Organization','WebSite','WebPage','BreadcrumbList'], socialImage: '/social-cover.png', unknownPages: 404 }, storefrontWorker: 'playbeat-storefront', playerWorker: 'playbeat-player', backendWorker: 'new-ne222',
     catalogueSource: 'fsdf-2026-10-09', importedChannels: 10000, sourceType: 'Live and 24/7 feeds; no on-demand catalogue',
     playback: 'HLS and MPEG-TS, loaded after Play; transport detected from source; MPEG-TS worker receives absolute URLs', playerBridge: '/broadcast-player', watchlist: 'local browser storage',
     frontendIntegration: { repository:'uzzirulzz-cyber/repository', release:'10d3c92b449e26e461c696e6972b110a3f67fa5f', status:'production', backgrounds:10 },

@@ -21,6 +21,9 @@ export default {
       return env.LEGACY_APP.fetch(request);
     }
     if ((request.method === 'GET' || request.method === 'HEAD') && !path.startsWith('/admin')) return fetchCinematicStorefront(request, env);
-    return env.ASSETS.fetch(request);
+    const privatePage = await env.ASSETS.fetch(request);
+    const response = new Response(privatePage.body, privatePage);
+    if (path.startsWith('/admin')) response.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive');
+    return response;
   },
 };

@@ -4,12 +4,13 @@ import { LiveTvView } from './components/playbeat/LiveTvView';
 import { loadBroadcastCatalog } from './services/broadcastCatalog';
 import { reportLiveEvent } from './services/digitalReporting';
 import type { Channel } from './types/playbeat';
+import { liveTab } from './seo';
 
 const OnDemandPlayer = lazy(() => import('./components/playbeat/OnDemandPlayer').then(m => ({ default: m.OnDemandPlayer })));
 const Player = lazy(() => import('./components/playbeat/VideoPlayerModal').then(m => ({ default: m.VideoPlayerModal })));
 
 export default function LiveApp() {
-  const [tab, setTab] = useState<'live' | 'movies' | 'series'>('live');
+  const [tab] = useState<'live' | 'movies' | 'series'>(() => liveTab(window.location.pathname));
   const [media, setMedia] = useState<{ title: string; source: string } | null>(null);
   const [channels, setChannels] = useState<Channel[]>([]);
   const [selected, setSelected] = useState<Channel | null>(null);
@@ -50,7 +51,7 @@ export default function LiveApp() {
         <a href="/" aria-label="PlayBeat Live home" className="flex items-center gap-3">
           <img src="/logo.svg" alt="PlayBeat Live" className="h-8 w-auto max-w-28 sm:h-10 sm:max-w-48" />
         </a>
-        <nav aria-label="Media sections" className="flex gap-1 sm:gap-3">{(['live', 'movies', 'series'] as const).map(section => <button key={section} aria-current={tab === section ? 'page' : undefined} onClick={() => setTab(section)} className={`rounded-lg px-2 py-2 text-xs font-semibold sm:px-4 sm:text-sm ${tab === section ? 'bg-amber-300 text-slate-950' : 'text-slate-300 hover:bg-white/10'}`}>{section === 'live' ? 'Live TV' : section === 'movies' ? 'Movies' : 'Web Series'}</button>)}</nav>
+        <nav aria-label="Media sections" className="flex gap-1 sm:gap-3">{(['live', 'movies', 'series'] as const).map(section => <a key={section} href={section === 'live' ? '/live-tv' : '/' + section} aria-current={tab === section ? 'page' : undefined} className={`rounded-lg px-2 py-2 text-xs font-semibold sm:px-4 sm:text-sm ${tab === section ? 'bg-amber-300 text-slate-950' : 'text-slate-300 hover:bg-white/10'}`}>{section === 'live' ? 'Live TV' : section === 'movies' ? 'Movies' : 'Web Series'}</a>)}</nav>
       </div>
     </header>
     {tab === 'live' && loading && <p role="status" className="mx-auto max-w-7xl px-6 py-8 text-slate-400">Loading live channels…</p>}
