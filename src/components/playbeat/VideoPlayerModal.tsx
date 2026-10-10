@@ -168,7 +168,8 @@ export function VideoPlayerModal({
           },
         );
         mpegTsRef.current = mpegTs;
-        mpegTs.on(mpegts.Events.ERROR, (type: string) => {
+        mpegTs.on(mpegts.Events.ERROR, (type: string, detail: string) => {
+          console.warn("[PlayBeat MPEG-TS]", type, detail);
           if (disposed) return;
           if (type === mpegts.ErrorTypes.NETWORK_ERROR && retries < 2) {
             retries++;
@@ -197,7 +198,10 @@ export function VideoPlayerModal({
             fail();
           }
         }
-      }).catch(() => fail());
+      }).catch((reason: unknown) => {
+        console.warn("[PlayBeat MPEG-TS initialization]", reason instanceof Error ? reason.message : "Initialization failed");
+        fail();
+      });
     } else if (!isHls || video.canPlayType("application/vnd.apple.mpegurl")) {
       video.src = source;
       video.load();
