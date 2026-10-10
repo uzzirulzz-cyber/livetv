@@ -9,15 +9,16 @@ writeFileSync('public/live-build.json', JSON.stringify({
   rule: 'PlayBeat Digital is the main admin; refresh live sources automatically and show disconnected reports explicitly.',
   settings: { storefrontWorker: 'playbeat-storefront', playerWorker: 'playbeat-player', backendWorker: 'new-ne222',
     catalogueSource: 'fsdf-2026-10-09', importedChannels: 10000, sourceType: 'Live and 24/7 feeds; no on-demand catalogue',
-    playback: 'HLS and MPEG-TS, loaded after Play', playerBridge: '/broadcast-player', watchlist: 'local browser storage',
+    playback: 'HLS and MPEG-TS, loaded after Play; transport detected from source; MPEG-TS worker receives absolute URLs', playerBridge: '/broadcast-player', watchlist: 'local browser storage',
     frontendIntegration: { repository:'uzzirulzz-cyber/repository', release:'10d3c92b449e26e461c696e6972b110a3f67fa5f', status:'production', backgrounds:10 },
     customerAuthentication: { projectId:'gen-lang-client-0800809003', google:true, email:true, facebook:false },
     streamBridgeRequestLimitSeconds:300,
-    frontend: liveOnly ? 'Vercel live television and media library' : 'Cloudflare entertainment storefront',
+    deploymentPipeline: 'Cloudflare Workers Builds from main; lint and tests required before deploy; GitHub Actions verifies only',
+    frontend: liveOnly ? 'Cloudflare live television and media library' : 'Cloudflare entertainment storefront',
     liveOnly, channelImages: 'Provider logos; CM cinema feeds use individual catalogue-name artwork; named fallback for missing logos',
     movieSections: liveOnly ? 'Movies and Web Series from backend provider; disconnected state explicit; episode API required' : 'Live / 24-hour channels', programmeGuide: 'Separate feed required', lifestyleSlides: liveOnly ? 0 : 10,
     reporting: 'First-party page views and play requests; not proof of successful playback' },
   updates: liveOnly
-    ? ['Live TV, Movies and Web Series tabs with on-demand player', 'Same-origin Cloudflare broadcast bridge', 'Provider channel logos on premium cards', 'Search, category filters and local favourites']
-    : ['Premium three-column storefront', 'Real channel library and on-demand HLS player', 'Stable segment paths on playlist refresh', 'Ten animated lifestyle scenes', 'Vercel live-only deployment available'],
+    ? ['Live TV, Movies and Web Series tabs with on-demand player', 'Same-origin Cloudflare broadcast bridge', 'Absolute stream URLs for MPEG-TS worker playback', 'Cloudflare native deployment with checks', 'Provider channel logos on premium cards', 'Search, category filters and local favourites']
+    : ['Premium three-column storefront', 'Real channel library and on-demand HLS player', 'Stable segment paths on playlist refresh', 'Ten animated lifestyle scenes', 'Cloudflare live-only deployment available'],
 }, null, 2));
