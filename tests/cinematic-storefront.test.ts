@@ -51,3 +51,14 @@ test('canonical redirects retain campaign attribution and unknown HTML returns 4
  assert.equal(missing.status,404);
  assert.equal(missing.headers.get('x-robots-tag'),'noindex');
 });
+test('public routes request the root asset instead of the redirecting index.html alias', async () => {
+ for (const path of ['/', '/live-tv', '/movies', '/series']) {
+   const env = {ASSETS:{fetch:async (input:Request) => {
+     assert.equal(new URL(input.url).pathname,'/');
+     return new Response('root asset',{headers:{'Content-Type':'text/plain'}});
+   }}};
+   const response = await fetchCinematicStorefront(new Request('https://playbeat.live'+path),env);
+   assert.equal(response.status,200);
+   assert.equal(await response.text(),'root asset');
+ }
+});
