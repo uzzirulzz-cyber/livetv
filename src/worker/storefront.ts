@@ -8,8 +8,8 @@ import { fetchCinematicStorefront, storefrontMetadata } from './services/cinemat
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const path = new URL(request.url).pathname;
-    if (path === '/live-build.json') return storefrontMetadata();
-    const dashboard = await digitalDashboard(request, {...env, ASSETS:{fetch:async () => storefrontMetadata()}});
+    if (path === '/live-build.json') return storefrontMetadata(request, env);
+    const dashboard = await digitalDashboard(request, env);
     if (dashboard) return dashboard;
     if (path.startsWith(BROADCAST_PREFIX + "/")) {
       return fetchStorefrontBroadcast(request, (upstream) =>
