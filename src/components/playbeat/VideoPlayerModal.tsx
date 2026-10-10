@@ -70,6 +70,10 @@ export function VideoPlayerModal({
     let disposed = false;
     let retries = 0;
     let timer: ReturnType<typeof setTimeout> | undefined;
+    let startupTimer: ReturnType<typeof setTimeout> | undefined;
+    let stallTimer: ReturnType<typeof setTimeout> | undefined;
+    let hasPlayed = false;
+    let terminalFailure = false;
     let hls: Hls | null = null;
     let mpegTs: MpegTsPlayer | null = null;
     setBuffering(true);
@@ -88,7 +92,7 @@ export function VideoPlayerModal({
     let usedHlsFallback = false;
     let startHls: (url: string) => void = () => {};
     const fail = () => {
-      if (disposed) return;
+      if (disposed || terminalFailure) return;
       if (!usedHlsFallback && hlsFallback) {
         usedHlsFallback = true;
         retries = 0;
@@ -100,6 +104,9 @@ export function VideoPlayerModal({
         startHls(hlsFallback);
         return;
       }
+      terminalFailure = true;
+      clearTimeout(startupTimer);
+      clearTimeout(stallTimer);
       setError(
         "This channel is temporarily unavailable. Try again or choose another channel.",
       );
@@ -121,7 +128,33 @@ export function VideoPlayerModal({
       }
     };
     if (!source) fail();
+    const armStartupWatchdog = () => {
+      clearTimeout(startupTimer);
+      startupTimer = setTimeout(() => {
+        if (!disposed && !hasPlayed) fail();
+      }, 25000);
+    };
+    const onVideoPlaying = () => {
+      hasPlayed = true;
+      clearTimeout(startupTimer);
+      clearTimeout(stallTimer);
+    };
+    const onVideoWaiting = () => {
+      if (!hasPlayed || disposed) return;
+      clearTimeout(stallTimer);
+      stallTimer = setTimeout(() => {
+        if (!disposed) fail();
+      }, 15000);
+    };
+    const onVideoError = () => {
+      if (!disposed) fail();
+    };
+    video.addEventListener("playing", onVideoPlaying);
+    video.addEventListener("waiting", onVideoWaiting);
+    video.addEventListener("error", onVideoError);
     startHls = (hlsSource: string) => {
+      hasPlayed = false;
+      armStartupWatchdog();
       if (Hls.isSupported()) {
         hls = new Hls({
           enableWorker: true,
@@ -168,6 +201,7 @@ export function VideoPlayerModal({
         video.load();
         void play();
       } else {
+        clearTimeout(startupTimer);
         setBuffering(false);
         setError(
           "HLS playback is not supported by this browser. Try a current version of Chrome or Safari.",
@@ -195,6 +229,8 @@ export function VideoPlayerModal({
           },
         );
         mpegTsRef.current = mpegTs;
+        hasPlayed = false;
+        armStartupWatchdog();
         mpegTs.on(mpegts.Events.ERROR, (type: string, detail: string) => {
           console.warn("[PlayBeat MPEG-TS]", type, detail);
           if (disposed) return;
@@ -230,6 +266,8 @@ export function VideoPlayerModal({
         fail();
       });
     } else if (!isHls || video.canPlayType("application/vnd.apple.mpegurl")) {
+      hasPlayed = false;
+      armStartupWatchdog();
       video.src = source;
       video.load();
       void play();
@@ -242,6 +280,11 @@ export function VideoPlayerModal({
     return () => {
       disposed = true;
       clearTimeout(timer);
+      clearTimeout(startupTimer);
+      clearTimeout(stallTimer);
+      video.removeEventListener("playing", onVideoPlaying);
+      video.removeEventListener("waiting", onVideoWaiting);
+      video.removeEventListener("error", onVideoError);
       hls?.destroy();
       if (hlsRef.current === hls) hlsRef.current = null;
       mpegTs?.destroy();
@@ -368,12 +411,6 @@ export function VideoPlayerModal({
               }}
               onWaiting={() => setBuffering(true)}
               onCanPlay={() => setBuffering(false)}
-              onError={() => {
-                setBuffering(false);
-                setError(
-                  "This channel could not be played. Try again or choose another channel.",
-                );
-              }}
             />
             {buffering && !error && (
               <div className="player-status" role="status">
