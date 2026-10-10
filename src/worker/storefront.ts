@@ -20,7 +20,7 @@ export default {
     if (path.startsWith("/api/") || path.startsWith("/callback/")) {
       return env.LEGACY_APP.fetch(request);
     }
-    if ((request.method === 'GET' || request.method === 'HEAD') && !path.startsWith('/admin')) return fetchCinematicStorefront(request);
+    if ((request.method === 'GET' || request.method === 'HEAD') && !path.startsWith('/admin')) return fetchCinematicStorefront(request, env);
     return env.ASSETS.fetch(request);
   },
 };
