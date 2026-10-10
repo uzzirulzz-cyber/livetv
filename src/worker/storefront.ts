@@ -7,8 +7,15 @@ import { fetchCinematicStorefront, storefrontMetadata } from './services/cinemat
 import { googleTrackingRoute } from './services/google-tracking';
 import { dispatchProviderBroadcast, fetchStorefrontProviderBroadcast } from './services/storefront-provider-broadcast';
 
+type StorefrontEnv = Env & {
+  ASSETS: Fetcher;
+  BROADCAST_PLAYER: Fetcher;
+  LIVE_PROVIDER?: Fetcher;
+  LEGACY_APP: Fetcher;
+};
+
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(request: Request, env: StorefrontEnv): Promise<Response> {
     const path = new URL(request.url).pathname;
     const tracking = await googleTrackingRoute(request);
     if (tracking) return tracking;
@@ -32,4 +39,3 @@ export default {
     return response;
   },
 };
-
